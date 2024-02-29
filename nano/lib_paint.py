@@ -201,6 +201,3 @@ def selftest():
     if error_list:
         print()
         print(fail_tag, f'{len(error_list)} errors')
-
-
-selftest()
