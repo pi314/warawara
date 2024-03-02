@@ -12,7 +12,7 @@ def main(argv):
     lib_selftest.init()
 
     if not argv:
-        module_list = list(name_to_module_mapping.keys())
+        module_list = list(name_to_module_mapping.values())
     else:
         module_list = [name_to_module_mapping[arg] for arg in argv]
 
