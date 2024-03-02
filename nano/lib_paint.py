@@ -74,77 +74,10 @@ white = paint(7)
 orange = paint(208)
 
 
-def selftest():
-    color = lambda x: lambda s: f'\033[{x}m{s}\033[m'
-
-    pass_tag = color(32)('[pass]')
-    fail_tag = color(32)('[fail]')
-
-    def hrepr(obj):
-        if obj is None:
-            return color(36)('None')
-
-        if isinstance(obj, int):
-            return color(35)(f'{obj}')
-
-        if isinstance(obj, list):
-            return '[' + ', '.join(hrepr(o) for o in obj) + ']'
-
-        if isinstance(obj, dict):
-            return '{' + ', '.join(hrepr(key) + ': ' + hrepr(value) for key, value in obj.items())+ '}'
-
-        import re
-        robj = repr(obj)
-
-        if isinstance(obj, str):
-            return color(35)(re.sub(
-                r'(\\\w+)',
-                r'\033[31m\1\033[35m',
-                robj))
-
-        # obj
-        m = re.match(r'^(\w+)\((.*)\)$', robj)
-        if m:
-            import ast
-            typename = m.group(1)
-            arg_list = []
-            for token in m.group(2).split(', '):
-                if '=' in token:
-                    a, b = token.split('=')
-                    try:
-                        b = ast.literal_eval(b)
-                    except ValueError:
-                        pass
-
-                    arg_list.append(f'{a}={hrepr(b)}')
-
-                else:
-                    arg_list.append(token)
-
-            return f'{typename}({", ".join(arg_list)})'
-
-        return robj
-
-
-    error_list = []
-
-    import inspect
-    def section(title):
-        frame = inspect.stack()[1]
-        filename = frame.filename
-        lineno = frame.lineno
-        print()
-        print(color(36)(f'[section] {title} @({filename}:{lineno})'))
-
-    def EXPECT_EQ(a, b):
-        cond_repr = f'{hrepr(a)} == {hrepr(b)}'
-        if a == b:
-            print(pass_tag, cond_repr)
-            return
-
-        print(fail_tag, cond_repr)
-        frame = inspect.stack()[1]
-        error_list.append((frame, cond_repr))
+def selftest(verbose=True):
+    from . import lib_selftest
+    section = lib_selftest.section
+    EXPECT_EQ = lib_selftest.EXPECT_EQ
 
     section('nocolor test')
     EXPECT_EQ(paint(), nocolor)
@@ -192,12 +125,3 @@ def selftest():
 
     section('RGB test')
     EXPECT_EQ(paint(160, 90, 0)('test'), '\033[38;2;160;90;0mtest\033[m')
-
-    for frame, cond_repr in error_list:
-        print()
-        print(fail_tag, cond_repr)
-        print(f'    At {frame.filename}:{frame.lineno}')
-
-    if error_list:
-        print()
-        print(fail_tag, f'{len(error_list)} errors')
