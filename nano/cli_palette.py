@@ -5,10 +5,7 @@ from . import lib_paint
 from .lib_paint import paint
 
 
-def main():
-    prog = sys.argv[0]
-    argv = sys.argv[1:]
-
+def main(argv):
     if not argv:
         print('Format: ESC[30;48;5;{}m')
         for color in range(0, 256):
@@ -31,3 +28,7 @@ def main():
                     paint(fg=int(arg), bg=int(arg))(arg.rjust(3)) +
                     paint(bg=int(arg))(' ' * 100)
                     )
+
+
+def cli_main():
+    main(sys.argv[1:])

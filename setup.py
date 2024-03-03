@@ -15,8 +15,8 @@ setup(
     entry_points = {
         'console_scripts': [
             'nano=nano:cli_main.main',
-            'palette=nano:cli_palette.main',
-            'rainbow=nano:cli_palette.main',
+            'palette=nano:cli_palette.cli_main',
+            'rainbow=nano:cli_palette.cli_main',
             ],
     },
     python_requires='>=3.6',
