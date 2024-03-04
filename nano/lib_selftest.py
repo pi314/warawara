@@ -74,7 +74,6 @@ def section(title):
     print(color(36)(f'[section] {title} @({filename}:{lineno})'))
 
 
-
 def EXPECT_EQ(a, b):
     frame = inspect.stack()[1]
     filename = frame.filename

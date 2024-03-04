@@ -1,10 +1,12 @@
 from . import lib_selftest
 
 from . import lib_paint
+from . import lib_rere
 
 
 name_to_module_mapping = {
-        'paint': lib_paint
+        'paint': lib_paint,
+        'rere': lib_rere,
         }
 
 
