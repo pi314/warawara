@@ -3,29 +3,33 @@ import inspect
 
 verbose = True
 
+color = lambda c: lambda *s: f'\033[{c}m{" ".join(str(token) for token in s)}\033[m'
+
+def banner(c, fill):
+    def inner(*s):
+        title = ' '.join(str(token) for token in s).rstrip()
+        return color(c)((title + ' ').ljust(79, fill))
+    return inner
+
+sepline = lambda x: ''.ljust(79, x)
+
+pass_tag = color(32)('[pass]')
+fail_tag = color(31)('[fail]')
+
+fail_list = dict()
+pass_list = dict()
+
 
 def init():
-    global color
-    global pass_tag
-    global fail_tag
-    global fail_list
-    global pass_list
-
-    color = lambda x: lambda s: f'\033[{x}m{s}\033[m'
-
-    pass_tag = color(32)('[pass]')
-    fail_tag = color(31)('[fail]')
-
-    fail_list = dict()
-    pass_list = dict()
+    pass
 
 
 def hrepr(obj):
-    if obj is None:
-        return color(36)('None')
+    if (obj is None) or (obj is True) or (obj is False):
+        return color(36)(obj)
 
     if isinstance(obj, int):
-        return color(35)(f'{obj}')
+        return color(35)(obj)
 
     if isinstance(obj, list):
         return '[' + ', '.join(hrepr(o) for o in obj) + ']'
@@ -95,18 +99,28 @@ def EXPECT_EQ(a, b):
 
 
 def print_summary():
-    print('-' * 79)
-    print('Failed tests:')
-    for filename in fail_list:
-        for frame, cond_repr in fail_list[filename]:
-            print()
-            print(fail_tag, cond_repr)
-            print(f'    At {frame.filename}:{frame.lineno}')
+    orange = color('38;5;208')
 
-    print('-' * 79)
-    print('Summary:')
+    if fail_list:
+        print(orange(sepline('=')))
+        print(orange('Failed tests'))
+        print(orange(sepline('-')))
+        for filename in fail_list:
+            for frame, cond_repr in fail_list[filename]:
+                print()
+                print(fail_tag, cond_repr)
+                print(f'    At {frame.filename}:{frame.lineno}')
+
+        print()
+
+    print(orange(sepline('=')))
+    print(orange('Summary'))
+    print(orange(sepline('-')))
+
     for filename in fail_list:
         print(fail_tag, f'{len(fail_list[filename])} failed')
 
     for filename in pass_list:
         print(pass_tag, f'{len(pass_list[filename])} passed')
+
+    print(orange(sepline('-')))
