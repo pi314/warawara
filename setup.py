@@ -14,9 +14,10 @@ setup(
     keywords=['nano', 'utiliy', 'toolbox'],
     entry_points = {
         'console_scripts': [
-            'nano=nano:cli_main.main',
+            'nano=nano:cli_nano.main',
             'palette=nano:cli_palette.cli_main',
             'rainbow=nano:cli_palette.cli_main',
+            'sponge=nano:cli_sponge.cli_main',
             ],
     },
     python_requires='>=3.6',

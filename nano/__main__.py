@@ -1,3 +1,3 @@
-from .cli_main import main
+from . import cli_nano
 
-main()
+cli_nano.main()

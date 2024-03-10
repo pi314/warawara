@@ -4,6 +4,7 @@ from os.path import basename
 
 from . import cli_selftest
 from . import cli_palette
+from . import cli_sponge
 
 
 def main():
@@ -20,3 +21,6 @@ def main():
 
     if argv[0] in ('rainbow', 'palette'):
         cli_palette.main(argv[1:])
+
+    if argv[0] in ('sponge',):
+        cli_sponge.main(argv[1:])
