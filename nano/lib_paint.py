@@ -16,7 +16,7 @@ class paint:
         return f'paint(fg={self.fg}, bg={self.bg})'
 
     def __call__(self, s=''):
-        return '' if not self.seq else f'{self.seq}{s}\033[m'
+        return s if not self.seq else f'{self.seq}{s}\033[m'
 
     def __str__(self):
         return self.seq
@@ -74,7 +74,7 @@ white = paint(7)
 orange = paint(208)
 
 
-def selftest(verbose=True):
+def selftest():
     from . import lib_selftest
     section = lib_selftest.section
     EXPECT_EQ = lib_selftest.EXPECT_EQ
@@ -82,6 +82,8 @@ def selftest(verbose=True):
     section('nocolor test')
     EXPECT_EQ(paint(), nocolor)
     EXPECT_EQ(nocolor(), '')
+    EXPECT_EQ(nocolor('text'), 'text')
+    EXPECT_EQ(nocolor.seq, '')
 
     section('fg test')
     EXPECT_EQ(black.seq,    '\033[38;5;0m')

@@ -15,10 +15,10 @@ setup(
     entry_points = {
         'console_scripts': [
             'nano=nano:cli_nano.main',
-            'palette=nano:cli_palette.cli_main',
-            'rainbow=nano:cli_palette.cli_main',
-            'sponge=nano:cli_sponge.cli_main',
-            'ntfy=nano:cli_ntfy.cli_main',
+            'palette=nano:cli_palette.main',
+            'rainbow=nano:cli_rainbow.main',
+            'sponge=nano:cli_sponge.main',
+            'ntfy=nano:cli_ntfy.main',
             ],
     },
     python_requires='>=3.6',

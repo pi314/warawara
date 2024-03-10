@@ -1,30 +1,26 @@
 import sys
+import importlib
 
 from os.path import basename
 
-from . import cli_selftest
-from . import cli_palette
-from . import cli_sponge
-from . import cli_ntfy
+
+def load_module(module):
+    import importlib
+    return importlib.import_module('.cli_' + module, 'nano')
 
 
 def main():
     prog = basename(sys.argv[0])
-    argv = sys.argv[1:]
+    sys.argv = sys.argv[1:]
 
-    if not argv:
-        print(prog, argv)
-        print('WIP')
-        return 1
+    if not sys.argv:
+        import os
+        for f in os.listdir(os.path.dirname(__file__)):
+            if f.startswith('cli_') and f.endswith('.py'):
+                m = os.path.splitext(f[4:])[0]
+                print(m)
+        exit(1)
 
-    if argv[0] == 'selftest':
-        cli_selftest.main(argv[1:])
+    subcmd = sys.argv[0]
 
-    if argv[0] in ('rainbow', 'palette'):
-        cli_palette.main(argv[1:])
-
-    if argv[0] in ('sponge',):
-        cli_sponge.main(argv[1:])
-
-    if argv[0] in ('ntfy',):
-        cli_ntfy.main(argv[1:])
+    load_module(subcmd).main()

@@ -226,7 +226,7 @@ def pipe(istream, *ostreams):
     t.start()
 
 
-def selftest(verbose=True):
+def selftest():
     from . import lib_selftest
     section = lib_selftest.section
     EXPECT_EQ = lib_selftest.EXPECT_EQ

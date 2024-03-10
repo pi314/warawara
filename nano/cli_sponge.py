@@ -49,37 +49,34 @@ def worker(streams, cmd, delay, stop_signal):
     streams[1].writelines(sponged_lines)
 
 
-def main(argv):
-    parser = argparse.ArgumentParser(prog='sponge',
-            description='sponge',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-d', '--delay', default=0.2, type=float, help='Delay in seconds')
-    parser.add_argument('command', nargs='*', default=None, help='Command to run')
-
-    args = parser.parse_args(argv)
-
-    if not args.command:
-        sponged_lines = [line.rstrip() for line in sys.stdin.readlines()]
-        for line in sponged_lines:
-            print(line)
-        exit()
-
-    stop_signal = threading.Event()
-
-    cmd = lib_cmd.run([worker, args.command, args.delay, stop_signal], stderr=None, wait=False)
-
-    for line in sys.stdin:
-        print('[ignored]', line.rstrip())
-    stop_signal.set()
-
-    cmd.wait()
-
-    for line in cmd.stdout:
-        print(line)
-
-
-def cli_main():
+def main():
     try:
-        main(sys.argv[1:])
+        parser = argparse.ArgumentParser(prog='sponge',
+                description='sponge',
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser.add_argument('-d', '--delay', default=0.2, type=float, help='Delay in seconds')
+        parser.add_argument('command', nargs='*', default=None, help='Command to run')
+
+        args = parser.parse_args()
+
+        if not args.command:
+            sponged_lines = [line.rstrip() for line in sys.stdin.readlines()]
+            for line in sponged_lines:
+                print(line)
+            exit()
+
+        stop_signal = threading.Event()
+
+        cmd = lib_cmd.run([worker, args.command, args.delay, stop_signal], stderr=None, wait=False)
+
+        for line in sys.stdin:
+            print('[ignored]', line.rstrip())
+        stop_signal.set()
+
+        cmd.wait()
+
+        for line in cmd.stdout:
+            print(line)
+
     except KeyboardInterrupt:
         print_err('KeyboardInterrupt')

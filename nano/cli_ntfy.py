@@ -38,7 +38,10 @@ def notify(title, lines):
     exit(lib_cmd.run(cmd).returncode)
 
 
-def main(argv):
+def main():
+    prog = sys.argv[0]
+    argv = sys.argv[1:]
+
     parser = argparse.ArgumentParser(description='ntfy', prog='ntfy')
     parser.add_argument('-t', '--title', help='Notification title')
     parser.add_argument('lines', nargs='*', help='Notification text', default=[])
@@ -46,10 +49,3 @@ def main(argv):
     args = parser.parse_args(argv)
 
     notify(args.title, args.lines)
-
-
-def cli_main():
-    try:
-        main(sys.argv[1:])
-    except KeyboardInterrupt:
-        print_err('KeyboardInterrupt')

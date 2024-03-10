@@ -1,8 +1,6 @@
 import inspect
 
 
-verbose = True
-
 color = lambda c: lambda *s: f'\033[{c}m{" ".join(str(token) for token in s)}\033[m'
 
 def banner(c, fill):

@@ -17,7 +17,7 @@ class rere:
         return re.sub(pattern, repl, self.text)
 
 
-def selftest(verbose=True):
+def selftest():
     from . import lib_selftest
     EXPECT_EQ = lib_selftest.EXPECT_EQ
 
