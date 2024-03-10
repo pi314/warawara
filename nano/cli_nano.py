@@ -5,6 +5,7 @@ from os.path import basename
 from . import cli_selftest
 from . import cli_palette
 from . import cli_sponge
+from . import cli_ntfy
 
 
 def main():
@@ -24,3 +25,6 @@ def main():
 
     if argv[0] in ('sponge',):
         cli_sponge.main(argv[1:])
+
+    if argv[0] in ('ntfy',):
+        cli_ntfy.main(argv[1:])

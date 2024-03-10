@@ -18,6 +18,7 @@ setup(
             'palette=nano:cli_palette.cli_main',
             'rainbow=nano:cli_palette.cli_main',
             'sponge=nano:cli_sponge.cli_main',
+            'ntfy=nano:cli_ntfy.cli_main',
             ],
     },
     python_requires='>=3.6',
