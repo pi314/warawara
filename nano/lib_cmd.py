@@ -39,6 +39,10 @@ class Stream:
     def closed(self):
         return self.eof.is_set()
 
+    @property
+    def empty(self):
+        return not self.lines
+
     def __iter__(self):
         while True:
             line = self.readline()
@@ -78,9 +82,11 @@ class Command:
             newline='\n', env=None):
 
         if callable(cmd):
-            self.cmd = cmd
-        else:
-            self.cmd = [str(token) for token in cmd]
+            cmd = [cmd]
+
+        self.cmd = [token for token in cmd]
+        if not self.cmd:
+            raise ValueError('command is empty')
 
         self.newline = newline
 
@@ -103,33 +109,28 @@ class Command:
             raise TypeError('stderr should be None or bool')
 
         # Initialize stdin stream
+        self.stdin = Stream()
         if stdin is None or stdin is False:
-            self.stdin = None
+            self.stdin.close()
 
         elif isinstance(stdin, list):
-            self.stdin = Stream()
             for line in stdin:
                 self.stdin.writeline(line)
             self.stdin.close()
 
-        elif stdin is True:
-            self.stdin = Stream()
-
         # Initialize stdout stream
+        self.stdout = Stream()
         if stdout is None or stdout is False:
-            self.stdout = None
-        else:
-            self.stdout = Stream()
-            if callable(stdout):
-                self.stdout.callback(stdout)
+            self.stdout.close()
+        elif callable(stdout):
+            self.stdout.callback(stdout)
 
         # Initialize stderr stream
+        self.stderr = Stream()
         if stderr is None or stderr is False:
-            self.stderr = None
-        else:
-            self.stderr = Stream()
-            if callable(stderr):
-                self.stderr.callback(stderr)
+            self.stderr.close()
+        elif callable(stderr):
+            self.stderr.callback(stderr)
 
         self.io_threads = []
 
@@ -137,9 +138,9 @@ class Command:
         return [self.stdin, self.stdout, self.stderr][idx]
 
     def run(self, wait=True):
-        if callable(self.cmd):
+        if callable(self.cmd[0]):
             def worker():
-                self.returncode = self.cmd(self.stdin, self.stdout, self.stderr)
+                self.returncode = self.cmd[0](self, *self.cmd[1:])
                 self.stdout.close()
                 self.stderr.close()
 
@@ -149,9 +150,9 @@ class Command:
 
         else:
             self.proc = sub.Popen(self.cmd,
-                    stdin=None if not self.stdin else sub.PIPE,
-                    stdout=None if self.stdout is None else sub.PIPE,
-                    stderr=None if self.stderr is None else sub.PIPE,
+                    stdin=None if self.stdin.closed and self.stdin.empty else sub.PIPE,
+                    stdout=None if self.stdout.closed else sub.PIPE,
+                    stderr=None if self.stderr.closed else sub.PIPE,
                     encoding='utf-8', bufsize=1, universal_newlines=True,
                     env=self.env)
 
@@ -185,9 +186,9 @@ class Command:
 
     def wait(self):
         # Wait for all streams to close
-        for idx in (0, 1, 2):
-            if self[idx]:
-                self[idx].eof.wait()
+        self.stdin.eof.wait()
+        self.stdout.eof.wait()
+        self.stderr.eof.wait()
 
         # Gracefully wait for threads and child process to finish
         for t in self.io_threads:
@@ -206,8 +207,7 @@ cmd = Command
 
 def run(cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True):
     ret = Command(cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
-    if wait:
-        ret.wait()
+    ret.run(wait=wait)
     return ret
 
 
@@ -273,10 +273,10 @@ def selftest(verbose=True):
 
     section('callable + pipe tests')
 
-    def proc(i, o, e):
-        for line in i:
-            o.writeline(line)
-            e.writeline(line)
+    def proc(streams, *args):
+        for line in streams[0]:
+            streams[1].writeline(line)
+            streams[2].writeline(line)
         return 2024
 
     p1 = cmd(proc, stdin=['hello', 'world'])
@@ -294,7 +294,7 @@ def selftest(verbose=True):
     EXPECT_EQ(p3.stdout.lines, ['1/hello', '2/world'])
 
     section('loopback test')
-    def pi(i, o, e):
+    def pi(streams, *args):
         # BBP
 
         def bbp(k):
@@ -305,18 +305,18 @@ def selftest(verbose=True):
                     (1 / (8 * k + 6))
                     )
 
-        for line in i:
+        for line in streams[0]:
             if isinstance(line, int):
                 n = line
-                o.writeline((n, 1, bbp(0)))
+                streams[1].writeline((n, 1, bbp(0)))
 
             else:
                 n, k, s = line
                 if n == k:
-                    o.writeline(s)
+                    streams[1].writeline(s)
                     break
 
-                o.writeline((n, k + 1, s + bbp(k)))
+                streams[1].writeline((n, k + 1, s + bbp(k)))
 
     p = cmd(pi, stdin=True)
     pipe(p.stdout, p.stdin)

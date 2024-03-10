@@ -11,15 +11,14 @@ def print_err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-def listener(cmd, delay, stop_signal):
-    line_count = 0
-
+def worker(streams, cmd, delay, stop_signal):
     # Get initial content from command for excluding it
     p = lib_cmd.run(cmd)
     if p.returncode:
         return
 
-    old_lines = p.stdout
+    old_lines = p.stdout.lines
+    sponged_lines = []
 
     while True:
         if stop_signal.is_set():
@@ -30,24 +29,24 @@ def listener(cmd, delay, stop_signal):
         if p.returncode:
             break
 
-        new_lines = p.stdout
+        new_lines = p.stdout.lines
 
         if old_lines != new_lines:
             for line in new_lines:
-                print(line)
+                sponged_lines.append(line)
 
                 # Print timestamp for reference so you know what's going on
-                if not sys.stdout.isatty():
+                if not sys.stdout.isatty() or True:
                     print_err('[' + str(datetime.datetime.now()) + ']', line)
-
-                line_count += 1
 
             old_lines = new_lines
 
-            lib_cmd.run(['ntfy', '-t', 'Copied', '{} lines'.format(line_count)])
+            lib_cmd.run(['ntfy', '-t', 'Copied', '{} lines'.format(len(sponged_lines))])
 
         if cmd[0] != 'sleep':
             time.sleep(delay)
+
+    streams[1].writelines(sponged_lines)
 
 
 def main(argv):
@@ -60,33 +59,27 @@ def main(argv):
     args = parser.parse_args(argv)
 
     if not args.command:
-        lines = [line.rstrip() for line in sys.stdin.readlines()]
-
-        for line in lines:
+        sponged_lines = [line.rstrip() for line in sys.stdin.readlines()]
+        for line in sponged_lines:
             print(line)
-
         exit()
 
     stop_signal = threading.Event()
 
-    cmd_thread = threading.Thread(target=listener, args=(args.command, args.delay, stop_signal))
-    cmd_thread.daemon = True
-    cmd_thread.start()
+    cmd = lib_cmd.run([worker, args.command, args.delay, stop_signal], stderr=None, wait=False)
 
     for line in sys.stdin:
-        print(line.rstrip())
-
+        print('[ignored]', line.rstrip())
     stop_signal.set()
 
-    cmd_thread.join()
+    cmd.wait()
+
+    for line in cmd.stdout:
+        print(line)
 
 
 def cli_main():
-    main(sys.argv[1:])
-
-
-if __name__ == '__main__':
     try:
-        main()
+        main(sys.argv[1:])
     except KeyboardInterrupt:
         print_err('KeyboardInterrupt')
