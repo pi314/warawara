@@ -1,4 +1,4 @@
 ===============================================================================
-Nano
+Smol
 ===============================================================================
-A library that provides might-be-useful code for my other projects
+A small library that provides might-be-useful code for my other projects

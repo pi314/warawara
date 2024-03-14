@@ -6,7 +6,7 @@ from os.path import basename
 
 def load_module(module):
     import importlib
-    return importlib.import_module('.cli_' + module, 'nano')
+    return importlib.import_module('.cli_' + module, 'smol')
 
 
 def main():

@@ -1,24 +1,24 @@
 from setuptools import setup
 
-import nano
+import smol
 
 
 setup(
-    name='nano',
-    version=nano.__version__,
-    description='Some nano-sized utilties for my other projects',
+    name='smol',
+    version=smol.__version__,
+    description='Some smol utilties for my other projects',
     author='Chang-Yen Chih',
     author_email='michael66230@gmail.com',
-    url=f'https://github.com/pi314/nano',
-    py_modules=['nano'],
-    keywords=['nano', 'utiliy', 'toolbox'],
+    url=f'https://github.com/pi314/smol',
+    py_modules=['smol'],
+    keywords=['smol', 'utiliy', 'toolbox'],
     entry_points = {
         'console_scripts': [
-            'nano=nano:cli_nano.main',
-            'palette=nano:cli_palette.main',
-            'rainbow=nano:cli_rainbow.main',
-            'sponge=nano:cli_sponge.main',
-            'ntfy=nano:cli_ntfy.main',
+            'smol=smol:cli_smol.main',
+            'palette=smol:cli_palette.main',
+            'rainbow=smol:cli_rainbow.main',
+            'sponge=smol:cli_sponge.main',
+            'ntfy=smol:cli_ntfy.main',
             ],
     },
     python_requires='>=3.6',

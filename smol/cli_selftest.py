@@ -32,7 +32,7 @@ def main():
     for f in os.listdir(os.path.dirname(__file__)):
         if f.startswith('lib_') and f.endswith('.py'):
             m = os.path.splitext(f[4:])[0]
-            modules[m] = importlib.import_module('.lib_' + m, 'nano')
+            modules[m] = importlib.import_module('.lib_' + m, 'smol')
 
     if not argv:
         module_list = list(modules.values())

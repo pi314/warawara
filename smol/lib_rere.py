@@ -21,13 +21,13 @@ def selftest():
     from . import lib_selftest
     EXPECT_EQ = lib_selftest.EXPECT_EQ
 
-    rec = rere('nano sized tools')
+    rec = rere('my smol tools')
 
     m = rec.match(r'^(\w+) (\w+)$')
     EXPECT_EQ(m, None)
 
     m = rec.match(r'^(\w+) (\w+) (\w+)$')
-    EXPECT_EQ(m.groups(), ('nano', 'sized', 'tools'))
-    EXPECT_EQ(m.group(2), 'sized')
+    EXPECT_EQ(m.groups(), ('my', 'smol', 'tools'))
+    EXPECT_EQ(m.group(2), 'smol')
 
-    EXPECT_EQ(rec.sub(r'sized', 'SIZED'), 'nano SIZED tools')
+    EXPECT_EQ(rec.sub(r'smol', 'SMOL'), 'my SMOL tools')

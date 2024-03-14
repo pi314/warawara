@@ -11,6 +11,6 @@ def _load_modules():
     for f in os.listdir(os.path.dirname(__file__)):
         if f.startswith('cli_') and f.endswith('.py'):
             m = os.path.splitext(f)[0]
-            globals()[m] = importlib.import_module('.' + m, 'nano')
+            globals()[m] = importlib.import_module('.' + m, 'smol')
 
 _load_modules()
