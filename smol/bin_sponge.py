@@ -4,7 +4,7 @@ import sys
 import threading
 import time
 
-from . import lib_cmd
+from . import subproc
 
 
 def print_err(*args, **kwargs):
@@ -13,7 +13,7 @@ def print_err(*args, **kwargs):
 
 def worker(streams, cmd, delay, stop_signal):
     # Get initial content from command for excluding it
-    p = lib_cmd.run(cmd)
+    p = subproc.run(cmd)
     if p.returncode:
         return
 
@@ -24,7 +24,7 @@ def worker(streams, cmd, delay, stop_signal):
         if stop_signal.is_set():
             break
 
-        p = lib_cmd.run(cmd)
+        p = subproc.run(cmd)
 
         if p.returncode:
             break
@@ -41,7 +41,7 @@ def worker(streams, cmd, delay, stop_signal):
 
             old_lines = new_lines
 
-            lib_cmd.run(['ntfy', '-t', 'Copied', '{} lines'.format(len(sponged_lines))])
+            subproc.run(['ntfy', '-t', 'Copied', '{} lines'.format(len(sponged_lines))])
 
         if cmd[0] != 'sleep':
             time.sleep(delay)
@@ -67,7 +67,7 @@ def main():
 
         stop_signal = threading.Event()
 
-        cmd = lib_cmd.run([worker, args.command, args.delay, stop_signal], stderr=None, wait=False)
+        cmd = subproc.run([worker, args.command, args.delay, stop_signal], stderr=None, wait=False)
 
         for line in sys.stdin:
             print('[ignored]', line.rstrip())

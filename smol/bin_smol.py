@@ -1,12 +1,9 @@
+import os
 import sys
-import importlib
 
 from os.path import basename
 
-
-def load_module(module):
-    import importlib
-    return importlib.import_module('.cli_' + module, 'smol')
+from . import bin
 
 
 def main():
@@ -14,13 +11,16 @@ def main():
     sys.argv = sys.argv[1:]
 
     if not sys.argv:
-        import os
         for f in os.listdir(os.path.dirname(__file__)):
-            if f.startswith('cli_') and f.endswith('.py'):
+            if f.startswith('bin_') and f.endswith('.py'):
                 m = os.path.splitext(f[4:])[0]
                 print(m)
         exit(1)
 
     subcmd = sys.argv[0]
 
-    load_module(subcmd).main()
+    try:
+        getattr(bin, subcmd).main()
+    except ModuleNotFoundError:
+        print(f'Unknown subcommand: {subcmd}', file=sys.stderr)
+        exit(1)

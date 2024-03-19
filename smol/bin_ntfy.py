@@ -3,23 +3,23 @@ import shlex
 import sys
 
 
-from . import lib_cmd
-from . import lib_paint
+from . import subproc
+from . import paints
 
 
 def print_cmd(cmd):
 
     def color_token(arg):
         token = shlex.quote(arg)
-        color = lib_paint.nocolor
+        color = paints.nocolor
         if token.startswith(('"', "'")):
-            color = lib_paint.orange
+            color = paints.orange
         elif token.startswith('-'):
-            color = lib_paint.cyan
+            color = paints.cyan
 
         return color(token)
 
-    print(lib_paint.magenta('$'), ' '.join(
+    print(paints.magenta('$'), ' '.join(
         color_token(arg) for arg in cmd
         ))
 

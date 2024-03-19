@@ -14,11 +14,11 @@ setup(
     keywords=['smol', 'utiliy', 'toolbox'],
     entry_points = {
         'console_scripts': [
-            'smol=smol:cli_smol.main',
-            'palette=smol:cli_palette.main',
-            'rainbow=smol:cli_rainbow.main',
-            'sponge=smol:cli_sponge.main',
-            'ntfy=smol:cli_ntfy.main',
+            'smol=smol:bin.smol.main',
+            'palette=smol:bin.palette.main',
+            'rainbow=smol:bin.rainbow.main',
+            'sponge=smol:bin.sponge.main',
+            'ntfy=smol:bin.ntfy.main',
             ],
     },
     python_requires='>=3.6',

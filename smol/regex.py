@@ -1,6 +1,9 @@
 import re
 
 
+__all__ = ['rere']
+
+
 class rere:
     def __init__(self, text):
         self.text = text
@@ -18,8 +21,8 @@ class rere:
 
 
 def selftest():
-    from . import lib_selftest
-    EXPECT_EQ = lib_selftest.EXPECT_EQ
+    from . import selftest
+    EXPECT_EQ = selftest.EXPECT_EQ
 
     rec = rere('my smol tools')
 

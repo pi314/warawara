@@ -1,3 +1,3 @@
-from . import cli_smol
+from . import bin
 
-cli_smol.main()
+bin.smol.main()

@@ -1,16 +1,25 @@
 __version__ = '0.0.1'
 
+from .paints import *
+from .regex import *
+from .subproc import *
 
-from .lib_paint import *
-from .lib_rere import *
-from .lib_cmd import *
+from . import bin
 
-def _load_modules():
+
+def load_cli_entry_points():
     import os
     import importlib
-    for f in os.listdir(os.path.dirname(__file__)):
-        if f.startswith('cli_') and f.endswith('.py'):
-            m = os.path.splitext(f)[0]
-            globals()[m] = importlib.import_module('.' + m, 'smol')
 
-_load_modules()
+    for f in os.listdir(os.path.dirname(__file__)):
+        if f.startswith('bin_') and f.endswith('.py'):
+            m = os.path.splitext(f)[0]
+
+            module = importlib.import_module('.' + m, 'smol')
+            setattr(bin, m[4:], module)
+
+            del globals()[m]
+
+load_cli_entry_points()
+
+del load_cli_entry_points

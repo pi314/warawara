@@ -3,7 +3,10 @@ import subprocess as sub
 import threading
 
 
-class Stream:
+__all__ = ['stream', 'command', 'run', 'pipe']
+
+
+class stream:
     def __init__(self):
         self.Q = queue.Queue()
         self.__lines = []
@@ -51,7 +54,7 @@ class Stream:
             yield line
 
 
-class Command:
+class command:
     '''
     A line-oriented wrapper for running external commands.
 
@@ -109,7 +112,7 @@ class Command:
             raise TypeError('stderr should be None or bool')
 
         # Initialize stdin stream
-        self.stdin = Stream()
+        self.stdin = stream()
         if stdin is None or stdin is False:
             self.stdin.close()
 
@@ -119,14 +122,14 @@ class Command:
             self.stdin.close()
 
         # Initialize stdout stream
-        self.stdout = Stream()
+        self.stdout = stream()
         if stdout is None or stdout is False:
             self.stdout.close()
         elif callable(stdout):
             self.stdout.callback(stdout)
 
         # Initialize stderr stream
-        self.stderr = Stream()
+        self.stderr = stream()
         if stderr is None or stderr is False:
             self.stderr.close()
         elif callable(stderr):
@@ -202,11 +205,8 @@ class Command:
             self.thread.join()
 
 
-cmd = Command
-
-
 def run(cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True):
-    ret = Command(cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
+    ret = command(cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
     ret.run(wait=wait)
     return ret
 
@@ -227,12 +227,12 @@ def pipe(istream, *ostreams):
 
 
 def selftest():
-    from . import lib_selftest
-    section = lib_selftest.section
-    EXPECT_EQ = lib_selftest.EXPECT_EQ
+    from . import selftest
+    section = selftest.section
+    EXPECT_EQ = selftest.EXPECT_EQ
 
     section('stream tests')
-    s = Stream()
+    s = stream()
     s.writeline('line1')
     s.writeline('line2')
     s.writeline('line3')
@@ -241,7 +241,7 @@ def selftest():
     EXPECT_EQ(s.closed, True)
     EXPECT_EQ(s.lines, ['line1', 'line2', 'line3'])
 
-    s = Stream()
+    s = stream()
     lines = ['line1', 'line2', 'line3']
     s.writelines(lines)
     s.close()
@@ -249,18 +249,18 @@ def selftest():
         EXPECT_EQ(lines[nr], line)
 
     section('Simple stdout tests')
-    p = cmd('seq 5'.split())
+    p = command('seq 5'.split())
     p.run(wait=False).wait()
     EXPECT_EQ(p.stdout.lines, ['1', '2', '3', '4', '5'])
 
     section('stdin tests')
-    p = cmd('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
+    p = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
     p.run(wait=False).wait()
     EXPECT_EQ(p.stdout.lines, ['1:hello', '2:world'])
 
     section('pipe tests')
-    p1 = cmd('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
-    p2 = cmd('nl -w 1 -s /'.split(), stdin=True)
+    p1 = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
+    p2 = command('nl -w 1 -s /'.split(), stdin=True)
     pipe(p1.stdout, p2.stdin)
 
     p1.run()
@@ -279,9 +279,9 @@ def selftest():
             streams[2].writeline(line)
         return 2024
 
-    p1 = cmd(proc, stdin=['hello', 'world'])
-    p2 = cmd('nl -w 1 -s :'.split(), stdin=True)
-    p3 = cmd('nl -w 1 -s /'.split(), stdin=True)
+    p1 = command(proc, stdin=['hello', 'world'])
+    p2 = command('nl -w 1 -s :'.split(), stdin=True)
+    p3 = command('nl -w 1 -s /'.split(), stdin=True)
     pipe(p1.stdout, p2.stdin)
     pipe(p1.stderr, p3.stdin)
 
@@ -318,7 +318,7 @@ def selftest():
 
                 streams[1].writeline((n, k + 1, s + bbp(k)))
 
-    p = cmd(pi, stdin=True)
+    p = command(pi, stdin=True)
     pipe(p.stdout, p.stdin)
     p.stdin.writeline(11)
     p.run()

@@ -1,3 +1,6 @@
+__all__ = ['paint']
+
+
 class paint:
     def __init__(self, fg=None, bg=None, blue=None):
         if blue is not None:
@@ -75,9 +78,9 @@ orange = paint(208)
 
 
 def selftest():
-    from . import lib_selftest
-    section = lib_selftest.section
-    EXPECT_EQ = lib_selftest.EXPECT_EQ
+    from . import selftest
+    section = selftest.section
+    EXPECT_EQ = selftest.EXPECT_EQ
 
     section('nocolor test')
     EXPECT_EQ(paint(), nocolor)

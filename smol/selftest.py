@@ -1,5 +1,7 @@
 import inspect
 
+from os.path import basename
+
 
 color = lambda c: lambda *s: f'\033[{c}m{" ".join(str(token) for token in s)}\033[m'
 
@@ -116,9 +118,9 @@ def print_summary():
     print(orange(sepline('-')))
 
     for filename in fail_list:
-        print(fail_tag, f'{len(fail_list[filename])} failed')
+        print(fail_tag, f'{basename(filename)}: {len(fail_list[filename])} failed')
 
     for filename in pass_list:
-        print(pass_tag, f'{len(pass_list[filename])} passed')
+        print(pass_tag, f'{basename(filename)}: {len(pass_list[filename])} passed')
 
     print(orange(sepline('-')))
