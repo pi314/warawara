@@ -76,6 +76,8 @@ cyan = paint(6)
 white = paint(7)
 orange = paint(208)
 
+__all__ += ['nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange']
+
 
 def selftest():
     from . import selftest
