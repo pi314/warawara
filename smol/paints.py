@@ -22,7 +22,7 @@ class paint:
         return s if not self.seq else f'{self.seq}{s}\033[m'
 
     def __str__(self):
-        return self.seq
+        return self.seq or '\033[m'
 
     def __or__(self, other):
         fg = self.fg if other.fg is None else other.fg
@@ -89,6 +89,7 @@ def selftest():
     EXPECT_EQ(nocolor(), '')
     EXPECT_EQ(nocolor('text'), 'text')
     EXPECT_EQ(nocolor.seq, '')
+    EXPECT_EQ('{}'.format(nocolor), '\033[m')
 
     section('fg test')
     EXPECT_EQ(black.seq,    '\033[38;5;0m')
