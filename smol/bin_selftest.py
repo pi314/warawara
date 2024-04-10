@@ -6,6 +6,7 @@ from . import selftest
 from . import paints
 from . import regex
 from . import subproc
+from . import itertools
 
 
 def main():
