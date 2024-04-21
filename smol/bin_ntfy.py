@@ -35,7 +35,7 @@ def notify(title, lines):
 
     cmd = ['osascript', '-e', ' '.join(args)]
     print_cmd(cmd)
-    exit(lib_cmd.run(cmd).returncode)
+    exit(subproc.run(cmd).returncode)
 
 
 def main():
