@@ -22,13 +22,13 @@ class stream:
 
     def readline(self):
         line = self.Q.get()
-        for callback in self.callbacks:
-            callback(line)
         return line
 
     def writeline(self, line):
         self.lines.append(line)
         self.Q.put(line)
+        for callback in self.callbacks:
+            callback(line)
 
     def writelines(self, lines):
         for line in lines:
@@ -45,6 +45,12 @@ class stream:
     @property
     def empty(self):
         return not self.lines
+
+    def __bool__(self):
+        return not self.empty
+
+    def __len__(self):
+        return len(self.lines)
 
     def __iter__(self):
         while True:
@@ -87,7 +93,11 @@ class command:
         if callable(cmd):
             cmd = [cmd]
 
-        self.cmd = [token for token in cmd]
+        if callable(cmd[0]):
+            self.cmd = [token for token in cmd]
+        else:
+            self.cmd = [str(token) for token in cmd]
+
         if not self.cmd:
             raise ValueError('command is empty')
 
@@ -101,12 +111,12 @@ class command:
         if isinstance(stdin, str):
             stdin = [stdin]
 
-        if stdout is None or isinstance(stdout, bool):
+        if stdout is None or isinstance(stdout, bool) or callable(stdout):
             pass
         else:
             raise TypeError('stdout should be None or bool')
 
-        if stderr is None or isinstance(stderr, bool):
+        if stderr is None or isinstance(stderr, bool) or callable(stderr):
             pass
         else:
             raise TypeError('stderr should be None or bool')
@@ -140,7 +150,7 @@ class command:
     def __getitem__(self, idx):
         return [self.stdin, self.stdout, self.stderr][idx]
 
-    def run(self, wait=True):
+    def run(self, wait=True, timeout=None):
         if callable(self.cmd[0]):
             def worker():
                 self.returncode = self.cmd[0](self, *self.cmd[1:])
@@ -176,33 +186,34 @@ class command:
                     (reader, self.stdout, self.proc.stdout),
                     (reader, self.stderr, self.proc.stderr),
                     ):
-                if self_stream and proc_stream:
+                if self_stream is not None and proc_stream is not None:
                     t = threading.Thread(target=worker, args=(self_stream, proc_stream))
                     t.daemon = True
                     t.start()
                     self.io_threads.append(t)
 
         if wait:
-            self.wait()
+            self.wait(timeout)
 
         return self
 
-    def wait(self):
+    def wait(self, timeout=None):
+        # Wait for child process to finish
+        if self.proc:
+            self.proc.wait(timeout)
+            self.returncode = self.proc.returncode
+
+        if self.thread:
+            self.thread.join(timeout)
+
         # Wait for all streams to close
         self.stdin.eof.wait()
         self.stdout.eof.wait()
         self.stderr.eof.wait()
 
-        # Gracefully wait for threads and child process to finish
+        # Gracefully wait for threads to finish
         for t in self.io_threads:
             t.join()
-
-        if self.proc:
-            self.proc.wait()
-            self.returncode = self.proc.returncode
-
-        if self.thread:
-            self.thread.join()
 
 
 def run(cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True):
@@ -253,6 +264,15 @@ def selftest():
     p.run(wait=False).wait()
     EXPECT_EQ(p.stdout.lines, ['1', '2', '3', '4', '5'])
 
+    section('Callback tests')
+    lines = []
+    def callback(line):
+        lines.append(line)
+    p = command('seq 5'.split(), stdout=callback)
+    p.run()
+    EXPECT_EQ(p.stdout.lines, ['1', '2', '3', '4', '5'])
+    EXPECT_EQ(p.stdout.lines, lines)
+
     section('stdin tests')
     p = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
     p.run(wait=False).wait()
@@ -295,9 +315,8 @@ def selftest():
 
     section('loopback test')
     def pi(streams, *args):
-        # BBP
-
         def bbp(k):
+            # BBP
             return (1 / 16 ** k) * (
                     (4 / (8 * k + 1)) -
                     (2 / (8 * k + 4)) -
