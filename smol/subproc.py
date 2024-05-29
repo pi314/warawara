@@ -10,11 +10,27 @@ class stream:
     def __init__(self):
         self.Q = queue.Queue()
         self.__lines = []
-        self.callbacks = []
+        self.subscriber_list = []
         self.eof = threading.Event()
 
-    def callback(self, callback):
-        self.callbacks.append(callback)
+    def welcome(self, subscriber):
+        if isinstance(subscriber, (list, tuple)):
+            for s in subscriber:
+                self.welcome(s)
+            return
+
+        if subscriber is not True:
+            ok = False
+            if hasattr(subscriber, 'put'):
+                ok = True
+            if callable(subscriber):
+                ok = True
+
+            if ok:
+                self.subscriber_list.append(subscriber)
+
+            else:
+                raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
 
     @property
     def lines(self):
@@ -27,8 +43,11 @@ class stream:
     def writeline(self, line):
         self.lines.append(line)
         self.Q.put(line)
-        for callback in self.callbacks:
-            callback(line)
+        for s in self.subscriber_list:
+            if hasattr(s, 'put'):
+                s.put(line)
+            elif callable(s):
+                s(line)
 
     def writelines(self, lines):
         for line in lines:
@@ -67,20 +86,39 @@ class command:
     cmd: iterable[str] | callable
         The command to run.
 
-    stdin: None | iterable[str] | True
+    stdin: None | iterable[str] | Queue | True
         The input text, one item for each line, without trailing newline.
-        If set to ``True``, stdin will be a writable stream.
-        If set to ``None``, stdin is closed after creation.
+        Default: None.
 
-    stdout: None | bool | callable[str]
+        If set to ``None`` or ``False``, stdin is closed after creation.
+        If set to a ``list`` or a ``tuple``, stdin is closed after data fed into the process.
+        Otherwise, stdin will be a subproc.stream, stdin.close() needs to be called manually.
+
+        If a Queue is provided, stdin.task_done() will be called for each item.
+
+    stdout: None | False | True | callable[str] | Queue
+        The stdout "subscribers".
+        Default: True.
+
+        If set to ``True`` or a callable, stdout will be a subproc.stream .
         If set to ``None``, stdout will be left as-is (most likely to the tty).
-        If set to ``False``, stdout will be silently dropped.
-        If set to ``True`` or a callable, stdout will be a readable stream.
+        If set to other falsy-values, stdout will be silently dropped.
+        If set to ``Queue``, each line will be put into the queue object.
 
-    stderr: None | bool | callable[str]
+        Multiple objects could be provided at once for output duplication.
+        E.g. tuple(print, queue.Queue())
+
+    stderr: None | False | True | callable[str] | Queue
+        The stderr "subscribers".
+        Default: True.
+
+        If set to ``True`` or a callable, stderr will be a subproc.stream .
         If set to ``None``, stderr will be left as-is (most likely to the tty).
         If set to ``False``, stderr will be silently dropped.
-        If set to ``True`` or a callable, stderr will be a readable stream.
+        If set to ``Queue``, each line will be put into the queue object.
+
+        Multiple objects could be provided at once for output duplication.
+        E.g. tuple(print, queue.Queue())
 
     env: dict[str, str]:
         The environment variables.
@@ -111,39 +149,27 @@ class command:
         if isinstance(stdin, str):
             stdin = [stdin]
 
-        if stdout is None or isinstance(stdout, bool) or callable(stdout):
-            pass
-        else:
-            raise TypeError('stdout should be None or bool')
-
-        if stderr is None or isinstance(stderr, bool) or callable(stderr):
-            pass
-        else:
-            raise TypeError('stderr should be None or bool')
-
         # Initialize stdin stream
         self.stdin = stream()
         if stdin is None or stdin is False:
             self.stdin.close()
-
-        elif isinstance(stdin, list):
-            for line in stdin:
-                self.stdin.writeline(line)
-            self.stdin.close()
+            self.user_stdin = []
+        else:
+            self.user_stdin = stdin
 
         # Initialize stdout stream
         self.stdout = stream()
         if stdout is None or stdout is False:
             self.stdout.close()
-        elif callable(stdout):
-            self.stdout.callback(stdout)
+        else:
+            self.stdout.welcome(stdout)
 
         # Initialize stderr stream
         self.stderr = stream()
         if stderr is None or stderr is False:
             self.stderr.close()
-        elif callable(stderr):
-            self.stderr.callback(stderr)
+        else:
+            self.stderr.welcome(stderr)
 
         self.io_threads = []
 
@@ -154,6 +180,7 @@ class command:
         if callable(self.cmd[0]):
             def worker():
                 self.returncode = self.cmd[0](self, *self.cmd[1:])
+                self.stdin.close()
                 self.stdout.close()
                 self.stderr.close()
 
@@ -192,6 +219,23 @@ class command:
                     t.daemon = True
                     t.start()
                     self.io_threads.append(t)
+
+        # Feed user stdin and close the stream
+        if self.user_stdin is not True:
+            def feeder():
+                if isinstance(self.user_stdin, queue.Queue):
+                    while True:
+                        self.stdin.writeline(self.user_stdin.get())
+                        self.user_stdin.task_done()
+
+                else:
+                    for line in self.user_stdin:
+                        self.stdin.writeline(line)
+                    self.stdin.close()
+
+            t = threading.Thread(target=feeder)
+            t.daemon = True
+            t.start()
 
         if wait:
             self.wait(timeout)
