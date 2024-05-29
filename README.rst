@@ -24,3 +24,13 @@ A small library that provides might-be-useful code for my other projects
     p1.run()
     p2.run()
     p2.stdout.lines   # ['smol: 1', 'smol: 2', 'smol: 3', 'smol: 4', 'smol: 5']
+
+
+Test
+***************************************************************************
+
+Testing
+
+..  code::shell
+
+    $ python -m unittest -v
