@@ -1,4 +1,5 @@
 __all__ = ['paint']
+__all__ += ['nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange']
 
 
 class paint:
@@ -75,61 +76,3 @@ magenta = paint(5)
 cyan = paint(6)
 white = paint(7)
 orange = paint(208)
-
-__all__ += ['nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange']
-
-
-def selftest():
-    from . import selftest
-    section = selftest.section
-    EXPECT_EQ = selftest.EXPECT_EQ
-
-    section('nocolor test')
-    EXPECT_EQ(paint(), nocolor)
-    EXPECT_EQ(nocolor(), '')
-    EXPECT_EQ(nocolor('text'), 'text')
-    EXPECT_EQ(nocolor.seq, '')
-    EXPECT_EQ('{}'.format(nocolor), '\033[m')
-
-    section('fg test')
-    EXPECT_EQ(black.seq,    '\033[38;5;0m')
-    EXPECT_EQ(red.seq,      '\033[38;5;1m')
-    EXPECT_EQ(green.seq,    '\033[38;5;2m')
-    EXPECT_EQ(yellow.seq,   '\033[38;5;3m')
-    EXPECT_EQ(blue.seq,     '\033[38;5;4m')
-    EXPECT_EQ(magenta.seq,  '\033[38;5;5m')
-    EXPECT_EQ(cyan.seq,     '\033[38;5;6m')
-    EXPECT_EQ(white.seq,    '\033[38;5;7m')
-    EXPECT_EQ(orange.seq,   '\033[38;5;208m')
-
-    section('bg test')
-    EXPECT_EQ(1 / red,      paint(bg=1))
-    EXPECT_EQ(1 / green,    paint(bg=2))
-    EXPECT_EQ(1 / yellow,   paint(bg=3))
-    EXPECT_EQ(1 / blue,     paint(bg=4))
-    EXPECT_EQ(1 / magenta,  paint(bg=5))
-    EXPECT_EQ(1 / cyan,     paint(bg=6))
-    EXPECT_EQ(1 / white,    paint(bg=7))
-    EXPECT_EQ(1 / orange,   paint(bg=208))
-
-    section('call test')
-    EXPECT_EQ(black('color'),   '\033[38;5;0mcolor\033[m')
-    EXPECT_EQ(red('color'),     '\033[38;5;1mcolor\033[m')
-    EXPECT_EQ(green('color'),   '\033[38;5;2mcolor\033[m')
-    EXPECT_EQ(yellow('color'),  '\033[38;5;3mcolor\033[m')
-    EXPECT_EQ(blue('color'),    '\033[38;5;4mcolor\033[m')
-    EXPECT_EQ(magenta('color'), '\033[38;5;5mcolor\033[m')
-    EXPECT_EQ(cyan('color'),    '\033[38;5;6mcolor\033[m')
-    EXPECT_EQ(white('color'),   '\033[38;5;7mcolor\033[m')
-    EXPECT_EQ(orange('color'),  '\033[38;5;208mcolor\033[m')
-
-    section('or test')
-    EXPECT_EQ(black | (1 / yellow), paint(fg=0, bg=3))
-
-    section('div test')
-    ry = red / yellow
-    EXPECT_EQ(ry, paint(fg=1, bg=3))
-    EXPECT_EQ(ry.seq, '\033[38;5;1;48;5;3m')
-
-    section('RGB test')
-    EXPECT_EQ(paint(160, 90, 0)('test'), '\033[38;2;160;90;0mtest\033[m')

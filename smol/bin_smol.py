@@ -21,6 +21,9 @@ def main():
 
     try:
         getattr(bin, subcmd).main()
+    except AttributeError:
+        print(f'Unknown subcommand: {subcmd}', file=sys.stderr)
+        exit(1)
     except ModuleNotFoundError:
         print(f'Unknown subcommand: {subcmd}', file=sys.stderr)
         exit(1)
