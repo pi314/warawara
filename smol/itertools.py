@@ -7,3 +7,9 @@ def lookahead(iterable):
         lookahead = val
 
     yield lookahead, True
+
+
+def flatten(listlist):
+    from itertools import chain
+    wrapper_type = type(listlist)
+    return wrapper_type(chain.from_iterable(listlist))

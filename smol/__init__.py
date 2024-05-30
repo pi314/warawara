@@ -1,5 +1,6 @@
 __version__ = '0.0.3'
 
+from .itertools import *
 from .paints import *
 from .regex import *
 from .subproc import *
