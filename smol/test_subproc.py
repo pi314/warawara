@@ -163,3 +163,16 @@ class TestSubproc(TestCase):
 
         # If this test fails, make sure to check the initial input
         self.eq(p.stdout.lines[-1], 1, p.stdin.lines[0])
+
+    def test_timeout(self):
+        import time
+
+        p = command(['sleep', 3])
+        t1 = time.time()
+        try:
+            p.run(timeout=0.1)
+        except TimeoutExpired:
+            pass
+        t2 = time.time()
+        self.le(t2 - t1, 1)
+        p.kill()

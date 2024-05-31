@@ -3,7 +3,10 @@ import subprocess as sub
 import threading
 
 
-__all__ = ['stream', 'command', 'run', 'pipe']
+__all__ = ['stream', 'command', 'run', 'pipe', 'TimeoutExpired']
+
+
+TimeoutExpired = sub.TimeoutExpired
 
 
 class stream:
@@ -237,7 +240,7 @@ class command:
             t.daemon = True
             t.start()
 
-        if wait:
+        if wait or timeout:
             self.wait(timeout)
 
         return self
@@ -260,10 +263,27 @@ class command:
         for t in self.io_threads:
             t.join()
 
+    def kill(self):
+        if self.proc:
+            self.proc.kill()
+            self.proc.wait()
+            for proc_stream in (
+                    self.proc.stdin,
+                    self.proc.stdout,
+                    self.proc.stderr
+                    ):
+                if proc_stream:
+                    proc_stream.close()
 
-def run(cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True):
+            self.returncode = self.proc.returncode
+
+        if self.thread:
+            self.thread.join()
+
+
+def run(cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
     ret = command(cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
-    ret.run(wait=wait)
+    ret.run(wait=wait, timeout=timeout)
     return ret
 
 

@@ -6,5 +6,6 @@ class TestCase(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self.eq = self.assertEqual
         self.ne = self.assertNotEqual
+        self.le = self.assertLessEqual
         self.is_true = self.assertTrue
         self.is_false = self.assertFalse
