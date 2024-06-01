@@ -12,28 +12,67 @@ def queue_to_list(Q):
     return ret
 
 
-class TestSubproc(TestCase):
+class TestStream(TestCase):
     def test_stream(self):
         s = stream()
+        s.keep = True
         s.writeline('line1')
         s.writeline('line2')
         s.writeline('line3')
-        self.eq(s.closed, False)
+        self.is_false(s.closed)
         s.close()
-        self.eq(s.closed, True)
+        self.is_true(s.closed)
         self.eq(s.lines, ['line1', 'line2', 'line3'])
 
         s = stream()
         lines = ['line1', 'line2', 'line3']
         s.writelines(lines)
         s.close()
+        self.eq(s.lines, [])
         for nr, line in enumerate(s):
             self.eq(lines[nr], line)
+        self.eq(s.lines, [])
 
+    def test_stream_nokeep(self):
+        s = stream()
+        # s.keep = False # Default
+        s.writeline('line1')
+        s.writeline('line2')
+        s.writeline('line3')
+        self.is_true(s.empty)
+
+
+class TestSubproc(TestCase):
     def test_stdout(self):
+        p = run('seq 5'.split())
+        self.eq(p.stdout.lines, '1 2 3 4 5'.split())
+
+    def test_run_and_then_wait(self):
+        p = run('seq 5'.split(), wait=False)
+        self.eq(p.stdout.lines, [])
+        p.wait()
+        self.eq(p.stdout.lines, '1 2 3 4 5'.split())
+
+    def test_wait_early(self):
         p = command('seq 5'.split())
-        p.run(wait=False).wait()
-        self.eq(p.stdout.lines, ['1', '2', '3', '4', '5'])
+        p.wait()
+        p.run(wait=False)
+        p.wait()
+        self.eq(p.stdout.lines, '1 2 3 4 5'.split())
+
+    def test_context_manager_run(self):
+        with run('seq 5'.split()) as p:
+            self.eq(p.stdout.lines, '1 2 3 4 5'.split())
+
+    def test_context_manager_run_and_nowait(self):
+        with run('seq 5'.split(), wait=False) as p:
+            self.eq(p.stdout.lines, [])
+        self.eq(p.stdout.lines, '1 2 3 4 5'.split())
+
+    def test_stdout_nokeep(self):
+        p = command('seq 5'.split(), stdout=False)
+        p.run()
+        self.eq(p.stdout.lines, [])
 
     def test_callback(self):
         lines = []
@@ -41,22 +80,21 @@ class TestSubproc(TestCase):
             lines.append(line)
         p = command('seq 5'.split(), stdout=callback)
         p.run()
-        self.eq(p.stdout.lines, ['1', '2', '3', '4', '5'])
-        self.eq(p.stdout.lines, lines)
+        self.eq(lines, ['1', '2', '3', '4', '5'])
 
     def test_stdout_queue(self):
-        q = queue.Queue()
-
-        p = command('seq 5'.split(), stdout=q)
+        Q = queue.Queue()
+        p = command('seq 5'.split(), stdout=Q)
+        self.is_false(p.stdout.keep)
         p.run()
-        self.eq(p.stdout.lines, ['1', '2', '3', '4', '5'])
-        self.eq(p.stdout.lines, queue_to_list(q))
+        self.eq(p.stdout.lines, [])
+        self.eq(queue_to_list(Q), ['1', '2', '3', '4', '5'])
 
     def test_multi_ouptut_merge(self):
-        def proc(streams, *args):
+        def prog(proc, *args):
             for i in range(5):
-                streams[1].writeline(i)
-                streams[2].writeline(i)
+                proc[1].writeline(i)
+                proc[2].writeline(i)
 
         Q = queue.Queue()
 
@@ -64,7 +102,7 @@ class TestSubproc(TestCase):
         def callback(line):
             lines.append(line)
 
-        p = command(proc, stdout=(Q, callback), stderr=(Q))
+        p = command(prog, stdout=(Q, callback, True), stderr=(Q, True))
         p.run()
         self.eq(p.stdout.lines, [0, 1, 2, 3, 4])
         self.eq(p.stderr.lines, [0, 1, 2, 3, 4])
@@ -113,20 +151,20 @@ class TestSubproc(TestCase):
 
         p1.run()
         self.eq(p1.stdout.lines, ['1:hello', '2:world'])
-        self.eq(p2.stdin.lines, ['1:hello', '2:world'])
         p2.run(wait=False)
 
         p2.wait()
+        self.eq(p2.stdin.lines, ['1:hello', '2:world'])
         self.eq(p2.stdout.lines, ['1/1:hello', '2/2:world'])
 
     def test_callable_with_pipe(self):
-        def proc(streams, *args):
-            for line in streams[0]:
-                streams[1].writeline(line)
-                streams[2].writeline(line)
+        def prog(proc, *args):
+            for line in proc[0]:
+                proc[1].writeline(line)
+                proc[2].writeline(line)
             return 2024
 
-        p1 = command(proc, stdin=['hello', 'world'])
+        p1 = command(prog, stdin=['hello', 'world'])
         p2 = command('nl -w 1 -s :'.split(), stdin=True)
         p3 = command('nl -w 1 -s /'.split(), stdin=True)
         pipe(p1.stdout, p2.stdin)
@@ -140,18 +178,28 @@ class TestSubproc(TestCase):
         self.eq(p2.stdout.lines, ['1:hello', '2:world'])
         self.eq(p3.stdout.lines, ['1/hello', '2/world'])
 
-    def test_loopback(self):
-        def three_n_plus_1(streams, *args):
-            for line in streams[0]:
-                n = line
-                if n == 1:
-                    break
-                elif n % 2 == 0:
-                    streams[1].writeline(n // 2)
-                else:
-                    streams[1].writeline(3 * n + 1)
+    def test_callable_raises_exception(self):
+        def prog(proc, *args):
+            # NameError
+            n + 1
 
-        p = command(three_n_plus_1, stdin=True)
+        with self.assertRaises(NameError):
+            p = run(prog)
+
+    def test_loopback(self):
+        # Collatz function
+        def collatz_function(x):
+            return (x // 2) if (x % 2 == 0) else (3 * x + 1)
+
+        def prog(proc, *args):
+            for line in proc[0]:
+                x = line
+                if x == 1:
+                    break
+                else:
+                    proc[1].writeline(collatz_function(x))
+
+        p = command(prog, stdin=True)
 
         # loopback
         pipe(p.stdout, p.stdin)
@@ -176,3 +224,15 @@ class TestSubproc(TestCase):
         t2 = time.time()
         self.le(t2 - t1, 1)
         p.kill()
+
+    def test_kill_callable(self):
+        checkpoint = False
+        def prog(proc, *args):
+            nonlocal checkpoint
+            proc.killed.wait()
+            checkpoint = True
+
+        p = run(prog, wait=False)
+        p.kill()
+        p.wait()
+        self.is_true(checkpoint)

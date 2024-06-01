@@ -12,7 +12,8 @@ TimeoutExpired = sub.TimeoutExpired
 class stream:
     def __init__(self):
         self.Q = queue.Queue()
-        self.__lines = []
+        self.keep = False
+        self.lines = []
         self.subscriber_list = []
         self.eof = threading.Event()
 
@@ -35,16 +36,17 @@ class stream:
             else:
                 raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
 
-    @property
-    def lines(self):
-        return self.__lines
+        if subscriber is True:
+            self.keep = True
 
     def readline(self):
         line = self.Q.get()
         return line
 
     def writeline(self, line):
-        self.lines.append(line)
+        if self.keep:
+            self.lines.append(line)
+
         self.Q.put(line)
         for s in self.subscriber_list:
             if hasattr(s, 'put'):
@@ -66,7 +68,7 @@ class stream:
 
     @property
     def empty(self):
-        return not self.lines
+        return not self.lines and not self.Q.empty()
 
     def __bool__(self):
         return not self.empty
@@ -147,6 +149,8 @@ class command:
         self.env = env
         self.proc = None
         self.thread = None
+        self.exception = None
+        self.killed = threading.Event()
         self.returncode = None
 
         if isinstance(stdin, str):
@@ -154,24 +158,39 @@ class command:
 
         # Initialize stdin stream
         self.stdin = stream()
+        self.stdin.keep = True
         if stdin is None or stdin is False:
+            self.proc_stdin = None
             self.stdin.close()
             self.user_stdin = []
         else:
+            self.proc_stdin = sub.PIPE
             self.user_stdin = stdin
 
         # Initialize stdout stream
         self.stdout = stream()
-        if stdout is None or stdout is False:
+        if stdout is None:
+            self.proc_stdout = None
+            self.stdout.close()
+        elif stdout is False:
+            self.proc_stdout = sub.DEVNULL
             self.stdout.close()
         else:
+            self.proc_stdout = sub.PIPE
+            self.stdout.keep = False
             self.stdout.welcome(stdout)
 
         # Initialize stderr stream
         self.stderr = stream()
-        if stderr is None or stderr is False:
+        if stderr is None:
+            self.proc_stderr = None
+            self.stderr.close()
+        elif stderr is False:
+            self.proc_stderr = sub.DEVNULL
             self.stderr.close()
         else:
+            self.proc_stderr = sub.PIPE
+            self.stderr.keep = False
             self.stderr.welcome(stderr)
 
         self.io_threads = []
@@ -179,10 +198,20 @@ class command:
     def __getitem__(self, idx):
         return [self.stdin, self.stdout, self.stderr][idx]
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.wait()
+
     def run(self, wait=True, timeout=None):
         if callable(self.cmd[0]):
             def worker():
-                self.returncode = self.cmd[0](self, *self.cmd[1:])
+                try:
+                    self.returncode = self.cmd[0](self, *self.cmd[1:])
+                except Exception as e:
+                    self.exception = e
+
                 self.stdin.close()
                 self.stdout.close()
                 self.stderr.close()
@@ -193,9 +222,9 @@ class command:
 
         else:
             self.proc = sub.Popen(self.cmd,
-                    stdin=None if self.stdin.closed and self.stdin.empty else sub.PIPE,
-                    stdout=None if self.stdout.closed else sub.PIPE,
-                    stderr=None if self.stderr.closed else sub.PIPE,
+                    stdin=self.proc_stdin,
+                    stdout=self.proc_stdout,
+                    stderr=self.proc_stderr,
                     encoding='utf-8', bufsize=1, universal_newlines=True,
                     env=self.env)
 
@@ -254,6 +283,14 @@ class command:
         if self.thread:
             self.thread.join(timeout)
 
+
+        # Wait too early
+        if self.proc is None and self.thread is None:
+            return
+
+        if self.exception:
+            raise self.exception
+
         # Wait for all streams to close
         self.stdin.eof.wait()
         self.stdout.eof.wait()
@@ -278,6 +315,7 @@ class command:
             self.returncode = self.proc.returncode
 
         if self.thread:
+            self.killed.set()
             self.thread.join()
 
 
