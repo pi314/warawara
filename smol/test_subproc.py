@@ -74,6 +74,21 @@ class TestSubproc(TestCase):
         p.run()
         self.eq(p.stdout.lines, [])
 
+    def test_keep_trailing_whitespaces(self):
+        p = run(['echo', 'a b c '])
+        self.eq(p.stdout.lines, ['a b c '])
+
+    def test_callable(self):
+        def prog(proc, *args):
+            for idx, line in enumerate(proc[0]):
+                proc[(idx % 2) + 1].writeline(line)
+            return 2024
+
+        p = run(prog, stdin=['hello ', 'how are you ', 'im fine ', 'thank you '])
+        self.eq(p.stdout.lines, ['hello ', 'im fine '])
+        self.eq(p.stderr.lines, ['how are you ', 'thank you '])
+        self.eq(p.returncode, 2024)
+
     def test_callback(self):
         lines = []
         def callback(line):

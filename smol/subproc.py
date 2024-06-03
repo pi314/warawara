@@ -236,7 +236,7 @@ class command:
 
             def reader(self_stream, proc_stream):
                 for line in proc_stream:
-                    line = line.rstrip()
+                    line = line.rstrip(self.newline)
                     self_stream.writeline(line)
                 self_stream.close()
                 proc_stream.close()
