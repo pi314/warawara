@@ -9,50 +9,77 @@ __all__ = ['stream', 'command', 'run', 'pipe', 'TimeoutExpired']
 TimeoutExpired = sub.TimeoutExpired
 
 
+class AlreadyRunningError(Exception):
+    def __init__(self, command):
+        super().__init__(' '.join(command.cmd))
+
+
+class EventBroadcaster:
+    def __init__(self):
+        self.handlers = []
+
+    def __iadd__(self, handler):
+        self.handlers.append(handler)
+        return self
+
+    def __isub__(self, handler):
+        self.handlers.remove(handler)
+        return self
+
+    def broadcast(self, *args, **kwargs):
+        for handler in self.handlers:
+            handler(*args, **kwargs)
+
+
+class QueueEventAdapter:
+    def __init__(self, Q):
+        self.Q = Q
+
+    def __call__(self, line):
+        self.Q.put(line)
+
+
 class stream:
     def __init__(self):
-        self.Q = queue.Queue()
+        self.queue = queue.Queue()
         self.keep = False
         self.lines = []
-        self.subscriber_list = []
         self.eof = threading.Event()
+        self.hub = EventBroadcaster()
 
     def welcome(self, subscriber):
         if isinstance(subscriber, (list, tuple)):
             for s in subscriber:
-                self.welcome(s)
-            return
+                self.welcome_one(s)
+        else:
+            self.welcome_one(subscriber)
 
-        if subscriber is not True:
-            ok = False
-            if hasattr(subscriber, 'put'):
-                ok = True
-            if callable(subscriber):
-                ok = True
-
-            if ok:
-                self.subscriber_list.append(subscriber)
-
-            else:
-                raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
-
+    def welcome_one(self, subscriber):
         if subscriber is True:
             self.keep = True
 
+        else:
+            handler = None
+            if hasattr(subscriber, 'put'):
+                handler = QueueEventAdapter(subscriber)
+            elif callable(subscriber):
+                handler = subscriber
+
+            if handler:
+                self.hub += handler
+            else:
+                raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
+
     def readline(self):
-        line = self.Q.get()
+        line = self.queue.get()
         return line
 
     def writeline(self, line):
         if self.keep:
             self.lines.append(line)
 
-        self.Q.put(line)
-        for s in self.subscriber_list:
-            if hasattr(s, 'put'):
-                s.put(line)
-            elif callable(s):
-                s(line)
+        self.queue.put(line)
+        self.hub.broadcast(line)
 
     def writelines(self, lines):
         for line in lines:
@@ -60,7 +87,7 @@ class stream:
 
     def close(self):
         self.eof.set()
-        self.Q.put(None)
+        self.queue.put(None)
 
     @property
     def closed(self):
@@ -68,7 +95,7 @@ class stream:
 
     @property
     def empty(self):
-        return not self.lines and not self.Q.empty()
+        return not self.lines and not self.queue.empty()
 
     def __bool__(self):
         return not self.empty
@@ -77,11 +104,15 @@ class stream:
         return len(self.lines)
 
     def __iter__(self):
-        while True:
-            line = self.readline()
-            if line is None:
-                return
-            yield line
+        if self.closed:
+            yield from self.lines
+
+        else:
+            while True:
+                line = self.readline()
+                if line is None:
+                    break
+                yield line
 
 
 class command:
@@ -97,7 +128,7 @@ class command:
 
         If set to ``None`` or ``False``, stdin is closed after creation.
         If set to a ``list`` or a ``tuple``, stdin is closed after data fed into the process.
-        Otherwise, stdin will be a subproc.stream, stdin.close() needs to be called manually.
+        Otherwise, stdin will be a subproc.stream object, stdin.close() needs to be called manually.
 
         If a Queue is provided, stdin.task_done() will be called for each item.
 
@@ -105,10 +136,10 @@ class command:
         The stdout "subscribers".
         Default: True.
 
-        If set to ``True`` or a callable, stdout will be a subproc.stream .
+        If set to ``True`` or a callable, stdout will be a subproc.stream object.
         If set to ``None``, stdout will be left as-is (most likely to the tty).
         If set to other falsy-values, stdout will be silently dropped.
-        If set to ``Queue``, each line will be put into the queue object.
+        If set to ``Queue`` object, each line will be put into the queue object.
 
         Multiple objects could be provided at once for output duplication.
         E.g. tuple(print, queue.Queue())
@@ -117,10 +148,10 @@ class command:
         The stderr "subscribers".
         Default: True.
 
-        If set to ``True`` or a callable, stderr will be a subproc.stream .
+        If set to ``True`` or a callable, stderr will be a subproc.stream object .
         If set to ``None``, stderr will be left as-is (most likely to the tty).
         If set to ``False``, stderr will be silently dropped.
-        If set to ``Queue``, each line will be put into the queue object.
+        If set to ``Queue`` object, each line will be put into the queue object.
 
         Multiple objects could be provided at once for output duplication.
         E.g. tuple(print, queue.Queue())
@@ -199,12 +230,18 @@ class command:
         return [self.stdin, self.stdout, self.stderr][idx]
 
     def __enter__(self):
-        return self
+        return self.run(wait=False)
 
     def __exit__(self, exc_type, exc_value, traceback):
+        self.stdin.close()
+        self.stdout.close()
+        self.stderr.close()
         self.wait()
 
     def run(self, wait=True, timeout=None):
+        if self.proc or self.thread:
+            raise AlreadyRunningError(self)
+
         if callable(self.cmd[0]):
             def worker():
                 try:
@@ -283,7 +320,6 @@ class command:
         if self.thread:
             self.thread.join(timeout)
 
-
         # Wait too early
         if self.proc is None and self.thread is None:
             return
@@ -326,7 +362,7 @@ def run(cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=
 
 
 def pipe(istream, *ostreams):
-    def worker(istream, *ostreams):
+    def worker(istream, ostreams):
         for line in istream:
             for ostream in ostreams:
                 ostream.writeline(line)
@@ -335,6 +371,6 @@ def pipe(istream, *ostreams):
         for ostream in ostreams:
             ostream.close()
 
-    t = threading.Thread(target=worker, args=(istream, *ostreams))
+    t = threading.Thread(target=worker, args=(istream, ostreams))
     t.daemon = True
     t.start()

@@ -60,12 +60,8 @@ class TestSubproc(TestCase):
         p.wait()
         self.eq(p.stdout.lines, '1 2 3 4 5'.split())
 
-    def test_context_manager_run(self):
-        with run('seq 5'.split()) as p:
-            self.eq(p.stdout.lines, '1 2 3 4 5'.split())
-
-    def test_context_manager_run_and_nowait(self):
-        with run('seq 5'.split(), wait=False) as p:
+    def test_context_manager_nowait(self):
+        with command('seq 5'.split()) as p:
             self.eq(p.stdout.lines, [])
         self.eq(p.stdout.lines, '1 2 3 4 5'.split())
 
@@ -117,6 +113,8 @@ class TestSubproc(TestCase):
         def callback(line):
             lines.append(line)
 
+        self.is_true(hasattr(Q, 'put'))
+
         p = command(prog, stdout=(Q, callback, True), stderr=(Q, True))
         p.run()
         self.eq(p.stdout.lines, [0, 1, 2, 3, 4])
@@ -162,7 +160,7 @@ class TestSubproc(TestCase):
     def test_pipe(self):
         p1 = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
         p2 = command('nl -w 1 -s /'.split(), stdin=True)
-        pipe(p1.stdout, p2.stdin)
+        pp = pipe(p1.stdout, p2.stdin)
 
         p1.run()
         self.eq(p1.stdout.lines, ['1:hello', '2:world'])
@@ -241,13 +239,33 @@ class TestSubproc(TestCase):
         p.kill()
 
     def test_kill_callable(self):
-        checkpoint = False
+        checkpoint = self.checkpoint()
+
         def prog(proc, *args):
-            nonlocal checkpoint
             proc.killed.wait()
-            checkpoint = True
+            checkpoint.set()
 
         p = run(prog, wait=False)
         p.kill()
         p.wait()
-        self.is_true(checkpoint)
+        checkpoint.is_set()
+
+    def test_read_stdout_twice(self):
+        ans = '1 2 3 4 5'.split()
+        p = run('seq 5'.split())
+
+        lines = []
+        for line in p.stdout:
+            lines.append(line)
+        self.eq(lines, ans)
+
+        checkpoint = self.checkpoint()
+        lines = []
+        def may_stuck():
+            for line in p.stdout:
+                lines.append(line)
+            checkpoint.set()
+
+        with self.run_in_thread(may_stuck):
+            checkpoint.is_set()
+            self.eq(lines, ans)
