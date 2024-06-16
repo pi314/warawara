@@ -31,6 +31,6 @@ Test
 
 Testing
 
-..  code::shell
+..  code:: shell
 
     $ python -m unittest -v
