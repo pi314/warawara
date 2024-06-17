@@ -1,9 +1,10 @@
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 from .itertools import *
 from .paints import *
 from .regex import *
 from .subproc import *
+from .tui import *
 
 from . import bin
 
