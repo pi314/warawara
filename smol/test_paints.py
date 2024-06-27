@@ -4,9 +4,6 @@ from smol.paints import *
 
 
 class TestPaint(TestCase):
-    def eq(self, a, b):
-        self.assertEqual(a, b)
-
     def test_nocolor(self):
         self.eq(paint(), nocolor)
         self.eq(nocolor(), '')
@@ -56,3 +53,7 @@ class TestPaint(TestCase):
 
     def test_rgb(self):
         self.eq(paint(160, 90, 0)('test'), '\033[38;2;160;90;0mtest\033[m')
+
+    def test_decolor(self):
+        self.eq(decolor(orange('test')), 'test')
+        self.eq(decolor('\033[1;31mred\033[m'), 'red')

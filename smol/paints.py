@@ -1,5 +1,9 @@
+import re
+
+
 __all__ = ['paint']
 __all__ += ['nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange']
+__all__ += ['decolor']
 
 
 class paint:
@@ -76,3 +80,8 @@ magenta = paint(5)
 cyan = paint(6)
 white = paint(7)
 orange = paint(208)
+
+
+decolor_regex = re.compile('\033' + r'\[[\d;]*m')
+def decolor(s):
+    return decolor_regex.sub('', s)
