@@ -13,6 +13,9 @@ class Checkpoint:
     def unset(self):
         self.checkpoint.clear()
 
+    def wait(self):
+        self.checkpoint.wait()
+
     def is_set(self):
         self.testcase.is_true(self.checkpoint.is_set(), 'Checkpoint was not set')
 

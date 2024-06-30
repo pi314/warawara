@@ -1,5 +1,7 @@
 import queue
 
+from unittest.mock import patch
+
 from .test_utils import *
 
 from smol.subproc import *
@@ -76,11 +78,12 @@ class TestSubproc(TestCase):
 
     def test_callable(self):
         def prog(proc, *args):
+            self.eq(args, ('arg1', 'arg2'))
             for idx, line in enumerate(proc[0]):
                 proc[(idx % 2) + 1].writeline(line)
             return 2024
 
-        p = run(prog, stdin=['hello ', 'how are you ', 'im fine ', 'thank you '])
+        p = run([prog, 'arg1', 'arg2'], stdin=['hello ', 'how are you ', 'im fine ', 'thank you '])
         self.eq(p.stdout.lines, ['hello ', 'im fine '])
         self.eq(p.stderr.lines, ['how are you ', 'thank you '])
         self.eq(p.returncode, 2024)
@@ -269,3 +272,157 @@ class TestSubproc(TestCase):
         with self.run_in_thread(may_stuck):
             checkpoint.is_set()
             self.eq(lines, ans)
+
+
+class TestSubprocRunMocker(TestCase):
+    def test_mock_basic(self):
+        mock = RunMocker()
+
+        def mock_wah(proc, *args):
+            proc.stdout.writeline('mock wah')
+            if args:
+                proc.stdout.writeline(' '.join(args))
+            return 0
+        mock.register('wah', mock_wah)
+
+        # MOCK
+        run = mock
+
+        p = run('wah'.split())
+        self.eq(p.stdout.lines, ['mock wah'])
+
+        p = run('wah wah wah'.split())
+        self.eq(p.stdout.lines, ['mock wah', 'wah wah'])
+
+    def test_mock_unregistered_cmd(self):
+        mock = RunMocker()
+
+        mock.register('wah', lambda proc: 0)
+
+        # MOCK
+        run = mock
+
+        run('wah'.split())
+
+        with self.assertRaises(ValueError):
+            p = run('ls -a -l'.split())
+
+    def test_mock_side_effect(self):
+        mock = RunMocker()
+
+        def mock_ls_1st(proc, *args):
+            self.eq(args, ('-a', '-l'))
+            proc.stdout.writeline('file1')
+        def mock_ls_2nd(proc, *args):
+            self.eq(args, ('-a', '-l'))
+            proc.stdout.writeline('file2')
+        def mock_ls_3rd(proc, *args):
+            self.eq(args, ('-a', '-l'))
+            proc.stdout.writeline('file3')
+        mock.register('ls', mock_ls_1st)
+        mock.register('ls', mock_ls_2nd)
+        mock.register('ls', mock_ls_3rd)
+
+        # MOCK
+        run = mock
+
+        p = run('ls -a -l'.split())
+        self.eq(p.returncode, None)
+        self.eq(p.stdout.lines, ['file1'])
+
+        p = run('ls -a -l'.split())
+        self.eq(p.returncode, None)
+        self.eq(p.stdout.lines, ['file2'])
+
+        p = run('ls -a -l'.split())
+        self.eq(p.returncode, None)
+        self.eq(p.stdout.lines, ['file3'])
+
+    def test_mock_pattern_matching(self):
+        mock = RunMocker()
+
+        def mock_ls0(proc):
+            proc.stdout.writeline('mock ls0')
+            return 0
+        mock.register('ls', mock_ls0)
+
+        def mock_ls1(proc, arg1):
+            proc.stdout.writeline('mock ls1')
+            proc.stdout.writeline(arg1)
+            return 1
+        mock.register(['ls', '{}'], mock_ls1)
+
+        def mock_ls2(proc, arg1, arg2):
+            proc.stdout.writeline('mock ls2')
+            proc.stdout.writeline(arg1 + ' ' + arg2)
+            return 2
+        mock.register(['ls', '{}', '{}'], mock_ls2)
+
+        def mock_ls22(proc, arg1, arg2):
+            proc.stdout.writeline('mock ls22')
+            proc.stdout.writeline(arg1 + ' ' + arg2)
+            return 22
+        mock.register(['ls', '{}', '-l', '{}'], mock_ls22)
+
+        def mock_rm_r(proc, arg1):
+            proc.stdout.writeline('mock rm')
+            proc.stdout.writeline('-r' + ' ' + arg1)
+            return 65530
+        mock.register(['rm', '{}', '-r'], mock_rm_r)
+        mock.register(['rm', '-r', '{}'], mock_rm_r)
+
+        def mock_rm_f(proc, arg1):
+            proc.stdout.writeline('mock rm')
+            proc.stdout.writeline('-f' + ' ' + arg1)
+            return 65535
+        mock.register(['rm', '-f', '{}'], mock_rm_f)
+
+        # MOCK
+        run = mock
+
+        p = run('ls'.split())
+        self.eq(p.returncode, 0)
+        self.eq(p.stdout.lines, ['mock ls0'])
+
+        p = run('ls -a'.split())
+        self.eq(p.returncode, 1)
+        self.eq(p.stdout.lines, ['mock ls1', '-a'])
+
+        p = run('ls -a -l'.split())
+        self.eq(p.returncode, 2)
+        self.eq(p.stdout.lines, ['mock ls2', '-a -l'])
+
+        p = run('ls A -l B'.split())
+        self.eq(p.returncode, 22)
+        self.eq(p.stdout.lines, ['mock ls22', 'A B'])
+
+        # I dont have balls to remove root dir
+        p = run('rm -r non_exist'.split())
+        self.eq(p.stdout.lines, ['mock rm', '-r non_exist'])
+        self.eq(p.returncode, 65530)
+
+        p = run('rm non_exist -r'.split())
+        self.eq(p.stdout.lines, ['mock rm', '-r non_exist'])
+        self.eq(p.returncode, 65530)
+
+        p = run('rm -f non_exist'.split())
+        self.eq(p.stdout.lines, ['mock rm', '-f non_exist'])
+        self.eq(p.returncode, 65535)
+
+        with self.assertRaises(ValueError):
+            run('rm non_exist -f'.split())
+
+    def test_mock_with_stdout_stderr_returncode(self):
+        mock = RunMocker()
+        mock.register('wah',
+                      stdout=['wah', 'wah wah', 'wah wah wah'],
+                      stderr=['WAH', 'WAH WAH', 'WAH WAH WAH'],
+                      returncode=520)
+
+        # MOCK
+        run = mock
+
+        p = run(['wah'])
+        self.eq(p.stdout.lines, ['wah', 'wah wah', 'wah wah wah'])
+        self.eq(p.stderr.lines, ['WAH', 'WAH WAH', 'WAH WAH WAH'])
+        self.eq(p.returncode, 520)
