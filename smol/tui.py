@@ -15,15 +15,15 @@ class ThreadedSpinner:
         elif isinstance(icon, str):
             self.icon_entry = tuple()
             self.icon_loop = [icon]
-            self.icon_leave = tuple()
+            self.icon_leave = '.'
         elif len(icon) == 1:
             self.icon_entry = tuple()
             self.icon_loop = icon
-            self.icon_leave = tuple()
+            self.icon_leave = '.'
         elif len(icon) == 2:
             self.icon_entry = icon[0]
             self.icon_loop = icon[1]
-            self.icon_leave = tuple()
+            self.icon_leave = '.'
         elif len(icon) == 3:
             self.icon_entry = icon[0]
             self.icon_loop = icon[1]
@@ -31,10 +31,12 @@ class ThreadedSpinner:
         else:
             raise ValueError('Invalid value: ' + repr(icon))
 
+        if not isinstance(self.icon_leave, str):
+            raise ValueError('Icon[leave] needs to be a single string')
+
         self.delay = delay
-        self.end = False
+        self.is_end = False
         self.thread = None
-        self.index = 0
         self._text = ''
         self.icon_iter = (
                 itertools.chain(
@@ -43,10 +45,9 @@ class ThreadedSpinner:
                     ),
                 iter(self.icon_leave)
                 )
-        self.icon_head = [
-                next(self.icon_iter[0]),
-                next(self.icon_iter[1])
-                ]
+        self.icon_head = [None, None]
+
+        self.print_function = print
 
     def __enter__(self):
         if self.thread:
@@ -56,25 +57,28 @@ class ThreadedSpinner:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.join()
+        self.end()
 
     @property
     def icon(self):
-        return self.icon_head[self.end]
+        idx = self.is_end
+        if self.icon_head[idx] is None:
+            self.icon_head[idx] = next(self.icon_iter[idx])
+        return self.icon_head[idx]
 
     def text(self, *args):
         if not args:
             return self._text
 
         self._text = ' '.join(str(a) for a in args)
-        self.refresh()
+        if self.thread:
+            self.refresh()
 
     def refresh(self):
-        print('\r' + self.icon + '\033[K ' + self._text, end='')
+        self.print_function('\r' + self.icon + '\033[K ' + self._text, end='')
 
     def animate(self):
-        self.index = 0
-        while not self.end:
+        while not self.is_end:
             self.refresh()
             time.sleep(self.delay)
             self.icon_head[0] = next(self.icon_iter[0])
@@ -82,12 +86,12 @@ class ThreadedSpinner:
         try:
             while True:
                 self.refresh()
-                time.sleep(self.delay)
                 self.icon_head[1] = next(self.icon_iter[1])
+                time.sleep(self.delay)
         except StopIteration:
             pass
 
-        print()
+        self.print_function()
 
     def start(self):
         if self.thread:
@@ -97,6 +101,10 @@ class ThreadedSpinner:
         self.thread.daemon = True
         self.thread.start()
 
+    def end(self, wait=True):
+        self.is_end = True
+        if wait:
+            self.join()
+
     def join(self):
-        self.end = True
         self.thread.join()
