@@ -10,6 +10,7 @@ class TestPaint(TestCase):
         self.eq(nocolor('text'), 'text')
         self.eq(nocolor.seq, '')
         self.eq('{}'.format(nocolor), '\033[m')
+        repr(paint())
 
     def test_fg(self):
         self.eq(black.seq,    '\033[38;5;0m')
@@ -42,6 +43,9 @@ class TestPaint(TestCase):
         self.eq(cyan('color'),    '\033[38;5;6mcolor\033[m')
         self.eq(white('color'),   '\033[38;5;7mcolor\033[m')
         self.eq(orange('color'),  '\033[38;5;208mcolor\033[m')
+
+    def test_add(self):
+        self.eq((red + yellow) + white, white)
 
     def test_or(self):
         self.eq(black | (1 / yellow), paint(fg=0, bg=3))

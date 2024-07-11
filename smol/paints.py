@@ -8,7 +8,7 @@ __all__ += ['decolor']
 
 class paint:
     def __init__(self, fg=None, bg=None, blue=None):
-        if blue is not None:
+        if blue is not None: # RGB
             self.fg = (fg, bg, blue)
             self.bg = None
         else:
@@ -30,8 +30,9 @@ class paint:
         return self.seq or '\033[m'
 
     def __or__(self, other):
-        fg = self.fg if other.fg is None else other.fg
-        bg = self.bg if other.bg is None else other.bg
+        fg = other.fg or self.fg
+        bg = other.bg or self.bg
+
         return paint(fg=fg, bg=bg)
 
     def __add__(self, other):
