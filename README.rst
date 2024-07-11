@@ -33,4 +33,8 @@ Testing
 
 ..  code:: shell
 
-    $ python -m unittest -v
+    $ python3 runtest.py
+
+If coverage_ package is installed, it will be called to generate report into ``htmlcov/``.
+
+.. _coverage: https://coverage.readthedocs.io/en/7.5.4/index.html
