@@ -44,3 +44,9 @@ class TestCase(unittest.TestCase):
 
         def __exit__(self, exc_type, exc_value, traceback):
             self.thread.join()
+
+    def patch(self, name, side_effect):
+        patcher = unittest.mock.patch(name, side_effect=side_effect)
+        thing = patcher.start()
+        self.addCleanup(patcher.stop)
+        return thing

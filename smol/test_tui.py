@@ -18,12 +18,11 @@ def queue_to_list(Q):
     return ret
 
 
-Event = namedtuple('Event',
-                   ('timestamp', 'tag', 'args', 'callback'),
-                   defaults=(None, None, None, None))
-
-
 class TestThreadedSpinner(TestCase):
+    Event = namedtuple('Event',
+                       ('timestamp', 'tag', 'args', 'callback'),
+                       defaults=(None, None, None, None))
+
     def setUp(self):
         self.sys_time = 0
         self.behavior_queue = queue.Queue()
@@ -50,12 +49,6 @@ class TestThreadedSpinner(TestCase):
 
         self.sys_time += secs
 
-    def patch(self, name, side_effect):
-        patcher = unittest.mock.patch(name, side_effect=side_effect)
-        thing = patcher.start()
-        self.addCleanup(patcher.stop)
-        return thing
-
     def test_default_values(self):
         self.patch('builtins.print', RuntimeError('Should not print() at all'))
         self.patch('time.sleep', RuntimeError('Should not sleep() at all'))
@@ -71,6 +64,7 @@ class TestThreadedSpinner(TestCase):
 
     def test_run(self):
         self.patch('time.sleep', self.mock_sleep)
+        Event = self.__class__.Event
 
         delay = 1
         spinner = ThreadedSpinner('ENTRY', 'LOOP', 'OUT', delay=delay)
@@ -131,3 +125,156 @@ class TestThreadedSpinner(TestCase):
         for e, behavior in zip_longest(event_list, queue_to_list(self.behavior_queue)):
             expected = (e.timestamp, e.tag, e.args)
             self.eq(expected, behavior)
+
+
+class TestPromotAskUser(TestCase):
+    def setUp(self):
+        self.input_queue = None
+        self.print_queue = queue.Queue()
+
+        self.patch('builtins.print', self.mock_print)
+        self.patch('builtins.input', self.mock_input)
+
+    def set_input(self, *lines):
+        self.input_queue = queue.Queue()
+        for line in lines:
+            self.input_queue.put(line)
+
+    def mock_print(self, *args, **kwargs):
+        self.print_queue.put(' '.join(args) + kwargs.get('end', '\n'))
+
+    def mock_input(self, prompt=None):
+        if prompt:
+            self.print_queue.put(prompt)
+
+        if self.input_queue.empty():
+            self.fail('Expected more test input')
+
+        s = self.input_queue.get()
+        if isinstance(s, BaseException):
+            raise s
+        return s + '\n'
+
+    def expect_output(self, *args):
+        self.eq(queue_to_list(self.print_queue), list(args))
+
+    def test_empty(self):
+        with self.assertRaises(TypeError):
+            s = prompt()
+
+    def test_continue(self):
+        self.set_input('wah')
+        yn = prompt('Input anything to continue>')
+        self.expect_output('Input anything to continue> ')
+
+        repr(yn)
+        self.eq(yn.selected, 'wah')
+        self.eq(str(yn), 'wah')
+        self.eq(yn, 'wah')
+        self.ne(yn, 'WAH')
+
+    def test_coffee_or_tea(self):
+        self.set_input('')
+        yn = prompt('Coffee or tea?', 'coffee tea')
+        self.expect_output('Coffee or tea? [(C)offee / (t)ea] ')
+
+        self.eq(yn.ignorecase, True)
+        self.eq(yn.selected, '')
+        self.eq(yn, '')
+        self.eq(yn, 'coffee')
+        self.eq(yn, 'Coffee')
+        self.eq(yn, 'COFFEE')
+        self.ne(yn, 'tea')
+
+    def test_coffee_or_tea_yes(self):
+        self.set_input(
+                'what',
+                'WHAT?',
+                'tea',
+                )
+        yn = prompt('Coffee or tea?', 'coffee tea both')
+        self.expect_output(
+                'Coffee or tea? [(C)offee / (t)ea / (b)oth] ',
+                'Coffee or tea? [(C)offee / (t)ea / (b)oth] ',
+                'Coffee or tea? [(C)offee / (t)ea / (b)oth] ',
+                )
+
+        self.eq(yn.selected, 'tea')
+        self.eq(yn, 'tea')
+        self.ne(yn, 'coffee')
+
+    def test_eoferror(self):
+        self.set_input(EOFError())
+        yn = prompt('Coffee or tea?', 'coffee tea')
+        self.expect_output(
+                'Coffee or tea? [(C)offee / (t)ea] ',
+                '\n',
+                )
+
+        self.eq(yn.selected, None)
+        self.eq(yn, None)
+        self.ne(yn, 'coffee')
+        self.ne(yn, 'tea')
+        self.ne(yn, 'water')
+        self.ne(yn, 'both')
+
+    def test_keyboardinterrupt(self):
+        self.set_input(KeyboardInterrupt())
+        yn = prompt('Coffee or tea?', 'coffee tea')
+        self.expect_output(
+                'Coffee or tea? [(C)offee / (t)ea] ',
+                '\n',
+                )
+
+        self.eq(yn.selected, None)
+        self.eq(yn, None)
+        self.ne(yn, 'coffee')
+        self.ne(yn, 'tea')
+        self.ne(yn, 'water')
+        self.ne(yn, 'both')
+
+    def test_suppress(self):
+        self.set_input(RuntimeError('wah'), TimeoutError('waaaaah'))
+        yn = prompt('Question', suppress=RuntimeError)
+        self.eq(yn, None)
+
+        with self.assertRaises(TimeoutError):
+            yn = prompt('Question', suppress=RuntimeError)
+        self.eq(yn, None)
+
+    def test_sep(self):
+        self.set_input('')
+        yn = prompt('Coffee or tea?', 'coffee tea', sep='|')
+        self.expect_output('Coffee or tea? [(C)offee|(t)ea] ')
+
+    def test_noignorecase(self):
+        self.set_input('tea')
+        yn = prompt('Coffee or tea?', 'coffee tea', ignorecase=False)
+        self.expect_output('Coffee or tea? [(c)offee / (t)ea] ')
+
+        self.eq(yn, 'tea')
+        self.ne(yn, 'TEA')
+
+        self.set_input('coFFee', 'coffEE', 'coffee')
+        yn = prompt('Coffee or tea?', 'coffee tea', ignorecase=False)
+        self.expect_output(
+                'Coffee or tea? [(c)offee / (t)ea] ',
+                'Coffee or tea? [(c)offee / (t)ea] ',
+                'Coffee or tea? [(c)offee / (t)ea] ',
+                )
+
+        self.ne(yn, 'coFFee')
+        self.ne(yn, 'coffEE')
+        self.eq(yn, 'coffee')
+
+    def test_noabbr(self):
+        self.set_input('t', 'tea')
+        yn = prompt('Coffee or tea?', 'coffee tea', abbr=False)
+        self.expect_output(
+                'Coffee or tea? [coffee / tea] ',
+                'Coffee or tea? [coffee / tea] ',
+                )
+
+        self.ne(yn, 't')
+        self.eq(yn, 'tea')
+        self.ne(yn, 'TEA')
