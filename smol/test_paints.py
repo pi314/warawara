@@ -24,14 +24,14 @@ class TestPaint(TestCase):
         self.eq(orange.seq,   '\033[38;5;208m')
 
     def test_bg(self):
-        self.eq(1 / red,      paint(bg=1))
-        self.eq(1 / green,    paint(bg=2))
-        self.eq(1 / yellow,   paint(bg=3))
-        self.eq(1 / blue,     paint(bg=4))
-        self.eq(1 / magenta,  paint(bg=5))
-        self.eq(1 / cyan,     paint(bg=6))
-        self.eq(1 / white,    paint(bg=7))
-        self.eq(1 / orange,   paint(bg=208))
+        self.eq(~red,      paint(bg=1))
+        self.eq(~green,    paint(bg=2))
+        self.eq(~yellow,   paint(bg=3))
+        self.eq(~blue,     paint(bg=4))
+        self.eq(~magenta,  paint(bg=5))
+        self.eq(~cyan,     paint(bg=6))
+        self.eq(~white,    paint(bg=7))
+        self.eq(~orange,   paint(bg=208))
 
     def test_call(self):
         self.eq(black('color'),   '\033[38;5;0mcolor\033[m')
@@ -48,15 +48,19 @@ class TestPaint(TestCase):
         self.eq((red + yellow) + white, white)
 
     def test_or(self):
-        self.eq(black | (1 / yellow), paint(fg=0, bg=3))
+        self.eq(black | (~yellow), paint(fg=0, bg=3))
 
     def test_div(self):
         ry = red / yellow
         self.eq(ry, paint(fg=1, bg=3))
         self.eq(ry.seq, '\033[38;5;1;48;5;3m')
 
+    def test_invert(self):
+        self.eq((~yellow), paint(bg=3))
+
     def test_rgb(self):
-        self.eq(paint(160, 90, 0)('test'), '\033[38;2;160;90;0mtest\033[m')
+        self.eq(paint(fg=(160, 90, 0))('test'), '\033[38;2;160;90;0mtest\033[m')
+        self.eq(paint(bg=(160, 90, 0))('test'), '\033[48;2;160;90;0mtest\033[m')
 
     def test_decolor(self):
         self.eq(decolor(orange('test')), 'test')
