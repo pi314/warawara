@@ -1,65 +1,63 @@
 import re
+import abc
 
 
 __all__ = ['paint']
 __all__ += ['nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange']
 __all__ += ['decolor']
-__all__ += ['color', 'gradient']
+__all__ += ['color', 'color256', 'rgb', 'gradient']
 
 
-class color:
+def is_uint8(i):
+    return isinstance(i, int) and 0 <= i < 256
+
+
+class Color(abc.ABC):
+    @abc.abstractmethod
+    def __init__(self, *args, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def __call__(self, *args, **kwargs):
+        pass
+
+
+def color(*args, **kwargs):
+    # unpack
+    if len(args) == 1 and isinstance(args[0], (tuple, list)):
+        args = args[0]
+
+    # copy ctor
+    if len(args) == 1 and issubclass(type(args[0]), Color):
+        return type(args[0])(*args, **kwargs)
+
+    # color256 ctor
+    elif len(args) == 1 and (args[0] is None or is_uint8(args[0])):
+        return color256(*args, **kwargs)
+
+    # rgb ctor
+    elif len(args) == 3 and all(is_uint8(i) for i in args):
+        return rgb(*args, **kwargs)
+
+    raise TypeError('bana')
+
+
+class color256(Color):
     def __init__(self, code):
-        def is_uint8(i):
-            return isinstance(i, int) and 0 <= i and i < 256
-
         if isinstance(code, self.__class__):
             code = code.code
 
-        self.space = None
-        self.code = None
+        self.code = code
 
         if code is None:
-            self.space = None
-            self.code = ''
-
-        elif isinstance(code, str):
-            self.space = None
-            self.code = code
-
-        elif isinstance(code, int):
-            if is_uint8(code):
-                self.space = 1
-            else:
-                raise TypeError('Color code exceeds range(0, 256): {}'.format(code))
-            self.code = code
-
-        elif isinstance(code, (tuple, list)):
-            if len(code) != 3:
-                raise TypeError('Invalid dimension: {}'.format(code))
-            if not all(is_uint8(i) for i in code):
-                raise TypeError('Color code exceeds range(0, 256): {}'.format(code))
-            self.space = 3
-            self.r = code[0]
-            self.g = code[1]
-            self.b = code[2]
-
+            self.seq = ''
+        elif is_uint8(code):
+            self.seq = '5;{}'.format(self.code)
         else:
             raise TypeError('Invalid color code: {}'.format(code))
 
-        if not self.code:
-            self.seq = ''
-        if self.space is None:
-            self.seq = self.code
-        elif self.space == 1:
-            self.seq = '5;{}'.format(self.code)
-        elif self.space == 3:
-            self.seq = '2;{};{};{}'.format(self.r, self.g, self.b)
-
     def __int__(self):
-        if self.space == 1:
-            return self.code
-        if self.space == 3:
-            return (self.r << 16) | (self.g << 8) | (self.b)
+        return self.code
 
     def __call__(self, prefix):
         if not self.seq:
@@ -67,11 +65,36 @@ class color:
         return prefix + ';' + self.seq
 
     def __repr__(self):
-        if self.space == 1:
-            return 'color(' + str(self.code) + ')'
-        elif self.space == 3:
-            return 'color({},{},{})'.format(*self.code)
-        return 'color(code={})'.format(self.code)
+        return '{}({})'.format(self.__class__.__name__, self.code)
+
+
+class rgb(Color):
+    def __init__(self, *args):
+        if len(args) == 1 and isinstance(args[0], self.__class__):
+            other = args[0]
+            (self.r, self.g, self.b) = (other.r, other.g, other.b)
+        elif len(args) == 1 and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
+            rgb_str = args[0][1:]
+            self.r = int(rgb_str[0:2], 16)
+            self.g = int(rgb_str[2:4], 16)
+            self.b = int(rgb_str[4:6], 16)
+        elif len(args) == 3 and all(is_uint8(i) for i in args):
+            (self.r, self.g, self.b) = args
+        else:
+            raise TypeError('Invalid rgb value: {}'.format(args))
+
+        self.seq = '2;{};{};{}'.format(self.r, self.g, self.b)
+
+    def __repr__(self):
+        return 'rgb({}, {}, {})'.format(self.r, self.g, self.b)
+
+    def __int__(self):
+        return (self.r << 16) | (self.g << 8) | (self.b)
+
+    def __call__(self, prefix):
+        if not self.seq:
+            return ''
+        return prefix + ';' + self.seq
 
 
 class paint:
@@ -131,10 +154,10 @@ def gradient(A, B, N=None):
     if isinstance(N, int) and N < 2:
         N = 2
 
-    if not isinstance(A, color) or not isinstance(B, color):
+    if not isinstance(A, Color) or not isinstance(B, Color):
         return tuple()
 
-    if A.space != 1 or B.space != 1:
+    if not isinstance(A, color256) or not isinstance(B, color256):
         return (A, B)
 
     if A.code in range(232, 256) and B.code in range(232, 256):
@@ -149,7 +172,7 @@ def gradient(A, B, N=None):
             return (r, g, b)
 
         def rgb6_to_color(rgb):
-            return color(rgb[0] * 36 + rgb[1] * 6 + rgb[2] + 16)
+            return color256(rgb[0] * 36 + rgb[1] * 6 + rgb[2] + 16)
 
         def rgb_add(a, b):
             return (a[0] + b[0], a[1] + b[1], a[2] + b[2])

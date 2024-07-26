@@ -9,8 +9,9 @@ class TestPaint(TestCase):
         self.eq(nocolor(), '')
         self.eq(nocolor('text'), 'text')
         self.eq(nocolor.seq, '')
+        self.eq(str(nocolor), '\033[m')
         self.eq('{}'.format(nocolor), '\033[m')
-        repr(paint())
+        self.is_true(repr(paint()).startswith('paint'))
 
     def test_fg(self):
         self.eq(black.seq,    '\033[38;5;0m')
@@ -22,6 +23,17 @@ class TestPaint(TestCase):
         self.eq(cyan.seq,     '\033[38;5;6m')
         self.eq(white.seq,    '\033[38;5;7m')
         self.eq(orange.seq,   '\033[38;5;208m')
+
+    def test_str(self):
+        self.eq(str(black),         '\033[38;5;0m')
+        self.eq(str(red.seq),       '\033[38;5;1m')
+        self.eq(str(green.seq),     '\033[38;5;2m')
+        self.eq(str(yellow.seq),    '\033[38;5;3m')
+        self.eq(str(blue.seq),      '\033[38;5;4m')
+        self.eq(str(magenta.seq),   '\033[38;5;5m')
+        self.eq(str(cyan.seq),      '\033[38;5;6m')
+        self.eq(str(white.seq),     '\033[38;5;7m')
+        self.eq(str(orange.seq),    '\033[38;5;208m')
 
     def test_bg(self):
         self.eq(~red,      paint(bg=1))
