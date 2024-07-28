@@ -1,4 +1,3 @@
-import coverage
 import unittest
 
 try:
@@ -25,4 +24,4 @@ if __name__ == '__main__':
     cov.stop()
     cov.save()
 
-    cov.html_report()
+    cov.html_report(omit=['test_*.py'])

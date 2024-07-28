@@ -12,14 +12,26 @@ def is_uint8(i):
     return isinstance(i, int) and 0 <= i < 256
 
 
+def lerp(a, b, t):
+    return ((1 - t) * a) + (t * b)
+
+
 class Color(abc.ABC):
     @abc.abstractmethod
     def __init__(self, *args, **kwargs):
-        pass
+        ...
+
+    @abc.abstractmethod
+    def __repr__(self, *args, **kwargs):
+        ...
+
+    @abc.abstractmethod
+    def __eq__(self, other):
+        ...
 
     @abc.abstractmethod
     def __call__(self, *args, **kwargs):
-        pass
+        ...
 
 
 def color(*args, **kwargs):
@@ -39,7 +51,11 @@ def color(*args, **kwargs):
     elif len(args) == 3 and all(is_uint8(i) for i in args):
         return rgb(*args, **kwargs)
 
-    raise TypeError('bana')
+    # rgb ctor #xxxxxx
+    elif len(args) == 1 and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
+        return rgb(*args, **kwargs)
+
+    raise TypeError('Invalid arguments')
 
 
 class color256(Color):
@@ -56,16 +72,19 @@ class color256(Color):
         else:
             raise TypeError('Invalid color code: {}'.format(code))
 
-    def __int__(self):
-        return self.code
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, self.code)
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.code == other.code
 
     def __call__(self, prefix):
         if not self.seq:
             return ''
         return prefix + ';' + self.seq
 
-    def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self.code)
+    def __int__(self):
+        return self.code
 
 
 class rgb(Color):
@@ -88,13 +107,16 @@ class rgb(Color):
     def __repr__(self):
         return 'rgb({}, {}, {})'.format(self.r, self.g, self.b)
 
-    def __int__(self):
-        return (self.r << 16) | (self.g << 8) | (self.b)
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and int(self) == int(other)
 
     def __call__(self, prefix):
         if not self.seq:
             return ''
         return prefix + ';' + self.seq
+
+    def __int__(self):
+        return (self.r << 16) | (self.g << 8) | (self.b)
 
 
 class paint:
@@ -149,19 +171,24 @@ decolor_regex = re.compile('\033' + r'\[[\d;]*m')
 def decolor(s):
     return decolor_regex.sub('', s)
 
-
 def gradient(A, B, N=None):
-    if isinstance(N, int) and N < 2:
-        N = 2
-
     if not isinstance(A, Color) or not isinstance(B, Color):
-        return tuple()
+        raise TypeError('Cannot calculate gradient() on non-Color objects')
+
+    if N is not None and not isinstance(N, int):
+        raise TypeError('N must be a integer')
+
+    if N is not None and N < 2:
+        raise ValueError('N={} is too small'.format(N))
+
+    if N == 2:
+        return (A, B)
 
     if not isinstance(A, color256) or not isinstance(B, color256):
         return (A, B)
 
     if A.code in range(232, 256) and B.code in range(232, 256):
-        return tuple(paint(c) for c in range(A.code, B.code + 1))
+        return gradient_color256_gray(A, B, N)
 
     if A.code in range(16, 232) and B.code in range(16, 232):
         def color_to_rgb6(p):
@@ -210,3 +237,33 @@ def gradient(A, B, N=None):
         return tuple(rgb6_to_color(i) for i in ret)
 
     return (A, B)
+
+
+def gradient_color256_gray(A, B, N):
+        a, b = A.code, B.code
+        reverse = (b < a)
+        if reverse:
+            a, b = b, a
+        n = (b + 1 - a)
+
+        if N is None or N == n:
+            ret = tuple(color256(c) for c in range(a, b + 1))
+
+        if N < n:
+            # Discrete averaging skipped colors to fit N
+            skips = b - a + 1 - N
+            step = skips // (N - 1) + 1
+            ret = (color256(a),) + tuple(color256(a + (t * step)) for t in range(1, N-1)) + (color256(b),)
+
+        if N > n:
+            # Duplicate colors to match N
+            ret = []
+            dup, r = divmod(N, n)
+            for i in range(a, b+1):
+                for d in range(dup + (i < r + a)):
+                    ret.append(color256(i))
+
+        if reverse:
+            ret = ret[::-1]
+
+        return ret

@@ -11,12 +11,15 @@ def main():
     # print(smol.color256, super(smol.color256))
     # print(smol.rgb, super(smol.rgb))
     # assert False
-    A = smol.color(a)
-    B = smol.color(b)
-    print(repr(A), A.code)
-    print(repr(B), B.code)
-    print(smol.paint(smol.rgb('#FF5F00'))('test'))
-    for color in smol.gradient(A, B):
+    # A = smol.color(a)
+    # B = smol.color(b)
+    # print(smol.paint(smol.rgb('#FF5F00'))('test'))
+    # for color in smol.gradient(A, B):
+    #     print(smol.paint(color)(color))
+
+    A = smol.color(241)
+    B = smol.color(250)
+    for color in smol.gradient(A, B, N=4):
         print(smol.paint(color)(color))
 
 
