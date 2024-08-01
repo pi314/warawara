@@ -282,13 +282,43 @@ def gradient_color256_rgb(A, B, N=None):
     return tuple(rgb6_to_color(i) for i in ret)
 
 
+class vector(list):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def __add__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i + other for i in self)
+
+        return vector(map(lambda x: x[0] + x[1], zip(self, other)))
+
+    def __sub__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i - other for i in self)
+
+        return vector(map(lambda x: x[0] - x[1], zip(self, other)))
+
+    def __rmul__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i * other for i in self)
+        raise TypeError("Not supported operation")
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i * other for i in self)
+        raise TypeError("Not supported operation")
+
+    def map(self, func):
+        return vector(func(i) for i in self)
+
+
 def lerp(a, b, t):
     if t == 0:
         return a
     if t == 1:
         return b
-    if isinstance(a, (tuple, list)):
-        return type(a)(a[i] + t * (b[i] - a[i]) for i in range(len(a)))
+    # if isinstance(a, (tuple, list)):
+    #     return type(a)(a[i] + t * (b[i] - a[i]) for i in range(len(a)))
 
     return a + t * (b - a)
 
@@ -306,13 +336,20 @@ def gradient_rgb(A, B, N):
 
     import colorsys
     # Calculate gradient on HSV
-    a = colorsys.rgb_to_hsv(A.r / 255, A.g / 255, A.b / 255)
-    b = colorsys.rgb_to_hsv(B.r / 255, B.g / 255, B.b / 255)
+    a = vector(colorsys.rgb_to_hsv(A.r / 255, A.g / 255, A.b / 255))
+    b = vector(colorsys.rgb_to_hsv(B.r / 255, B.g / 255, B.b / 255))
+
+    # Choose shorter hue gradient
+    if abs(b[0] - a[0]) > 0.5:
+        if b[0] < a[0]:
+            b[0] += 1
+        else:
+            a[0] += 1
 
     ret = [A]
     for t in (i / (N - 1) for i in range(1, N - 1)):
-        c = tuple(lerp(a[j], b[j], t) for j in (0, 1, 2))
-        ret.append(rgb(tuple(int(255 * ca) for ca in colorsys.hsv_to_rgb(*c))))
+        c = lerp(a, b, t)
+        ret.append(rgb(vector(colorsys.hsv_to_rgb(*c)).map(lambda x: int(x * 255))))
 
     ret.append(B)
 
