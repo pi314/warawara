@@ -15,12 +15,12 @@ def main():
     # B = smol.color(b)
     A = smol.color('#FF0000')
     B = smol.color('#00FF00')
-    # A = smol.color('#FFAF00')
-    # B = smol.color('#00AFFF')
-    A = smol.color('#FF1100')
+    A = smol.color('#FFAF00')
+    B = smol.color('#00AFFF')
+    # A = smol.color('#FF1100')
     # B = smol.color('#FF0011')
     # A = smol.color('#6E3A08')
-    B = smol.color('#003847')
+    # B = smol.color('#003847')
     for color in smol.gradient(A, B, 20):
         print(smol.paint(color)(color))
 

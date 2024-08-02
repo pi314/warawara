@@ -1,6 +1,9 @@
 import re
 import abc
 
+from .math import vector
+from .math import lerp
+
 
 __all__ = ['paint']
 __all__ += ['nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange']
@@ -280,47 +283,6 @@ def gradient_color256_rgb(A, B, N=None):
                 ret.append(acc[i])
 
     return tuple(rgb6_to_color(i) for i in ret)
-
-
-class vector(list):
-    def __init__(self, *args):
-        super().__init__(*args)
-
-    def __add__(self, other):
-        if isinstance(other, (int, float)):
-            return vector(i + other for i in self)
-
-        return vector(map(lambda x: x[0] + x[1], zip(self, other)))
-
-    def __sub__(self, other):
-        if isinstance(other, (int, float)):
-            return vector(i - other for i in self)
-
-        return vector(map(lambda x: x[0] - x[1], zip(self, other)))
-
-    def __rmul__(self, other):
-        if isinstance(other, (int, float)):
-            return vector(i * other for i in self)
-        raise TypeError("Not supported operation")
-
-    def __mul__(self, other):
-        if isinstance(other, (int, float)):
-            return vector(i * other for i in self)
-        raise TypeError("Not supported operation")
-
-    def map(self, func):
-        return vector(func(i) for i in self)
-
-
-def lerp(a, b, t):
-    if t == 0:
-        return a
-    if t == 1:
-        return b
-    # if isinstance(a, (tuple, list)):
-    #     return type(a)(a[i] + t * (b[i] - a[i]) for i in range(len(a)))
-
-    return a + t * (b - a)
 
 
 def gradient_rgb(A, B, N):
