@@ -297,12 +297,12 @@ def gradient_rgb(A, B, N):
     # ret.append(B)
     # return tuple(ret)
 
-    import colorsys
     # Calculate gradient on HSV
+    import colorsys
     a = vector(colorsys.rgb_to_hsv(A.r / 255, A.g / 255, A.b / 255))
     b = vector(colorsys.rgb_to_hsv(B.r / 255, B.g / 255, B.b / 255))
 
-    # Choose shorter hue gradient
+    # Choose shorter hue gradient path
     if abs(b[0] - a[0]) > 0.5:
         if b[0] < a[0]:
             b[0] += 1
@@ -316,30 +316,4 @@ def gradient_rgb(A, B, N):
 
     ret.append(B)
 
-    convert = matrix([
-        [0.4122214708, 0.5363325363, 0.0514459929],
-        [0.2119034982, 0.6806995451, 0.1073969566],
-        [0.0883024619, 0.2817188376, 0.6299787005],
-        ])
-    m2 = matrix([[A.r], [A.g], [A.b]])
-
-    m = convert * m2
-    print('{}x{}'.format(m.rows, m.cols))
-    for i in range(m.rows):
-        for j in range(m.cols):
-            print(m[i][j], end=' ')
-        print()
-    print()
-
     return tuple(ret)
-    # M1 = matrix([
-    #     [0.8189330101, 0.3618667424, -0.1288597137]
-    #     [0.0329845436, 0.9293118715, 0.0361456387]
-    #     [0.0482003018, 0.2643662691, 0.6338517070]
-    #     ])
-    #
-    # M2 = matrix([
-    #     [,0.2104542553, 0.7936177850, -0.0040720468]
-    #     [,1.9779984951, 2.4285922050, 0.4505937099]
-    #     [,0.0259040371, 0.7827717662, -0.8086757660]
-    #     ])
