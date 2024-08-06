@@ -3,7 +3,6 @@ import abc
 
 from .math import vector
 from .math import lerp
-from .math import matrix
 
 
 __all__ = ['paint']
