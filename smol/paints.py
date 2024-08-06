@@ -1,6 +1,7 @@
 import re
 import abc
 
+from .math import sgn
 from .math import vector
 from .math import lerp
 
@@ -260,9 +261,6 @@ def gradient_color256_rgb(A, B, N=None):
         return (A, rgb6_to_color(tuple(((rgb_a[i] + rgb_b[i]) // 2) for i in (0, 1, 2))), B)
 
     delta = tuple(rgb_b[i] - rgb_a[i] for i in (0, 1, 2))
-
-    def sgn(i):
-        return (i > 0) - (i < 0)
 
     steps = []
     for n in range(max(map(abs, delta))):

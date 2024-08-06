@@ -6,6 +6,10 @@ def is_int(o):
     return isinstance(o, int)
 
 
+def sgn(i):
+    return (i > 0) - (i < 0)
+
+
 def lerp(a, b, t):
     if t == 0:
         return a
