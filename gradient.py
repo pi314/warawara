@@ -5,9 +5,12 @@ import random
 
 def main():
     # a, b = 77, 147
-    a, b = 70, 191
-    a, b = 214, 39
+    # a, b = 70, 191
+    a, b = 70, 227
+    a, b = 232, 255
+    # a, b = 214, 39
     # a, b = random.sample(range(16, 232), 2)
+    # a, b = b, a
     # print(smol.color, super(smol.color))
     # print(smol.color256, super(smol.color256))
     # print(smol.rgb, super(smol.rgb))
@@ -21,7 +24,7 @@ def main():
     # B = smol.color('#FF0011')
     # A = smol.color('#6E3A08')
     # B = smol.color('#003847')
-    for color in smol.gradient(A, B):
+    for color in smol.gradient(A, B, N=4):
         print(smol.paint(color)(color))
 
     # A = smol.color(241)
