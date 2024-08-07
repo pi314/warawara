@@ -20,30 +20,51 @@ def lerp(a, b, t):
 
 class vector(list):
     def __init__(self, *args):
-        super().__init__(*args)
+        if len(args) > 1:
+            super().__init__(args)
+        else:
+            super().__init__(*args)
 
     def __add__(self, other):
         if isinstance(other, (int, float)):
             return vector(i + other for i in self)
+        if len(self) != len(other):
+            raise ValueError('Cannot operate on vector(len={}) and {}'.format(len(self), other))
         return vector(map(lambda x: x[0] + x[1], zip(self, other)))
+
+    def __radd__(self, other):
+        return self + other
 
     def __sub__(self, other):
         if isinstance(other, (int, float)):
             return vector(i - other for i in self)
+        if len(self) != len(other):
+            raise ValueError('Cannot operate on vector(len={}) and {}'.format(len(self), other))
         return vector(map(lambda x: x[0] - x[1], zip(self, other)))
-
-    def __rmul__(self, other):
-        if isinstance(other, (int, float)):
-            return vector(i * other for i in self)
-        raise TypeError("Not supported operation")
 
     def __mul__(self, other):
         if isinstance(other, (int, float)):
             return vector(i * other for i in self)
-        raise TypeError("Not supported operation")
+        if len(self) != len(other):
+            raise ValueError('Cannot operate on vector(len={}) and {}'.format(len(self), other))
+        return vector(map(lambda x: x[0] * x[1], zip(self, other)))
+
+    def __rmul__(self, other):
+        return self * other
 
     def map(self, func):
         return vector(func(i) for i in self)
+
+
+def interval(a, b, close=True):
+    direction = sgn(b - a)
+    if direction == 0:
+        return [a] if close else []
+
+    ret = range(a, b + direction, direction)
+    if close:
+        return ret
+    return ret[1:-1]
 
 
 # class matrix:

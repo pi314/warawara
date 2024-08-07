@@ -4,10 +4,23 @@ import random
 
 
 def main():
+    import sys
+    argv = sys.argv[1:]
+
+    a = int(argv[0])
+    b = int(argv[1])
+    argv.pop(0)
+    argv.pop(0)
+
+    if argv:
+        n = int(argv[0])
+    else:
+        n = None
+
     # a, b = 77, 147
     # a, b = 70, 191
-    a, b = 70, 227
-    a, b = 232, 255
+    # a, b = 70, 227
+    # a, b = 232, 255
     # a, b = 214, 39
     # a, b = random.sample(range(16, 232), 2)
     # a, b = b, a
@@ -24,7 +37,7 @@ def main():
     # B = smol.color('#FF0011')
     # A = smol.color('#6E3A08')
     # B = smol.color('#003847')
-    for color in smol.gradient(A, B, N=4):
+    for color in smol.gradient(A, B, N=n):
         print(smol.paint(color)(color))
 
     # A = smol.color(241)

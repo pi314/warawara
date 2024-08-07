@@ -1,11 +1,17 @@
 import re
 import abc
+import itertools
 
 from .math import sgn
 from .math import vector
 from .math import lerp
+from .math import interval
 
-from icecream import ic
+
+# try:
+#     from icecream import ic
+# except ImportError:  # Graceful fallback if IceCream isn't installed.
+#     ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
 
 
 __all__ = ['paint']
@@ -181,10 +187,6 @@ def decolor(s):
 
 
 def gradient(A, B, N=None):
-    ic(A)
-    ic(B)
-    ic(N)
-
     if not isinstance(A, Color) or not isinstance(B, Color):
         raise TypeError('Can only calculate gradient() on Color objects')
 
@@ -217,6 +219,9 @@ def gradient_color256(A, B, N=None):
 
 
 def distribute(samples, N):
+    if N is None:
+        return samples
+
     n = len(samples)
 
     if N == n:
@@ -250,7 +255,7 @@ def gradient_color256_gray(A, B, N=None):
     a, b = A.code, B.code
     direction = sgn(b - a)
     n = abs(b - a) + 1
-    return tuple(color256(c) for c in distribute(range(a, b + direction, direction), N or n))
+    return tuple(color256(c) for c in distribute(interval(a, b), N or n))
 
 
 def gradient_color256_rgb(A, B, N=None):
@@ -259,46 +264,34 @@ def gradient_color256_rgb(A, B, N=None):
         r = c // 36
         g = (c % 36) // 6
         b = c % 6
-        return (r, g, b)
+        return vector(r, g, b)
 
     def rgb6_to_color(rgb):
         return color256(rgb[0] * 36 + rgb[1] * 6 + rgb[2] + 16)
 
-    def rgb_add(a, b):
-        return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
-
     rgb_a = color_to_rgb6(A)
     rgb_b = color_to_rgb6(B)
 
-    # if N == 3:
-    #     return (A, rgb6_to_color(tuple(((rgb_a[i] + rgb_b[i]) // 2) for i in (0, 1, 2))), B)
-
-    delta = tuple(rgb_b[i] - rgb_a[i] for i in (0, 1, 2))
-    ic(delta)
+    delta = rgb_b - rgb_a
     cont_step_count = max(abs(d) for d in delta)
-    ic(cont_step_count)
-    min
 
-    if N is None or N >= (cont_step_count + 1):
+    if N is None or N > cont_step_count:
+        # N >= minimum contiguous path
         steps = []
         for n in range(cont_step_count):
-            step = tuple(sgn(delta[i]) for i in (0, 1, 2))
+            step = delta.map(sgn)
             steps.append(step)
-            delta = tuple(delta[i] - sgn(delta[i]) for i in (0, 1, 2))
-            ic(step, delta)
+            delta = delta.map(lambda x: x - sgn(x))
 
-        acc = [rgb_a]
-        for step in steps:
-            acc.append(rgb_add(acc[-1], step))
+        ret = distribute(list(itertools.accumulate(steps, initial=rgb_a)), N)
 
-        if N is None:
-            ret = acc
-        else:
-            dup, r = divmod(N, len(acc))
-            ret = []
-            for i in range(len(acc)):
-                for d in range(dup + (i < r)):
-                    ret.append(acc[i])
+    else:
+        # N is shorter than minimum contiguous path
+        ret = zip(
+                distribute(interval(rgb_a[0], rgb_b[0]), N),
+                distribute(interval(rgb_a[1], rgb_b[1]), N),
+                distribute(interval(rgb_a[2], rgb_b[2]), N),
+                )
 
     return tuple(rgb6_to_color(i) for i in ret)
 
