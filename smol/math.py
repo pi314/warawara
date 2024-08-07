@@ -1,4 +1,4 @@
-__all__ = ['lerp']
+__all__ = ['is_int', 'sgn', 'lerp', 'interval']
 __all__ += ['vector']
 
 
@@ -18,12 +18,12 @@ def lerp(a, b, t):
     return a + t * (b - a)
 
 
-class vector(list):
-    def __init__(self, *args):
+class vector(tuple):
+    def __new__(cls, *args, **kwargs):
         if len(args) > 1:
-            super().__init__(args)
+            return super().__new__(cls, args)
         else:
-            super().__init__(*args)
+            return super().__new__(cls, *args)
 
     def __add__(self, other):
         if isinstance(other, (int, float)):
