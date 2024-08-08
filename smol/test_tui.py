@@ -62,6 +62,13 @@ class TestThreadedSpinner(TestCase):
         spinner.text('wah')
         self.eq(spinner.text(), 'wah')
 
+    def test_context_manager(self):
+        spinner = ThreadedSpinner()
+        spinner.print_function = lambda *args, **kwarags: None
+        with spinner:
+            with spinner:
+                spinner.start()
+
     def test_run(self):
         self.patch('time.sleep', self.mock_sleep)
         Event = self.__class__.Event
