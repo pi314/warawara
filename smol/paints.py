@@ -17,56 +17,57 @@ from .math import interval
 __all__ = ['paint']
 __all__ += ['nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange']
 __all__ += ['decolor']
-__all__ += ['color', 'color256', 'rgb', 'gradient']
+__all__ += ['dye', 'dye256', 'dyergb', 'gradient']
 
 
 def is_uint8(i):
-    return isinstance(i, int) and 0 <= i < 256
+    return isinstance(i, int) and not isinstance(i, bool) and 0 <= i < 256
 
 
-class Color(abc.ABC):
+class DyeTrait(abc.ABC):
     @abc.abstractmethod
-    def __init__(self, *args, **kwargs):
-        ...
-
-    @abc.abstractmethod
-    def __repr__(self, *args, **kwargs):
-        ...
+    def __init__(self, *args, **kwargs): # pragma: no cover
+        raise NotImplementedError
 
     @abc.abstractmethod
-    def __eq__(self, other):
-        ...
+    def __repr__(self, *args, **kwargs): # pragma: no cover
+        raise NotImplementedError
 
     @abc.abstractmethod
-    def __call__(self, *args, **kwargs):
-        ...
+    def __eq__(self, other): # pragma: no cover
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def __call__(self, *args, **kwargs): # pragma: no cover
+        raise NotImplementedError
 
 
-def color(*args, **kwargs):
-    # unpack
-    if len(args) == 1 and isinstance(args[0], (tuple, list)):
-        args = args[0]
+class dye(abc.ABC):
+    def __new__(cls, *args, **kwargs):
+        # unpack
+        if len(args) == 1 and isinstance(args[0], (tuple, list)):
+            args = args[0]
 
-    # copy ctor
-    if len(args) == 1 and issubclass(type(args[0]), Color):
-        return type(args[0])(*args, **kwargs)
+        # copy ctor
+        if len(args) == 1 and issubclass(type(args[0]), dye):
+            return type(args[0])(*args, **kwargs)
 
-    # color256 ctor
-    elif len(args) == 1 and (args[0] is None or is_uint8(args[0])):
-        return color256(*args, **kwargs)
+        # dye256 ctor
+        elif len(args) == 1 and (args[0] is None or is_uint8(args[0])):
+            return dye256(*args, **kwargs)
 
-    # rgb ctor
-    elif len(args) == 3 and all(is_uint8(i) for i in args):
-        return rgb(*args, **kwargs)
+        # dyergb ctor
+        elif len(args) == 3 and all(is_uint8(i) for i in args):
+            return dyergb(*args, **kwargs)
 
-    # rgb ctor #xxxxxx
-    elif len(args) == 1 and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
-        return rgb(*args, **kwargs)
+        # dyergb ctor #xxxxxx
+        elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
+            return dyergb(*args, **kwargs)
 
-    raise TypeError('Invalid arguments')
+        raise TypeError('Invalid arguments')
 
 
-class color256(Color):
+class dye256(DyeTrait):
     def __init__(self, code):
         if isinstance(code, self.__class__):
             code = code.code
@@ -94,8 +95,10 @@ class color256(Color):
     def __int__(self):
         return self.code
 
+dye.register(dye256)
 
-class rgb(Color):
+
+class dyergb(DyeTrait):
     def __init__(self, *args):
         if len(args) == 1 and isinstance(args[0], (tuple, list)):
             args = args[0]
@@ -111,19 +114,17 @@ class rgb(Color):
         elif len(args) == 3 and all(is_uint8(i) for i in args):
             (self.r, self.g, self.b) = args
         else:
-            raise TypeError('Invalid rgb value: {}'.format(args))
+            raise TypeError('Invalid RGB value: {}'.format(args))
 
         self.seq = '2;{};{};{}'.format(self.r, self.g, self.b)
 
     def __repr__(self):
-        return 'rgb({}, {}, {})'.format(self.r, self.g, self.b)
+        return 'dyergb({}, {}, {})'.format(self.r, self.g, self.b)
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and int(self) == int(other)
 
     def __call__(self, prefix):
-        if not self.seq:
-            return ''
         return prefix + ';' + self.seq
 
     def __int__(self):
@@ -132,11 +133,13 @@ class rgb(Color):
     def __str__(self):
         return '#{:0>2X}{:0>2X}{:0>2X}'.format(self.r, self.g, self.b)
 
+dye.register(dyergb)
+
 
 class paint:
     def __init__(self, fg=None, bg=None):
-        self.fg = color(fg)
-        self.bg = color(bg)
+        self.fg = dye(fg)
+        self.bg = dye(bg)
 
         seq = ';'.join(filter(None, [self.fg('38'), self.bg('48')]))
         self.seq = '' if not seq else ('\033[' + seq + 'm')
@@ -187,8 +190,8 @@ def decolor(s):
 
 
 def gradient(A, B, N=None):
-    if not isinstance(A, Color) or not isinstance(B, Color):
-        raise TypeError('Can only calculate gradient() on Color objects')
+    if not isinstance(A, dye) or not isinstance(B, dye):
+        raise TypeError('Can only calculate gradient() on dye objects')
 
     if N is not None and not isinstance(N, int):
         raise TypeError('N must be a integer')
@@ -199,10 +202,10 @@ def gradient(A, B, N=None):
     if N == 2:
         return (A, B)
 
-    if isinstance(A, color256) and isinstance(B, color256):
+    if isinstance(A, dye256) and isinstance(B, dye256):
         return gradient_color256(A, B, N=N)
 
-    if isinstance(A, rgb) and isinstance(B, rgb):
+    if isinstance(A, dyergb) and isinstance(B, dyergb):
         return gradient_rgb(A, B, N=N)
 
     return (A, B)
@@ -255,7 +258,7 @@ def gradient_color256_gray(A, B, N=None):
     a, b = A.code, B.code
     direction = sgn(b - a)
     n = abs(b - a) + 1
-    return tuple(color256(c) for c in distribute(interval(a, b), N or n))
+    return tuple(dye256(c) for c in distribute(interval(a, b), N or n))
 
 
 def gradient_color256_rgb(A, B, N=None):
@@ -266,8 +269,8 @@ def gradient_color256_rgb(A, B, N=None):
         b = c % 6
         return vector(r, g, b)
 
-    def rgb6_to_color(rgb):
-        return color256(rgb[0] * 36 + rgb[1] * 6 + rgb[2] + 16)
+    def rgb6_to_color(rgb6):
+        return dye256(rgb6[0] * 36 + rgb6[1] * 6 + rgb6[2] + 16)
 
     rgb_a = color_to_rgb6(A)
     rgb_b = color_to_rgb6(B)
@@ -297,17 +300,17 @@ def gradient_color256_rgb(A, B, N=None):
 
 
 def gradient_rgb(A, B, N):
-    # Calculate gradient on RGB
+    # Calculate gradient in RGB
     # a = (A.r, A.g, A.b)
     # b = (B.r, B.g, B.b)
     #
     # ret = [A]
     # for t in (i / (N - 1) for i in range(1, N - 1)):
-    #     ret.append(rgb(tuple(map(int, lerp(a, b, t)))))
+    #     ret.append(dyergb(tuple(map(int, lerp(a, b, t)))))
     # ret.append(B)
     # return tuple(ret)
 
-    # Calculate gradient on HSV
+    # Calculate gradient in HSV
     import colorsys
     a = vector(colorsys.rgb_to_hsv(A.r / 255, A.g / 255, A.b / 255))
     b = vector(colorsys.rgb_to_hsv(B.r / 255, B.g / 255, B.b / 255))
@@ -322,7 +325,7 @@ def gradient_rgb(A, B, N):
     ret = [A]
     for t in (i / (N - 1) for i in range(1, N - 1)):
         c = lerp(a, b, t)
-        ret.append(rgb(vector(colorsys.hsv_to_rgb(*c)).map(lambda x: int(x * 255))))
+        ret.append(dyergb(vector(colorsys.hsv_to_rgb(*c)).map(lambda x: int(x * 255))))
 
     ret.append(B)
 

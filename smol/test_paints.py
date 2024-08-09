@@ -3,6 +3,60 @@ from .test_utils import *
 from smol.paints import *
 
 
+class TestDye(TestCase):
+    def test_dye_facade(self):
+        # arg unpack
+        self.eq(dye((208,)), dye(208))
+
+        # copy_ctor
+        self.eq(dye(dye(208)), dye(208))
+
+        # dye256
+        self.is_true(issubclass(dye256, dye))
+        orange = dye(208)
+        self.is_true(isinstance(orange, dye256))
+        self.is_true(isinstance(orange, dye))
+
+        # dyergb
+        self.is_true(issubclass(dyergb, dye))
+        orange = dye('#A05A00')
+        self.is_true(isinstance(orange, dyergb))
+        self.is_true(isinstance(orange, dye))
+
+    def test_dye_invalid(self):
+        with self.assertRaises(TypeError):
+            dye(True)
+
+        with self.assertRaises(TypeError):
+            dye256(True)
+
+        with self.assertRaises(TypeError):
+            dyergb(True)
+
+    def test_dye256(self):
+        orange = dye(208)
+        self.eq(orange('prefix'), 'prefix;5;208')
+        self.eq(int(orange), 208)
+        repr(orange)
+
+    def test_dyergb(self):
+        orange = dyergb((160, 90, 0))
+        self.eq(dyergb(orange), orange)
+        self.eq(orange, dyergb('#A05A00'))
+        self.eq(orange.r, 160)
+        self.eq(orange.g, 90)
+        self.eq(orange.b, 0)
+        self.eq(int(orange), 0xa05a00)
+        self.eq(str(orange), '#A05A00')
+
+        with self.assertRaises(TypeError):
+            dyergb(True)
+
+        repr(orange)
+
+        self.eq(orange('prefix'), 'prefix;2;160;90;0')
+
+
 class TestPaint(TestCase):
     def test_nocolor(self):
         self.eq(paint(), nocolor)
@@ -46,15 +100,15 @@ class TestPaint(TestCase):
         self.eq(~orange,   paint(bg=208))
 
     def test_call(self):
-        self.eq(black('color'),   '\033[38;5;0mcolor\033[m')
-        self.eq(red('color'),     '\033[38;5;1mcolor\033[m')
-        self.eq(green('color'),   '\033[38;5;2mcolor\033[m')
-        self.eq(yellow('color'),  '\033[38;5;3mcolor\033[m')
-        self.eq(blue('color'),    '\033[38;5;4mcolor\033[m')
-        self.eq(magenta('color'), '\033[38;5;5mcolor\033[m')
-        self.eq(cyan('color'),    '\033[38;5;6mcolor\033[m')
-        self.eq(white('color'),   '\033[38;5;7mcolor\033[m')
-        self.eq(orange('color'),  '\033[38;5;208mcolor\033[m')
+        self.eq(black('text'),   '\033[38;5;0mtext\033[m')
+        self.eq(red('text'),     '\033[38;5;1mtext\033[m')
+        self.eq(green('text'),   '\033[38;5;2mtext\033[m')
+        self.eq(yellow('text'),  '\033[38;5;3mtext\033[m')
+        self.eq(blue('text'),    '\033[38;5;4mtext\033[m')
+        self.eq(magenta('text'), '\033[38;5;5mtext\033[m')
+        self.eq(cyan('text'),    '\033[38;5;6mtext\033[m')
+        self.eq(white('text'),   '\033[38;5;7mtext\033[m')
+        self.eq(orange('text'),  '\033[38;5;208mtext\033[m')
 
     def test_add(self):
         self.eq((red + yellow) + white, white)
