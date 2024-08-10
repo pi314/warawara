@@ -7,14 +7,19 @@ def main():
     import sys
     argv = sys.argv[1:]
 
-    a = int(argv[0])
-    b = int(argv[1])
-    argv.pop(0)
-    argv.pop(0)
+    try:
+        a = int(argv[0])
+        b = int(argv[1])
+        argv.pop(0)
+        argv.pop(0)
 
-    if argv:
-        n = int(argv[0])
-    else:
+        if argv:
+            n = int(argv[0])
+        else:
+            n = None
+
+    except IndexError:
+        a, b = random.sample(range(16, 232), 2)
         n = None
 
     # a, b = 77, 147
@@ -29,16 +34,17 @@ def main():
     # print(smol.rgb, super(smol.rgb))
     A = smol.dye(a)
     B = smol.dye(b)
-    # A = smol.dye('#FF0000')
-    # B = smol.dye('#00FF00')
+    A = smol.dye('#FF0000')
+    B = smol.dye('#00FF00')
     # A = smol.dye('#FFAF00')
     # B = smol.dye('#00AFFF')
+    n = 10
     # A = smol.dye('#FF1100')
     # B = smol.dye('#FF0011')
     # A = smol.dye('#6E3A08')
     # B = smol.dye('#003847')
     for dye in smol.gradient(A, B, N=n):
-        print(smol.paint(dye)(dye))
+        print(str(dye) + repr(dye) + '\033[m')
 
     # A = smol.dye(241)
     # B = smol.dye(250)

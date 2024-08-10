@@ -37,9 +37,22 @@ class DyeTrait(abc.ABC):
     def __eq__(self, other): # pragma: no cover
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def __call__(self, *args, **kwargs): # pragma: no cover
-        raise NotImplementedError
+    def __call__(self, *args):
+        return self.fg(*args)
+
+    def fg(self, *args):
+        return self.apply('38', ' '.join(str(arg) for arg in args))
+
+    def bg(self, *args, **kwargs): # pragma: no cover
+        return self.apply('48', ' '.join(str(arg) for arg in args))
+
+    def apply(self, ground, s):
+        if not self.seq:
+            return s
+        return '\033[{};{}m{}\033[m'.format(ground, self.seq, str(s))
+
+    def __str__(self):
+        return '\033[38;{}m'.format(self.seq) if self.seq else '\033[m'
 
 
 class dye(abc.ABC):
@@ -87,11 +100,6 @@ class dye256(DyeTrait):
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.code == other.code
 
-    def __call__(self, prefix):
-        if not self.seq:
-            return ''
-        return prefix + ';' + self.seq
-
     def __int__(self):
         return self.code
 
@@ -103,16 +111,26 @@ class dyergb(DyeTrait):
         if len(args) == 1 and isinstance(args[0], (tuple, list)):
             args = args[0]
 
-        if len(args) == 1 and isinstance(args[0], self.__class__):
+        if not args:
+            self.r = 0
+            self.g = 0
+            self.b = 0
+            self.seq = ''
+            return
+
+        elif len(args) == 1 and isinstance(args[0], self.__class__):
             other = args[0]
             (self.r, self.g, self.b) = (other.r, other.g, other.b)
+
         elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
             rgb_str = args[0][1:]
             self.r = int(rgb_str[0:2], 16)
             self.g = int(rgb_str[2:4], 16)
             self.b = int(rgb_str[4:6], 16)
+
         elif len(args) == 3 and all(is_uint8(i) for i in args):
             (self.r, self.g, self.b) = args
+
         else:
             raise TypeError('Invalid RGB value: {}'.format(args))
 
@@ -124,14 +142,8 @@ class dyergb(DyeTrait):
     def __eq__(self, other):
         return isinstance(other, self.__class__) and int(self) == int(other)
 
-    def __call__(self, prefix):
-        return prefix + ';' + self.seq
-
     def __int__(self):
         return (self.r << 16) | (self.g << 8) | (self.b)
-
-    def __str__(self):
-        return '#{:0>2X}{:0>2X}{:0>2X}'.format(self.r, self.g, self.b)
 
 dye.register(dyergb)
 
