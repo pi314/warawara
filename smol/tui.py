@@ -191,6 +191,45 @@ class UserSelection:
         return '<smol.tui.UserSelection selected=[{}]>'.format(self.selected)
 
 
+class HijackStdio:
+    def __init__(self, replace_with='/dev/tty'):
+        self.replace_with = replace_with
+
+    def __enter__(self):
+        self.stdin_backup = sys.stdin
+        self.stdout_backup = sys.stdout
+        self.stderr_backup = sys.stderr
+
+        sys.stdin = open(self.replace_with)
+        sys.stdout = open(self.replace_with, 'w')
+        sys.stderr = open(self.replace_with, 'w')
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        sys.stdin.close()
+        sys.stdout.close()
+        sys.stderr.close()
+
+        sys.stdin = self.stdin_backup
+        sys.stdout = self.stdout_backup
+        sys.stderr = self.stderr_backup
+
+
+class ExceptionSuppressor:
+    def __init__(self, *exc_group):
+        if isinstance(exc_group[0], tuple):
+            self.exc_group = exc_group[0]
+        else:
+            self.exc_group = exc_group
+
+    def __enter__(self, *exc_group):
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type in (EOFError, KeyboardInterrupt):
+            print()
+        return exc_type in self.exc_group
+
+
 def prompt(question, options=tuple(),
            accept_cr=None,
            abbr=None,
@@ -203,37 +242,7 @@ def prompt(question, options=tuple(),
 
     user_selection = UserSelection(options, accept_cr=accept_cr, abbr=abbr, sep=sep, ignorecase=ignorecase)
 
-    class SingleUseContextManager:
-        def __enter__(self):
-            self.stdin_backup = sys.stdin
-            self.stdout_backup = sys.stdout
-            self.stderr_backup = sys.stderr
-
-        def __exit__(self, exc_type, exc_value, traceback):
-            sys.stdin = self.stdin_backup
-            sys.stdout = self.stdout_backup
-            sys.stderr = self.stderr_backup
-
-    class ExceptionSuppressor:
-        def __init__(self, *exc_group):
-            if isinstance(exc_group[0], tuple):
-                self.exc_group = exc_group[0]
-            else:
-                self.exc_group = exc_group
-
-        def __enter__(self, *exc_group):
-            pass
-
-        def __exit__(self, exc_type, exc_value, traceback):
-            if exc_type in (EOFError, KeyboardInterrupt):
-                print()
-            return exc_type in self.exc_group
-
-    with SingleUseContextManager():
-        sys.stdin = open('/dev/tty')
-        sys.stdout = open('/dev/tty', 'w')
-        sys.stderr = open('/dev/tty', 'w')
-
+    with HijackStdio():
         with ExceptionSuppressor(suppress):
             while user_selection.selected is None:
                 print((question + (user_selection.prompt)), end=' ')
@@ -242,8 +251,53 @@ def prompt(question, options=tuple(),
                     i = input().strip()
                     user_selection.select(i)
 
-        sys.stdin.close()
-        sys.stdout.close()
-        sys.stderr.close()
-
     return user_selection
+
+
+def menu(*args, **kwargs):
+    # up: \033[A
+    # down: \033[B
+    # right: \033[C
+    # left: \033[D
+
+    def getch():
+        import sys, termios, tty
+
+        fd = sys.stdin.fileno()
+        orig = termios.tcgetattr(fd)
+
+        try:
+            tty.setcbreak(fd)  # or tty.setraw(fd) if you prefer raw mode's behavior.
+
+            while True:
+                ch = sys.stdin.read(1)
+                if ch == '\033':
+                    ch = sys.stdin.read(1)
+                    if ch == '[':
+                        ch = sys.stdin.read(1)
+                        if ch == 'A':
+                            return 'UP'
+                        if ch == 'B':
+                            return 'DOWN'
+                        if ch == 'C':
+                            return 'RIGHT'
+                        if ch == 'D':
+                            return 'LEFT'
+                        return '\033[' + ch
+
+                    return '\033' + ch
+
+                return ch
+
+        finally:
+            termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
+
+    while True:
+        ch = getch()
+        if ch == '\033[A':
+            print('ch', '=', 'UP')
+        else:
+            print('ch', '=', ch)
+
+        if ch.lower() == 'q':
+            break
