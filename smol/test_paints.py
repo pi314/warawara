@@ -35,7 +35,7 @@ class TestDye(TestCase):
 
     def test_dye256(self):
         orange = dye(208)
-        self.eq(orange('prefix'), 'prefix;5;208')
+        self.eq(orange('text'), '\033[38;5;208mtext\033[m')
         self.eq(int(orange), 208)
         repr(orange)
 
@@ -47,14 +47,13 @@ class TestDye(TestCase):
         self.eq(orange.g, 90)
         self.eq(orange.b, 0)
         self.eq(int(orange), 0xa05a00)
-        self.eq(str(orange), '#A05A00')
 
         with self.assertRaises(TypeError):
             dyergb(True)
 
         repr(orange)
 
-        self.eq(orange('prefix'), 'prefix;2;160;90;0')
+        self.eq(orange('text'), '\033[38;2;160;90;0mtext\033[m')
 
 
 class TestPaint(TestCase):
@@ -68,26 +67,26 @@ class TestPaint(TestCase):
         self.is_true(repr(paint()).startswith('paint'))
 
     def test_fg(self):
-        self.eq(black.seq,    '\033[38;5;0m')
-        self.eq(red.seq,      '\033[38;5;1m')
-        self.eq(green.seq,    '\033[38;5;2m')
-        self.eq(yellow.seq,   '\033[38;5;3m')
-        self.eq(blue.seq,     '\033[38;5;4m')
-        self.eq(magenta.seq,  '\033[38;5;5m')
-        self.eq(cyan.seq,     '\033[38;5;6m')
-        self.eq(white.seq,    '\033[38;5;7m')
-        self.eq(orange.seq,   '\033[38;5;208m')
+        self.eq(black.seq,    '5;0')
+        self.eq(red.seq,      '5;1')
+        self.eq(green.seq,    '5;2')
+        self.eq(yellow.seq,   '5;3')
+        self.eq(blue.seq,     '5;4')
+        self.eq(magenta.seq,  '5;5')
+        self.eq(cyan.seq,     '5;6')
+        self.eq(white.seq,    '5;7')
+        self.eq(orange.seq,   '5;208')
 
     def test_str(self):
-        self.eq(str(black),         '\033[38;5;0m')
-        self.eq(str(red.seq),       '\033[38;5;1m')
-        self.eq(str(green.seq),     '\033[38;5;2m')
-        self.eq(str(yellow.seq),    '\033[38;5;3m')
-        self.eq(str(blue.seq),      '\033[38;5;4m')
-        self.eq(str(magenta.seq),   '\033[38;5;5m')
-        self.eq(str(cyan.seq),      '\033[38;5;6m')
-        self.eq(str(white.seq),     '\033[38;5;7m')
-        self.eq(str(orange.seq),    '\033[38;5;208m')
+        self.eq(str(black),     '\033[38;5;0m')
+        self.eq(str(red),       '\033[38;5;1m')
+        self.eq(str(green),     '\033[38;5;2m')
+        self.eq(str(yellow),    '\033[38;5;3m')
+        self.eq(str(blue),      '\033[38;5;4m')
+        self.eq(str(magenta),   '\033[38;5;5m')
+        self.eq(str(cyan),      '\033[38;5;6m')
+        self.eq(str(white),     '\033[38;5;7m')
+        self.eq(str(orange),    '\033[38;5;208m')
 
     def test_bg(self):
         self.eq(~red,      paint(bg=1))

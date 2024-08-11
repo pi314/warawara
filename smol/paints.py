@@ -61,8 +61,12 @@ class dye(abc.ABC):
         if len(args) == 1 and isinstance(args[0], (tuple, list)):
             args = args[0]
 
+        # empty
+        if not args:
+            return dye256(None)
+
         # copy ctor
-        if len(args) == 1 and issubclass(type(args[0]), dye):
+        elif len(args) == 1 and issubclass(type(args[0]), dye):
             return type(args[0])(*args, **kwargs)
 
         # dye256 ctor
@@ -81,7 +85,7 @@ class dye(abc.ABC):
 
 
 class dye256(DyeTrait):
-    def __init__(self, code):
+    def __init__(self, code=None):
         if isinstance(code, self.__class__):
             code = code.code
 
@@ -153,7 +157,10 @@ class paint:
         self.fg = dye(fg)
         self.bg = dye(bg)
 
-        seq = ';'.join(filter(None, [self.fg('38'), self.bg('48')]))
+        seq = ';'.join(filter(None, [
+            '38;' + self.fg.seq if self.fg.seq else None,
+            '48;' + self.bg.seq if self.bg.seq else None,
+            ]))
         self.seq = '' if not seq else ('\033[' + seq + 'm')
 
     def __repr__(self):
@@ -184,16 +191,16 @@ class paint:
         return self.seq == other.seq
 
 
-nocolor = paint()
-black = paint(0)
-red = paint(1)
-green = paint(2)
-yellow = paint(3)
-blue = paint(4)
-magenta = paint(5)
-cyan = paint(6)
-white = paint(7)
-orange = paint(208)
+nocolor = dye()
+black = dye(0)
+red = dye(1)
+green = dye(2)
+yellow = dye(3)
+blue = dye(4)
+magenta = dye(5)
+cyan = dye(6)
+white = dye(7)
+orange = dye(208)
 
 
 decolor_regex = re.compile('\033' + r'\[[\d;]*m')

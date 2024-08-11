@@ -34,15 +34,17 @@ def main():
     # print(smol.rgb, super(smol.rgb))
     A = smol.dye(a)
     B = smol.dye(b)
-    A = smol.dye('#FF0000')
-    B = smol.dye('#00FF00')
+    # A = smol.dye('#FF0000')
+    # B = smol.dye('#00FF00')
     # A = smol.dye('#FFAF00')
     # B = smol.dye('#00AFFF')
-    n = 10
     # A = smol.dye('#FF1100')
     # B = smol.dye('#FF0011')
     # A = smol.dye('#6E3A08')
     # B = smol.dye('#003847')
+    if isinstance(A, smol.dyergb) and n is None:
+        n = 10
+
     for dye in smol.gradient(A, B, N=n):
         print(str(dye) + repr(dye) + '\033[m')
 
