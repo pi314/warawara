@@ -30,12 +30,15 @@ class DyeTrait(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def __repr__(self, *args, **kwargs): # pragma: no cover
+    def __repr__(self): # pragma: no cover
         raise NotImplementedError
 
     @abc.abstractmethod
-    def __eq__(self, other): # pragma: no cover
+    def __int__(self): # pragma: no cover
         raise NotImplementedError
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and int(self) == int(other)
 
     def __call__(self, *args):
         return self.fg(*args)
@@ -53,6 +56,19 @@ class DyeTrait(abc.ABC):
 
     def __str__(self):
         return '\033[38;{}m'.format(self.seq) if self.seq else '\033[m'
+
+    def __invert__(self):
+        return paint(bg=self)
+
+    def __truediv__(self, other):
+        if not isinstance(other, dye):
+            raise TypeError('Only dye() / dye() is allowed')
+        return paint(fg=self, bg=other)
+
+    def __or__(self, other):
+        if isinstance(other, dye):
+            return self if self.seq else other
+        return paint(fg=self) | other
 
 
 class dye(abc.ABC):
@@ -101,9 +117,6 @@ class dye256(DyeTrait):
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, self.code)
 
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.code == other.code
-
     def __int__(self):
         return self.code
 
@@ -143,9 +156,6 @@ class dyergb(DyeTrait):
     def __repr__(self):
         return 'dyergb({}, {}, {})'.format(self.r, self.g, self.b)
 
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and int(self) == int(other)
-
     def __int__(self):
         return (self.r << 16) | (self.g << 8) | (self.b)
 
@@ -177,9 +187,6 @@ class paint:
         bg = other.bg if other.bg.seq else self.bg
 
         return paint(fg=fg, bg=bg)
-
-    def __add__(self, other):
-        return self | other
 
     def __truediv__(self, other):
         return paint(fg=self.fg, bg=other.fg)
