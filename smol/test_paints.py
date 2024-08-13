@@ -172,3 +172,70 @@ class TestDecolor(TestCase):
     def test_decolor(self):
         self.eq(decolor(orange('test')), 'test')
         self.eq(decolor('\033[1;31mred\033[m'), 'red')
+
+
+class TestGradient(TestCase):
+    def test_invalid_values(self):
+        with self.assertRaises(TypeError):
+            gradient(True, False)
+
+        A = dye()
+        B = dye()
+
+        with self.assertRaises(TypeError):
+            gradient(A, B, 1.5)
+
+        with self.assertRaises(ValueError):
+            gradient(A, B, 1)
+
+    def test_trivial(self):
+        A = dye(39)
+        B = dye(214)
+
+        self.eq(gradient(A, B, 2), (A, B))
+
+    def test_not_support(self):
+        A = dye(39)
+        B = dye(255)
+        res = gradient(A, B)
+        ans = (A, B)
+        self.eq(res, tuple(map(dye, ans)))
+
+    def test_dye256_gray(self):
+        A = dye(235)
+        B = dye(245)
+
+        # default length
+        res = gradient(A, B)
+        ans = tuple(range(235, 246))
+        self.eq(res, tuple(map(dye, ans)))
+
+        # shorter length
+        res = gradient(A, B, N=5)
+        ans = (235, 238, 241, 243, 245)
+        self.eq(res, tuple(map(dye, ans)))
+
+        # longer length
+        res = gradient(A, B, N=15)
+        ans = (235, 235, 236, 236, 237, 237, 238, 238, 239, 240, 241, 242, 243, 244, 245)
+        self.eq(res, tuple(map(dye, ans)))
+
+
+    def test_dye256_rgb(self):
+        A = dye(39)
+        B = dye(214)
+
+        # default length
+        res = gradient(A, B)
+        ans = (39 ,74 ,109 ,144 ,179 ,214)
+        self.eq(res, tuple(map(dye, ans)))
+
+        # shorter length
+        res = gradient(A, B, N=4)
+        ans = (39, 109, 179, 214)
+        self.eq(res, tuple(map(dye, ans)))
+
+        # longer length
+        res = gradient(A, B, N=15)
+        ans = (39, 39, 39, 74, 74, 74, 109, 109, 109, 144, 144, 179, 179, 214, 214)
+        self.eq(res, tuple(map(dye, ans)))

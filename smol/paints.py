@@ -6,6 +6,7 @@ from .math import sgn
 from .math import vector
 from .math import lerp
 from .math import interval
+from .math import distribute
 
 
 # try:
@@ -97,6 +98,7 @@ class dye(abc.ABC):
         elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
             return dyergb(*args, **kwargs)
 
+        print(args, kwargs)
         raise TypeError('Invalid arguments')
 
 
@@ -229,7 +231,7 @@ def gradient(A, B, N=None):
         return (A, B)
 
     if isinstance(A, dye256) and isinstance(B, dye256):
-        return gradient_color256(A, B, N=N)
+        return gradient_dye256(A, B, N=N)
 
     if isinstance(A, dyergb) and isinstance(B, dyergb):
         return gradient_rgb(A, B, N=N)
@@ -237,57 +239,24 @@ def gradient(A, B, N=None):
     return (A, B)
 
 
-def gradient_color256(A, B, N=None):
+def gradient_dye256(A, B, N=None):
     if A.code in range(232, 256) and B.code in range(232, 256):
-        return gradient_color256_gray(A, B, N)
+        return gradient_dye256_gray(A, B, N)
 
     if A.code in range(16, 232) and B.code in range(16, 232):
-        return gradient_color256_rgb(A, B, N)
+        return gradient_dye256_rgb(A, B, N)
 
     return (A, B)
 
 
-def distribute(samples, N):
-    if N is None:
-        return samples
-
-    n = len(samples)
-
-    if N == n:
-        return samples
-
-    if N < n:
-        # Averaging skipped samples to into N-1 gaps
-        skip_count = n - N
-        gap_count = N - 1
-
-        probe = 0
-        dup, rem = divmod(skip_count, gap_count)
-
-        ret = [samples[0]]
-        for i in range(gap_count):
-            probe += 1 + dup + (i < rem)
-            ret.append(samples[probe])
-
-    if N > n:
-        # Duplicate samples to match N
-        ret = []
-        dup, rem = divmod(N, n)
-        for i in range(n):
-            for d in range(dup + (i < rem)):
-                ret.append(samples[i])
-
-    return ret
-
-
-def gradient_color256_gray(A, B, N=None):
+def gradient_dye256_gray(A, B, N=None):
     a, b = A.code, B.code
     direction = sgn(b - a)
     n = abs(b - a) + 1
     return tuple(dye256(c) for c in distribute(interval(a, b), N or n))
 
 
-def gradient_color256_rgb(A, B, N=None):
+def gradient_dye256_rgb(A, B, N=None):
     def color_to_rgb6(p):
         c = int(p) - 16
         r = c // 36

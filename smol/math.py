@@ -1,5 +1,5 @@
 __all__ = ['is_int', 'sgn', 'lerp', 'interval']
-__all__ += ['vector']
+__all__ += ['vector', 'distribute']
 
 
 def is_int(o):
@@ -65,6 +65,39 @@ def interval(a, b, close=True):
     if close:
         return ret
     return ret[1:-1]
+
+
+def distribute(samples, N):
+    if N is None:
+        return samples
+
+    n = len(samples)
+
+    if N == n:
+        return samples
+
+    if N < n:
+        # Averaging skipped samples to into N-1 gaps
+        skip_count = n - N
+        gap_count = N - 1
+
+        probe = 0
+        dup, rem = divmod(skip_count, gap_count)
+
+        ret = [samples[0]]
+        for i in range(gap_count):
+            probe += 1 + dup + (i < rem)
+            ret.append(samples[probe])
+
+    if N > n:
+        # Duplicate samples to match N
+        ret = []
+        dup, rem = divmod(N, n)
+        for i in range(n):
+            for d in range(dup + (i < rem)):
+                ret.append(samples[i])
+
+    return tuple(ret)
 
 
 # class matrix:
