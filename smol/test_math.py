@@ -25,7 +25,6 @@ class TestMath(TestCase):
         v1 = vector(1, 2, 3)
         v2 = vector([4, 5, 6])
 
-
         self.eq(v1 + 2, (3, 4, 5))
         self.eq(2 + v1, (3, 4, 5))
         self.eq(v1 + v2, (5, 7, 9))

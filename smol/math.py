@@ -1,3 +1,6 @@
+from .itertools import unwrap_one
+
+
 __all__ = ['is_int', 'sgn', 'lerp', 'interval']
 __all__ += ['vector', 'distribute']
 
@@ -18,12 +21,38 @@ def lerp(a, b, t):
     return a + t * (b - a)
 
 
-class vector(tuple):
-    def __new__(cls, *args, **kwargs):
-        if len(args) > 1:
-            return super().__new__(cls, args)
+class vector:
+    def __init__(self, *args):
+        args = unwrap_one(args)
+
+        if isinstance(args, vector):
+            self.data = list(args.data)
         else:
-            return super().__new__(cls, *args)
+            self.data = list(args)
+
+        for i in self.data:
+            if not isinstance(i, (int, float, complex)):
+                raise ValueError('Invalid value: {}'.format(repr(tuple(self.data))))
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __eq__(self, other):
+        if not isinstance(other, (vector, tuple, list)):
+            raise TypeError('Cannot compare with type {}'.format(repr(type(other))))
+        return tuple(self.data) == tuple(other)
+
+    def __repr__(self):
+        return '(' + ', '.join(map(str, self.data)) + ')'
 
     def __add__(self, other):
         if isinstance(other, (int, float)):
