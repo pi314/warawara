@@ -25,6 +25,8 @@ class TestMath(TestCase):
         v1 = vector(1, 2, 3)
         v2 = vector([4, 5, 6])
 
+        self.eq(v1, vector(v1))
+
         self.eq(v1 + 2, (3, 4, 5))
         self.eq(2 + v1, (3, 4, 5))
         self.eq(v1 + v2, (5, 7, 9))
@@ -39,6 +41,14 @@ class TestMath(TestCase):
         self.eq(v1 * (4, 5, 6), (4, 10, 18))
 
         self.eq(v1.map(lambda x: x * 10), (10, 20, 30))
+
+        with self.assertRaises(ValueError):
+            vector('bla')
+
+        with self.assertRaises(TypeError):
+            vector(1, 2, 3) == 'bla'
+
+        repr(v1)
 
         with self.assertRaises(ValueError):
             v1 + (1, 2, 3, 4)
