@@ -27,13 +27,13 @@ def main():
     # a, b = 70, 227
     # a, b = 232, 255
     # a, b = 214, 39
-    # a, b = random.sample(range(16, 232), 2)
+    a, b = random.sample(range(16777216), 2)
     # a, b = b, a
     # print(smol.dye, super(smol.dye))
     # print(smol.dye256, super(smol.dye256))
     # print(smol.rgb, super(smol.rgb))
-    A = smol.dye(a)
-    B = smol.dye(b)
+    A = smol.dye((a & 0xFF0000) >> 16, (a & 0xFF00) >> 8, a & 0xFF)
+    B = smol.dye((b & 0xFF0000) >> 16, (b & 0xFF00) >> 8, b & 0xFF)
     # A = smol.dye('#FF0000')
     # B = smol.dye('#00FF00')
     # A = smol.dye('#FFAF00')

@@ -8,11 +8,12 @@ from .math import lerp
 from .math import interval
 from .math import distribute
 
+from .itertools import unwrap_one
 
-# try:
-#     from icecream import ic
-# except ImportError:  # Graceful fallback if IceCream isn't installed.
-#     ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
+try: # pragma: no cover
+    from icecream import ic
+except ImportError:  # pragma: no cover
+    ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
 
 
 __all__ = ['paint']
@@ -74,9 +75,7 @@ class DyeTrait(abc.ABC):
 
 class dye(abc.ABC):
     def __new__(cls, *args, **kwargs):
-        # unpack
-        if len(args) == 1 and isinstance(args[0], (tuple, list)):
-            args = args[0]
+        args = unwrap_one(args)
 
         # empty
         if not args:
@@ -98,7 +97,6 @@ class dye(abc.ABC):
         elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
             return dyergb(*args, **kwargs)
 
-        print(args, kwargs)
         raise TypeError('Invalid arguments')
 
 
@@ -127,8 +125,7 @@ dye.register(dye256)
 
 class dyergb(DyeTrait):
     def __init__(self, *args):
-        if len(args) == 1 and isinstance(args[0], (tuple, list)):
-            args = args[0]
+        args = unwrap_one(args)
 
         if not args:
             self.r = 0
@@ -304,6 +301,9 @@ def gradient_rgb(A, B, N):
     #     ret.append(dyergb(tuple(map(int, lerp(a, b, t)))))
     # ret.append(B)
     # return tuple(ret)
+
+    if N is None:
+        N = 7
 
     # Calculate gradient in HSV
     import colorsys

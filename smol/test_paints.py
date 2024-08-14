@@ -189,17 +189,20 @@ class TestGradient(TestCase):
             gradient(A, B, 1)
 
     def test_trivial(self):
+        # N=2 trivial case
         A = dye(39)
         B = dye(214)
-
         self.eq(gradient(A, B, 2), (A, B))
 
-    def test_not_support(self):
+        # dye256() and dyergb() case
+        A = dye(39)
+        B = dye('#C0FFEE')
+        self.eq(gradient(A, B), (A, B))
+
+        # dye256() rgb6 and gray case
         A = dye(39)
         B = dye(255)
-        res = gradient(A, B)
-        ans = (A, B)
-        self.eq(res, tuple(map(dye, ans)))
+        self.eq(gradient(A, B), (A, B))
 
     def test_dye256_gray(self):
         A = dye(235)
@@ -239,3 +242,56 @@ class TestGradient(TestCase):
         res = gradient(A, B, N=15)
         ans = (39, 39, 39, 74, 74, 74, 109, 109, 109, 144, 144, 179, 179, 214, 214)
         self.eq(res, tuple(map(dye, ans)))
+
+    def test_dyergb(self):
+        A = dye(242, 5, 148)
+        B = dye(146, 219, 189)
+
+        # default length
+        res = gradient(A, B)
+        ans = (dye(242, 5, 148),
+               dye(223, 30, 238),
+               dye(137, 55, 234),
+               dye(79, 80, 230),
+               dye(102, 161, 226),
+               dye(124, 217, 222),
+               dye(146, 219, 189))
+
+        self.eq(res, ans)
+
+        # shorter length
+        res = gradient(A, B, N=4)
+        ans = (dye(242, 5, 148),
+               dye(137, 55, 234),
+               dye(102, 161, 226),
+               dye(146, 219, 189))
+        self.eq(res, tuple(map(dye, ans)))
+
+        # longer length
+        res = gradient(A, B, N=15)
+        ans = (dyergb(242, 5, 148),
+               dyergb(240, 16, 196),
+               dyergb(237, 26, 238),
+               dyergb(196, 37, 237),
+               dyergb(159, 48, 235),
+               dyergb(127, 58, 233),
+               dyergb(100, 69, 232),
+               dyergb(79, 80, 230),
+               dyergb(89, 118, 228),
+               dyergb(99, 151, 227),
+               dyergb(108, 179, 225),
+               dyergb(118, 203, 223),
+               dyergb(127, 222, 221),
+               dyergb(136, 220, 203),
+               dyergb(146, 219, 189),)
+        self.eq(res, ans)
+
+        A = dye('#FF1100')
+        B = dye('#FF0011')
+        res = gradient(A, B, N=3)
+        self.eq(res, (A, dye('#FF0000'), B))
+
+        A = dye('#FF0011')
+        B = dye('#FF1100')
+        res = gradient(A, B, N=3)
+        self.eq(res, (A, dye('#FF0000'), B))
