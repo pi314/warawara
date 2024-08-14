@@ -1,6 +1,16 @@
 import itertools
 
 
+def unwrap_one(obj):
+    try:
+        if len(obj) == 1 and not isinstance(obj[0], str) and iter(obj[0]):
+            return obj[0]
+    except TypeError:
+        pass
+
+    return obj
+
+
 def lookahead(iterable):
     it = iter(iterable)
     lookahead = next(it)
