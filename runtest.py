@@ -24,4 +24,4 @@ if __name__ == '__main__':
     cov.stop()
     cov.save()
 
-    cov.html_report(omit=['test_*.py'])
+    cov.html_report(omit=['test_*.py', '*/site-packages/*'])
