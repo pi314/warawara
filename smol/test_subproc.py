@@ -12,34 +12,119 @@ def queue_to_list(Q):
     return ret
 
 
+class TestEventBroadcaster(TestCase):
+    def test_all(self):
+        data1 = []
+        def handler1(arg):
+            data1.append(arg)
+
+        data2 = []
+        def handler2(arg):
+            data2.append(arg)
+
+        import smol
+        hub = smol.subproc.EventBroadcaster()
+        hub.broadcast('...')
+
+        hub += handler1
+        hub.broadcast('wah')
+
+        hub += handler2
+        hub.broadcast('Wah')
+
+        hub += handler2
+        hub.broadcast('WAAAAAH')
+
+        hub -= handler1
+        hub.broadcast('wah?')
+
+        hub -= handler2
+        hub.broadcast('wow')
+
+        hub -= handler2
+        hub.broadcast('bye')
+
+        self.eq(data1, ['wah', 'Wah', 'WAAAAAH'])
+        self.eq(data2, ['Wah', 'WAAAAAH', 'WAAAAAH', 'wah?', 'wah?', 'wow'])
+
+
 class TestStream(TestCase):
-    def test_stream(self):
+    def test_stream_basic_io(self):
         s = stream()
-        s.keep = True
+        self.eq(s.keep, False)
+
         s.writeline('line1')
         s.writeline('line2')
         s.writeline('line3')
         self.is_false(s.closed)
+
         s.close()
         self.is_true(s.closed)
-        self.eq(s.lines, ['line1', 'line2', 'line3'])
+
+        self.eq(s.lines, [])
+        self.eq(s.readline(), 'line1')
+        self.eq(s.readline(), 'line2')
+        self.eq(s.readline(), 'line3')
+
+    def test_stream_iter(self):
+        s = stream()
+        self.eq(s.keep, False)
+        s.writelines(['line1', 'line2', 'line3'])
+
+        i = iter(s)
+        self.eq(next(i), 'line1')
+        self.eq(next(i), 'line2')
+        self.eq(next(i), 'line3')
+
+        s.close()
+
+        with self.assertRaises(StopIteration):
+            next(iter(s))
+
+    def test_stream_keep(self):
+        s = stream()
+        s.keep = True
+
+        lines = ['line1', 'line2', 'line3']
+        for line in lines:
+            s.writeline(line)
+
+        self.eq(s.lines, lines)
+        self.eq(len(s), 3)
+
+        self.is_false(s.empty)
+        self.is_true(bool(s))
+
+        self.eq(s.readline(), 'line1')
+        self.eq(s.readline(), 'line2')
+        self.eq(s.readline(), 'line3')
+        self.is_false(s.empty)
+        self.is_true(bool(s))
+
+    def test_stream_subscribers(self):
+        data1 = []
+        def handler1(line):
+            data1.append(line)
+
+        data2 = []
+        def handler2(line):
+            data2.append(line)
+
+        Q = queue.Queue()
 
         s = stream()
+        s.welcome([handler1, handler2])
+        s.welcome(Q)
+        s.welcome(True)
+
+        with self.assertRaises(TypeError):
+            s.welcome(s)
+
         lines = ['line1', 'line2', 'line3']
         s.writelines(lines)
-        s.close()
-        self.eq(s.lines, [])
-        for nr, line in enumerate(s):
-            self.eq(lines[nr], line)
-        self.eq(s.lines, [])
 
-    def test_stream_nokeep(self):
-        s = stream()
-        # s.keep = False # Default
-        s.writeline('line1')
-        s.writeline('line2')
-        s.writeline('line3')
-        self.is_true(s.empty)
+        self.eq(data1, lines)
+        self.eq(data2, lines)
 
 
 class TestSubproc(TestCase):
@@ -74,6 +159,12 @@ class TestSubproc(TestCase):
 
         checkpoint.set()
         p.wait()
+
+        p = command(['sleep', 1])
+        p.run(wait=False)
+        with self.assertRaises(AlreadyRunningError):
+            p.run(wait=False)
+        p.kill()
 
     def test_context_manager_nowait(self):
         with command('seq 5'.split()) as p:

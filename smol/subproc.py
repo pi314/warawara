@@ -13,7 +13,11 @@ TimeoutExpired = sub.TimeoutExpired
 
 class AlreadyRunningError(Exception):
     def __init__(self, cmd):
-        prog = cmd.cmd[0].__name__ + '()' if callable(cmd.cmd[0]) else cmd.cmd[0]
+        if callable(cmd.cmd[0]):
+            prog = cmd.cmd[0].__name__ + '()'
+        else:
+            prog = cmd.cmd[0]
+
         super().__init__(' '.join(
             [prog] + cmd.cmd[1:]))
 
@@ -99,7 +103,7 @@ class stream:
 
     @property
     def empty(self):
-        return not self.lines and not self.queue.empty()
+        return not self.lines and self.queue.empty()
 
     def __bool__(self):
         return not self.empty
@@ -167,6 +171,9 @@ class command:
     def __init__(self, cmd,
             stdin=None, stdout=True, stderr=True,
             newline='\n', env=None):
+
+        if isinstance(cmd, str):
+            cmd = [cmd]
 
         if callable(cmd):
             cmd = [cmd]
