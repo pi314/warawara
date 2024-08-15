@@ -14,6 +14,7 @@ except ModuleNotFoundError:
 
 
 if __name__ == '__main__':
+    cov.set_option("run:branch", True)
     cov.start()
 
     loader = unittest.TestLoader()
