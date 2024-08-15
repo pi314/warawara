@@ -12,8 +12,10 @@ TimeoutExpired = sub.TimeoutExpired
 
 
 class AlreadyRunningError(Exception):
-    def __init__(self, command):
-        super().__init__(' '.join(command.cmd))
+    def __init__(self, cmd):
+        prog = cmd.cmd[0].__name__ + '()' if callable(cmd.cmd[0]) else cmd.cmd[0]
+        super().__init__(' '.join(
+            [prog] + cmd.cmd[1:]))
 
 
 class EventBroadcaster:

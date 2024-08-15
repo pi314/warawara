@@ -60,6 +60,21 @@ class TestSubproc(TestCase):
         p.wait()
         self.eq(p.stdout.lines, '1 2 3 4 5'.split())
 
+    def test_already_running_error(self):
+        checkpoint = self.checkpoint()
+
+        def prog(proc, *args):
+            checkpoint.wait()
+
+        p = command(prog)
+        p.run(wait=False)
+
+        with self.assertRaises(AlreadyRunningError):
+            p.run()
+
+        checkpoint.set()
+        p.wait()
+
     def test_context_manager_nowait(self):
         with command('seq 5'.split()) as p:
             self.eq(p.stdout.lines, [])
