@@ -98,8 +98,9 @@ class TestStream(TestCase):
         self.eq(s.readline(), 'line1')
         self.eq(s.readline(), 'line2')
         self.eq(s.readline(), 'line3')
-        self.is_false(s.empty)
-        self.is_true(bool(s))
+
+        self.eq(s.lines, lines)
+        self.eq(len(s), 3)
 
     def test_stream_subscribers(self):
         data1 = []
@@ -128,6 +129,12 @@ class TestStream(TestCase):
 
 
 class TestSubproc(TestCase):
+    def test_default_properties(self):
+        def prog(proc):
+            self.eq(proc[0].readline(), 'line')
+
+        p = run(prog, stdin='line', stdout=False, stderr=False)
+
     def test_stdout(self):
         p = run('seq 5'.split())
         self.eq(p.stdout.lines, '1 2 3 4 5'.split())
@@ -166,6 +173,17 @@ class TestSubproc(TestCase):
             p.run(wait=False)
         p.kill()
 
+    def test_word(self):
+        p = run('true')
+        self.eq(p.returncode, 0)
+
+        p = run('false')
+        self.eq(p.returncode, 1)
+
+    def test_empty_cmd(self):
+        with self.assertRaises(ValueError):
+            p = command([])
+
     def test_context_manager_nowait(self):
         with command('seq 5'.split()) as p:
             self.eq(p.stdout.lines, [])
@@ -192,7 +210,7 @@ class TestSubproc(TestCase):
         self.eq(p.stderr.lines, ['how are you ', 'thank you '])
         self.eq(p.returncode, 2024)
 
-    def test_callback(self):
+    def test_stdout_callback(self):
         lines = []
         def callback(line):
             lines.append(line)
@@ -232,7 +250,7 @@ class TestSubproc(TestCase):
 
     def test_stdin(self):
         p = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
-        p.run(wait=False).wait()
+        p.run()
         self.eq(p.stdout.lines, ['1:hello', '2:world'])
 
     def test_stdin_delayed_write(self):

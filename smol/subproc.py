@@ -172,6 +172,9 @@ class command:
             stdin=None, stdout=True, stderr=True,
             newline='\n', env=None):
 
+        if not cmd:
+            raise ValueError('command is empty')
+
         if isinstance(cmd, str):
             cmd = [cmd]
 
@@ -182,9 +185,6 @@ class command:
             self.cmd = [token for token in cmd]
         else:
             self.cmd = [str(token) for token in cmd]
-
-        if not self.cmd:
-            raise ValueError('command is empty')
 
         self.newline = newline
 
