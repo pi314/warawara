@@ -139,6 +139,11 @@ class TestSubproc(TestCase):
         p = run('seq 5'.split())
         self.eq(p.stdout.lines, '1 2 3 4 5'.split())
 
+    def test_disable_stdout_and_stderr(self):
+        p = command('seq 5'.split(), stdout=None, stderr=None)
+        self.is_true(p.stdout.closed)
+        self.is_true(p.stderr.closed)
+
     def test_run_and_then_wait(self):
         p = run('seq 5'.split(), wait=False)
         self.eq(p.stdout.lines, [])
@@ -413,6 +418,18 @@ class TestSubprocRunMocker(TestCase):
         p = mock_run('wah wah wah'.split())
         self.eq(p.stdout.lines, ['mock wah', 'wah wah'])
 
+    def test_mock_meaningless_mock(self):
+        mock_run = RunMocker()
+
+        with self.assertRaises(ValueError):
+            mock_run.register('cmd')
+
+    def test_mock_ambiguous_mock(self):
+        mock_run = RunMocker()
+
+        with self.assertRaises(ValueError):
+            mock_run.register('wah', lambda: None, stdout='wah')
+
     def test_mock_unregistered_cmd(self):
         mock_run = RunMocker()
 
@@ -521,6 +538,12 @@ class TestSubprocRunMocker(TestCase):
 
         with self.assertRaises(ValueError):
             mock_run('rm non_exist -f'.split())
+
+    def test_mock_with_returncode(self):
+        mock_run = RunMocker()
+        mock_run.register('wah', returncode=1)
+        p = mock_run(['wah'])
+        self.eq(p.returncode, 1)
 
     def test_mock_with_stdout_stderr_returncode(self):
         mock_run = RunMocker()
