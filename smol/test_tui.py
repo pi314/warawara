@@ -62,6 +62,31 @@ class TestThreadedSpinner(TestCase):
         spinner.text('wah')
         self.eq(spinner.text(), 'wah')
 
+    def test_icon_set_loop(self):
+        spinner = ThreadedSpinner('LOOP')
+        self.eq(spinner.icon_entry, tuple())
+        self.eq(spinner.icon_loop, ('LOOP',))
+        self.eq(spinner.icon_leave, '.')
+
+    def test_icon_set_entry_loop(self):
+        spinner = ThreadedSpinner('ENTRY', 'LOOP')
+        self.eq(spinner.icon_entry, 'ENTRY')
+        self.eq(spinner.icon_loop, 'LOOP')
+        self.eq(spinner.icon_leave, '.')
+
+    def test_icon_set_entry_loop_leave(self):
+        spinner = ThreadedSpinner('ENTRY', 'LOOP', 'LEAVE')
+        self.eq(spinner.icon_entry, 'ENTRY')
+        self.eq(spinner.icon_loop, 'LOOP')
+        self.eq(spinner.icon_leave, 'LEAVE')
+
+    def test_icon_set_invalid(self):
+        with self.assertRaises(ValueError):
+            spinner = ThreadedSpinner('ENTRY', 'LOOP', 'LEAVE', 'WHAT')
+
+        with self.assertRaises(ValueError):
+            spinner = ThreadedSpinner(True)
+
     def test_context_manager(self):
         spinner = ThreadedSpinner()
         spinner.print_function = lambda *args, **kwarags: None

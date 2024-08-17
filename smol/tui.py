@@ -16,10 +16,6 @@ class ThreadedSpinner:
             self.icon_entry = '⠉⠛⠿⣿⠿⠛⠉⠙'
             self.icon_loop = '⠹⢸⣰⣤⣆⡇⠏⠛'
             self.icon_leave = '⣿'
-        elif isinstance(icon, str):
-            self.icon_entry = tuple()
-            self.icon_loop = [icon]
-            self.icon_leave = '.'
         elif len(icon) == 1:
             self.icon_entry = tuple()
             self.icon_loop = icon
@@ -35,8 +31,14 @@ class ThreadedSpinner:
         else:
             raise ValueError('Invalid value: ' + repr(icon))
 
-        if not isinstance(self.icon_leave, str):
-            raise ValueError('Icon[leave] needs to be a single string')
+        ok = True
+        for name, icon in (('entry', self.icon_entry), ('loop', self.icon_loop), ('leave', self.icon_leave)):
+            if isinstance(icon, str):
+                ok = True
+            elif isinstance(icon, (tuple, list)) and all(isinstance(c, str) for c in icon):
+                ok = True
+            else:
+                raise ValueError('Invalid value of icon[{}]: {}'.format(name, icon))
 
         self.delay = delay
         self.is_end = False
