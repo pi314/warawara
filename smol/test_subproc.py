@@ -187,6 +187,9 @@ class TestSubproc(TestCase):
 
     def test_empty_cmd(self):
         with self.assertRaises(ValueError):
+            p = command()
+
+        with self.assertRaises(ValueError):
             p = command([])
 
     def test_context_manager_nowait(self):

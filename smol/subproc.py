@@ -2,6 +2,8 @@ import queue
 import subprocess as sub
 import threading
 
+from .itertools import unwrap_one
+
 
 __all__ = ['stream', 'command', 'run', 'pipe']
 __all__ += ['TimeoutExpired', 'AlreadyRunningError']
@@ -168,18 +170,14 @@ class command:
         The environment variables.
     '''
 
-    def __init__(self, cmd,
+    def __init__(self, *cmd,
             stdin=None, stdout=True, stderr=True,
             newline='\n', env=None):
 
+        cmd = unwrap_one(cmd)
+
         if not cmd:
             raise ValueError('command is empty')
-
-        if isinstance(cmd, str):
-            cmd = [cmd]
-
-        if callable(cmd):
-            cmd = [cmd]
 
         if callable(cmd[0]):
             self.cmd = [token for token in cmd]
@@ -366,8 +364,8 @@ class command:
             self.thread.join()
 
 
-def run(cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
-    ret = command(cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
+def run(*cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
+    ret = command(*cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
     ret.run(wait=wait, timeout=timeout)
     return ret
 
