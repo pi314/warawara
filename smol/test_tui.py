@@ -310,3 +310,19 @@ class TestPromotAskUser(TestCase):
         self.ne(yn, 't')
         self.eq(yn, 'tea')
         self.ne(yn, 'TEA')
+
+    def test_noaccept_cr(self):
+        self.set_input('', 'c')
+        yn = prompt('Coffee or tea?', 'coffee tea', accept_cr=False)
+        self.expect_output(
+                'Coffee or tea? [(c)offee / (t)ea] ',
+                'Coffee or tea? [(c)offee / (t)ea] ',
+                )
+
+        self.eq(yn.ignorecase, True)
+        self.eq(yn.selected, 'c')
+        self.eq(yn, 'c')
+        self.eq(yn, 'coffee')
+        self.eq(yn, 'Coffee')
+        self.eq(yn, 'COFFEE')
+        self.ne(yn, 'tea')
