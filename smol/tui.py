@@ -3,6 +3,7 @@ import itertools
 import sys
 import threading
 import time
+import select
 
 from .paints import paint
 
@@ -256,50 +257,75 @@ def prompt(question, options=tuple(),
     return user_selection
 
 
+special_key_table = {
+        '\033[A':   'up',
+        '\033[B':   'down',
+        '\033[C':   'right',
+        '\033[D':   'left',
+        '\033':     'escape',
+        '\033[1~':  'home',
+        '\033[4~':  'end',
+        '\033[5~':  'pgup',
+        '\033[6~':  'pgdn',
+        '\x7f':     'backspace',
+        '\n':       'enter',
+        '\t':       'tab',
+        }
+
+
+def getch(timeout=None):
+    print('getch()')
+    import sys, termios, tty
+    import os
+    import time
+
+    fd = sys.stdin.fileno()
+    orig = termios.tcgetattr(fd)
+
+    def has_data(t=0):
+        return select.select([fd], [], [], t)[0]
+
+    def read_one_byte():
+        return os.read(sys.stdin.fileno(), 1).decode('utf8')
+
+    try:
+        tty.setcbreak(fd)  # or tty.setraw(fd) if you prefer raw mode's behavior.
+
+        # Wait for input until timeout
+        if not has_data(timeout):
+            return None
+
+        acc = ''
+        while True:
+            acc += read_one_byte()
+            print('acc', '=', repr(acc))
+
+            if not has_data():
+                return special_key_table.get(acc, acc)
+
+            if acc != '\033' and acc in special_key_table:
+                return special_key_table[acc]
+
+            # prefix match: collectmore char
+            if any(key_seq for key_seq in special_key_table.keys() if key_seq.startswith(acc)):
+                continue
+
+            return acc
+
+    finally:
+        termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
+
+
 def menu(*args, **kwargs):
-    # up: \033[A
-    # down: \033[B
-    # right: \033[C
-    # left: \033[D
 
-    def getch():
-        import sys, termios, tty
-
-        fd = sys.stdin.fileno()
-        orig = termios.tcgetattr(fd)
-
-        try:
-            tty.setcbreak(fd)  # or tty.setraw(fd) if you prefer raw mode's behavior.
-
-            while True:
-                ch = sys.stdin.read(1)
-                if ch == '\033':
-                    ch = sys.stdin.read(1)
-                    if ch == '[':
-                        ch = sys.stdin.read(1)
-                        if ch == 'A':
-                            return 'UP'
-                        if ch == 'B':
-                            return 'DOWN'
-                        if ch == 'C':
-                            return 'RIGHT'
-                        if ch == 'D':
-                            return 'LEFT'
-                        return '\033[' + ch
-
-                    return '\033' + ch
-
-                return ch
-
-        finally:
-            termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
-
+    print(menu)
     while True:
         ch = getch()
-        if ch == '\033[A':
-            print('ch', '=', 'UP')
-        else:
-            print('ch', '=', ch)
+        print('ch', '=', repr(ch))
+        print()
 
-        if ch.lower() == 'q':
-            break
+        if ch == 'q':
+            exit()
+
+    # while True:
+    #     print(repr(sys.stdin.read(1)))
