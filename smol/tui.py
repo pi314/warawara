@@ -3,9 +3,9 @@ import itertools
 import sys
 import threading
 import time
-import select
 
-from .paints import paint
+
+from . import paints
 
 
 __all__ = ['ThreadedSpinner', 'prompt']
@@ -274,10 +274,10 @@ special_key_table = {
 
 
 def getch(timeout=None):
-    print('getch()')
-    import sys, termios, tty
+    import termios, tty
     import os
     import time
+    import select
 
     fd = sys.stdin.fileno()
     orig = termios.tcgetattr(fd)
@@ -298,7 +298,6 @@ def getch(timeout=None):
         acc = ''
         while True:
             acc += read_one_byte()
-            print('acc', '=', repr(acc))
 
             if not has_data():
                 return special_key_table.get(acc, acc)
@@ -316,16 +315,38 @@ def getch(timeout=None):
         termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
 
 
-def menu(*args, **kwargs):
+def menu(question, options, wrap=False,
+         suppress=(EOFError, KeyboardInterrupt)):
+    cursor = 0
 
-    print(menu)
-    while True:
-        ch = getch()
-        print('ch', '=', repr(ch))
-        print()
+    with HijackStdio():
+        with ExceptionSuppressor(suppress):
+            while True:
+                print(question)
+                for idx, o in enumerate(options):
+                    if idx == cursor:
+                        print('>', (paints.black / paints.white)(o))
+                    else:
+                        print(' ', o)
 
-        if ch == 'q':
-            exit()
+                ch = getch()
 
-    # while True:
-    #     print(repr(sys.stdin.read(1)))
+                if ch == 'q':
+                    break
+
+                elif ch == 'enter':
+                    return options[cursor]
+
+                elif ch in ('up', 'k'):
+                    cursor = max(cursor - 1, 0) if not wrap else ((cursor + len(options) - 1) % len(options))
+
+                elif ch in ('down', 'j'):
+                    cursor = min(cursor + 1, len(options) - 1) if not wrap else (cursor + 1) % len(options)
+
+                elif ch == 'home':
+                    cursor = 0
+
+                elif ch == 'end':
+                    cursor = len(options) - 1
+
+                print('\033[{}A'.format(len(options) + 1), end='')
