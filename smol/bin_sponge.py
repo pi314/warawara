@@ -4,7 +4,7 @@ import sys
 import threading
 import time
 
-from . import lib_subproc
+from . import lib_subproc as subproc
 
 
 def print_err(*args, **kwargs):
