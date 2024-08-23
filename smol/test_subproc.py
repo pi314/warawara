@@ -192,10 +192,14 @@ class TestSubproc(TestCase):
         with self.assertRaises(ValueError):
             p = command([])
 
-    def test_context_manager_nowait(self):
-        with command('seq 5'.split()) as p:
-            self.eq(p.stdout.lines, [])
-        self.eq(p.stdout.lines, '1 2 3 4 5'.split())
+    def test_run_with_context_manager(self):
+        barrier = threading.Barrier(2)
+
+        def prog(proc, *args):
+            barrier.wait()
+
+        with command(prog) as p:
+            barrier.wait()
 
     def test_stdout_nokeep(self):
         p = command('seq 5'.split(), stdout=False)
@@ -302,6 +306,22 @@ class TestSubproc(TestCase):
         p2.wait()
         self.eq(p2.stdin.lines, ['1:hello', '2:world'])
         self.eq(p2.stdout.lines, ['1/1:hello', '2/2:world'])
+
+    def test_pipe_istream_already_closed(self):
+        i = stream()
+        o = stream()
+        i.close()
+
+        with self.assertRaises(EOFError):
+            pipe(i, o)
+
+    def test_pipe_ostream_already_closed(self):
+        i = stream()
+        o = stream()
+        o.close()
+
+        with self.assertRaises(BrokenPipeError):
+            pipe(i, o)
 
     def test_callable_with_pipe(self):
         def prog(proc, *args):

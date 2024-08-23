@@ -85,6 +85,9 @@ class stream:
         return line
 
     def writeline(self, line):
+        if self.closed:
+            return
+
         if self.keep:
             self.lines.append(line)
 
@@ -371,6 +374,13 @@ def run(*cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait
 
 
 def pipe(istream, *ostreams):
+    if istream.closed:
+        raise EOFError('istream already closed')
+
+    for ostream in ostreams:
+        if ostream.closed:
+            raise BrokenPipeError('ostream already closed')
+
     def worker(istream, ostreams):
         for line in istream:
             for ostream in ostreams:
