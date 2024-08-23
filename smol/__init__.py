@@ -1,37 +1,41 @@
 __version__ = '2.0.0'
 
-from .lib_itertools import *
-from .lib_math import *
-from .lib_paints import *
-from .lib_regex import *
-from .lib_subproc import *
-from .lib_tui import *
-from .lib_typesetting import *
 
-itertools = lib_itertools
-math = lib_math
-paints = lib_paints
-regex = lib_regex
-subproc = lib_subproc
-tui = lib_tui
-typesetting = lib_typesetting
+def load_internal_modules():
+    import os
+    import importlib
+    for f in os.listdir(os.path.dirname(__file__)):
+        if f.startswith('lib_') and f.endswith('.py'):
+            int_name = os.path.splitext(f)[0]
+            ext_name = int_name[4:]
+            module = importlib.import_module('.' + int_name, 'smol')
+
+            if '__all__' in module.__dict__:
+                attrs = module.__dict__['__all__']
+            else:
+                attrs = [x for x in module.__dict__ if not x.startswith('_')]
+
+            globals()[ext_name] = globals()[int_name]
+            globals().update({attr: getattr(module, attr) for attr in attrs})
+
+            del globals()[int_name]
+
+load_internal_modules()
+del load_internal_modules
+
 
 from . import bin
-
 
 def load_cli_entry_points():
     import os
     import importlib
-
     for f in os.listdir(os.path.dirname(__file__)):
         if f.startswith('bin_') and f.endswith('.py'):
-            m = os.path.splitext(f)[0]
-
-            module = importlib.import_module('.' + m, 'smol')
-            setattr(bin, m[4:], module)
-
-            del globals()[m]
+            int_name = os.path.splitext(f)[0]
+            ext_name = int_name[4:]
+            module = importlib.import_module('.' + int_name, 'smol')
+            setattr(bin, ext_name, module)
+            del globals()[int_name]
 
 load_cli_entry_points()
-
 del load_cli_entry_points
