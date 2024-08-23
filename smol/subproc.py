@@ -84,9 +84,11 @@ class stream:
         line = self.queue.get()
         return line
 
-    def writeline(self, line):
+    def writeline(self, line, suppress=True):
         if self.closed:
-            return
+            if suppress:
+                return
+            raise BrokenPipeError('stream already closed')
 
         if self.keep:
             self.lines.append(line)

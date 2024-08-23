@@ -127,6 +127,23 @@ class TestStream(TestCase):
         self.eq(data1, lines)
         self.eq(data2, lines)
 
+    def test_stream_write_after_close(self):
+        def should_not_be_called_handler(line):
+            self.fail()
+
+        # test in test
+        with self.assertRaises(AssertionError):
+            should_not_be_called_handler('wah')
+
+        s = stream()
+        s.welcome(should_not_be_called_handler)
+        s.close()
+
+        s.writeline('line1')
+
+        with self.assertRaises(BrokenPipeError):
+            s.writeline('line2', suppress=False)
+
 
 class TestSubproc(TestCase):
     def test_default_properties(self):
