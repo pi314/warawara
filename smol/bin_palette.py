@@ -1,8 +1,8 @@
 import sys
 
-from . import paints
+from . import lib_paints
 
-from .paints import paint
+from .lib_paints import paint
 
 
 def main():

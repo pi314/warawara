@@ -1,4 +1,4 @@
-from .itertools import unwrap_one
+from .lib_itertools import unwrap_one
 
 
 __all__ = ['is_int', 'sgn', 'lerp', 'interval']

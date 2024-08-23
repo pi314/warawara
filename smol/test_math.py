@@ -1,6 +1,6 @@
 from .test_utils import *
 
-from smol.math import *
+from smol import *
 
 
 class TestMath(TestCase):

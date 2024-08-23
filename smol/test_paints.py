@@ -1,6 +1,6 @@
 from .test_utils import *
 
-from smol.paints import *
+from smol import *
 
 
 class TestDyeFacade(TestCase):

@@ -2,13 +2,13 @@ import re
 import abc
 import itertools
 
-from .math import sgn
-from .math import vector
-from .math import lerp
-from .math import interval
-from .math import distribute
+from .lib_math import sgn
+from .lib_math import vector
+from .lib_math import lerp
+from .lib_math import interval
+from .lib_math import distribute
 
-from .itertools import unwrap_one
+from .lib_itertools import unwrap_one
 
 try: # pragma: no cover
     from icecream import ic

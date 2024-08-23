@@ -2,7 +2,7 @@ import queue
 import subprocess as sub
 import threading
 
-from .itertools import unwrap_one
+from .lib_itertools import unwrap_one
 
 
 __all__ = ['stream', 'command', 'run', 'pipe']

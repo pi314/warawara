@@ -1,6 +1,6 @@
 from .test_utils import *
 
-from smol.itertools import *
+from smol import *
 
 
 class TestItertools(TestCase):

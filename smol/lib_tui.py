@@ -5,7 +5,7 @@ import threading
 import time
 
 
-from . import paints
+from . import lib_paints
 
 
 __all__ = ['ThreadedSpinner', 'prompt']
@@ -325,7 +325,7 @@ def menu(question, options, wrap=False,
                 print(question)
                 for idx, o in enumerate(options):
                     if idx == cursor:
-                        print('>', (paints.black / paints.white)(o))
+                        print('>', (lib_paints.black / lib_paints.white)(o))
                     else:
                         print(' ', o)
 

@@ -2,7 +2,7 @@ import queue
 
 from .test_utils import *
 
-from smol.subproc import *
+from smol import *
 
 
 def queue_to_list(Q):

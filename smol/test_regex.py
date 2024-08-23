@@ -1,6 +1,6 @@
 from .test_utils import *
 
-from smol.regex import *
+from smol import *
 
 
 class TestRegex(TestCase):

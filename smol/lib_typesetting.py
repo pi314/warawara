@@ -3,9 +3,9 @@ import unicodedata
 
 from itertools import repeat
 
-from .itertools import zip_longest
+from .lib_itertools import zip_longest
 
-from .paints import decolor
+from .lib_paints import decolor
 
 
 __all__ = ['strwidth', 'ljust', 'rjust']

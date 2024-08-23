@@ -8,7 +8,7 @@ from collections import namedtuple
 
 from .test_utils import *
 
-from smol.tui import *
+from smol import *
 
 
 def queue_to_list(Q):
