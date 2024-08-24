@@ -262,7 +262,7 @@ special_key_table = {
         '\033[B':   'down',
         '\033[C':   'right',
         '\033[D':   'left',
-        '\033':     'escape',
+        '\033':     'esc',
         '\033[1~':  'home',
         '\033[4~':  'end',
         '\033[5~':  'pgup',
@@ -270,10 +270,11 @@ special_key_table = {
         '\x7f':     'backspace',
         '\n':       'enter',
         '\t':       'tab',
+        ' ':        'space',
         }
 
 
-def getch(timeout=None):
+def getch(timeout=None, alias=True):
     import termios, tty
     import os
     import time
@@ -300,10 +301,10 @@ def getch(timeout=None):
             acc += read_one_byte()
 
             if not has_data():
-                return special_key_table.get(acc, acc)
+                return special_key_table.get(acc, acc) if alias else acc
 
             if acc != '\033' and acc in special_key_table:
-                return special_key_table[acc]
+                return special_key_table[acc] if alias else acc
 
             # prefix match: collectmore char
             if any(key_seq for key_seq in special_key_table.keys() if key_seq.startswith(acc)):
@@ -316,22 +317,45 @@ def getch(timeout=None):
 
 
 def menu(question, options, wrap=False,
-         suppress=(EOFError, KeyboardInterrupt)):
-    cursor = 0
+         onkey=lambda key, cursor: None,
+         suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
+    user_options = options
+
+    options = [opt.strip() if isinstance(opt, str) else opt for opt in user_options]
+
+    def printline(*args, **kwargs):
+        args = list(args)
+        if args:
+            args[0] = '\r\033[K' + args[0]
+        else:
+            args = ['\r\033[K']
+        print(*args, **kwargs)
 
     with HijackStdio():
         with ExceptionSuppressor(suppress):
+            cursor = 0
+            message = ''
             while True:
-                print(question)
+                if question:
+                    printline(question)
+
                 for idx, o in enumerate(options):
                     if idx == cursor:
-                        print('>', (lib_paints.black / lib_paints.white)(o))
+                        printline('>', (lib_paints.black / lib_paints.white)(o))
                     else:
-                        print(' ', o)
+                        printline(' ', o)
+
+                printline('[' + message + ']', end='')
 
                 ch = getch()
 
+                if onkey:
+                    msg = onkey(key=ch, cursor=options[cursor])
+                    if msg is not None:
+                        message = msg
+
                 if ch == 'q':
+                    printline(end='')
                     break
 
                 elif ch == 'enter':
@@ -349,4 +373,5 @@ def menu(question, options, wrap=False,
                 elif ch == 'end':
                     cursor = len(options) - 1
 
-                print('\033[{}A'.format(len(options) + 1), end='')
+                printline('{' + message + '}', end='')
+                print('\r\033[{}A'.format(len(options) + 1), end='')
