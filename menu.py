@@ -1,4 +1,6 @@
 import sys
+import os
+import shutil
 
 
 import smol
@@ -8,7 +10,9 @@ def main():
     if not sys.stdin.isatty():
         items = [line for line in sys.stdin]
     else:
-        items = ['Default item 1', 'Default item 2', 'Defaaaaaauuuuulllltttt item 33333']
+        items = os.listdir('.')
+
+    print(shutil.get_terminal_size())
 
     def onkey(key, cursor):
         if key == '\x04':
@@ -22,6 +26,9 @@ def main():
 
         if key == 'space':
             return ''
+
+        if key == 'q':
+            return
 
         return key
 

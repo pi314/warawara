@@ -5,7 +5,7 @@ import threading
 import time
 
 
-from . import lib_paints
+from . import lib_paints as paints
 
 
 __all__ = ['ThreadedSpinner', 'prompt']
@@ -316,10 +316,36 @@ def getch(timeout=None, alias=True):
         termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
 
 
+def _default_onkey(key, cursor):
+    if key == 'q':
+        return 'quit'
+
+    if key == 'enter':
+        return 'select'
+
+    if key == 'space':
+        return 'toggle'
+
+    if key == 'up':
+        return 'up'
+
+    if key == 'down':
+        return 'down'
+
+    if key == 'home':
+        return 'home'
+
+    if key == 'end':
+        return 'end'
+
+
 def menu(question, options, wrap=False,
-         onkey=lambda key, cursor: None,
+         onkey=_default_onkey,
          suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
     user_options = options
+
+    if not callable(onkey):
+        raise TypeError('onkey should be a callable(key, cursor)')
 
     options = [opt.strip() if isinstance(opt, str) else opt for opt in user_options]
 
@@ -341,7 +367,7 @@ def menu(question, options, wrap=False,
 
                 for idx, o in enumerate(options):
                     if idx == cursor:
-                        printline('>', (lib_paints.black / lib_paints.white)(o))
+                        printline('>', (paints.black / paints.white)(o))
                     else:
                         printline(' ', o)
 
@@ -349,28 +375,43 @@ def menu(question, options, wrap=False,
 
                 ch = getch()
 
-                if onkey:
-                    msg = onkey(key=ch, cursor=options[cursor])
-                    if msg is not None:
-                        message = msg
+                action = onkey(key=ch, cursor=options[cursor])
+                if action is None:
+                    action = _default_onkey(key=ch, cursor=options[cursor])
 
-                if ch == 'q':
+                if not isinstance(action, str):
+                    pass
+
+                elif action.startswith(':'):
+                    message = action[1:]
+
+                elif action == 'quit':
                     printline(end='')
                     break
 
-                elif ch == 'enter':
+                elif action == 'select':
                     return options[cursor]
 
-                elif ch in ('up', 'k'):
-                    cursor = max(cursor - 1, 0) if not wrap else ((cursor + len(options) - 1) % len(options))
+                elif action == 'up':
+                    cursor = cursor - 1
 
-                elif ch in ('down', 'j'):
-                    cursor = min(cursor + 1, len(options) - 1) if not wrap else (cursor + 1) % len(options)
+                elif action == 'down':
+                    cursor = cursor + 1
 
-                elif ch == 'home':
+                elif action == 'home':
                     cursor = 0
 
-                elif ch == 'end':
+                elif action == 'end':
+                    cursor = len(options) - 1
+
+                else:
+                    message = action
+
+                if wrap:
+                    cursor = (cursor + len(options)) % len(options)
+                elif cursor < 0:
+                    cursor = 0
+                elif cursor > len(options):
                     cursor = len(options) - 1
 
                 printline('{' + message + '}', end='')
