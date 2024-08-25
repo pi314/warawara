@@ -339,7 +339,14 @@ def _default_onkey(key, cursor):
         return 'end'
 
 
-def menu(question, options, wrap=False,
+class MenuItem:
+    def __init__(self, obj):
+        self.obj = obj
+        self.text = str(obj).strip()
+        self.selected = False
+
+
+def menu(question, options, type='select', wrap=False,
          onkey=_default_onkey,
          suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
     user_options = options
@@ -347,7 +354,17 @@ def menu(question, options, wrap=False,
     if not callable(onkey):
         raise TypeError('onkey should be a callable(key, cursor)')
 
-    options = [opt.strip() if isinstance(opt, str) else opt for opt in user_options]
+    if type == 'select':
+        cursor_format = ['  ', '> ']
+    elif type == 'radio':
+        cursor_format = ['({selected}) ', '({selected})>']
+    elif type == 'checkbox':
+        cursor_format = ['[{selected}] ', '[{selected}]>']
+
+    if type not in ('select', 'radio', 'checkbox'):
+        raise ValueError('Invalid menu type: {}'.format(type))
+
+    options = [MenuItem(opt) for opt in user_options]
 
     def printline(*args, **kwargs):
         args = list(args)
@@ -366,10 +383,8 @@ def menu(question, options, wrap=False,
                     printline(question)
 
                 for idx, o in enumerate(options):
-                    if idx == cursor:
-                        printline('>', (paints.black / paints.white)(o))
-                    else:
-                        printline(' ', o)
+                    text = (paints.black / paints.white)(o.text) if idx == cursor else o.text
+                    printline((cursor_format[idx == cursor] + text).format(selected='X' if o.selected else ' '))
 
                 printline('[' + message + ']', end='')
 
@@ -387,10 +402,23 @@ def menu(question, options, wrap=False,
 
                 elif action == 'quit':
                     printline(end='')
-                    break
+                    return
 
                 elif action == 'select':
-                    return options[cursor]
+                    printline(end='')
+                    if type == 'select':
+                        return options[cursor]
+                    elif type == 'radio':
+                        return tuple(opt for opt in options if opt.selected)
+                    elif type == 'checkbox':
+                        return [opt for opt in options if opt.selected]
+
+                elif action == 'toggle':
+                    if type in ('select', 'radio'):
+                        for opt in options:
+                            opt.selected = False
+
+                    options[cursor].selected = not options[cursor].selected
 
                 elif action == 'up':
                     cursor = cursor - 1
