@@ -14,6 +14,15 @@ def main():
 
     print(shutil.get_terminal_size())
 
+    print(list(iter(smol.tui.MenuType)))
+
+    def fmt(option):
+        return option.name.lower()
+
+    menu_type = smol.tui.menu('Select menu type:', options=smol.tui.MenuType, format=fmt, wrap=True)
+    print(menu_type)
+    print()
+
     def onkey(key, cursor):
         if key == '\x04':
             return 'DwD'
@@ -25,25 +34,25 @@ def main():
             return 'twt'
 
         if key == 'space':
-            return 'toggle'
+            return smol.tui.MenuOperation.TOGGLE
 
         if key == 'q':
             return
 
         if key == 'enter':
             if not cursor.selected:
-                return 'toggle'
+                return smol.tui.MenuOperation.TOGGLE
             else:
-                return 'select'
+                return smol.tui.MenuOperation.SELECT
 
 
-    ret = smol.tui.menu('Select one you like:', options=items, type='checkbox', onkey=onkey, wrap=True)
+    ret = smol.tui.menu('Select one you like:', options=items, type=menu_type, onkey=onkey, wrap=True)
     if isinstance(ret, tuple):
-        print('You selected:', '(', ret[0].text, ')')
+        print('You selected:', '(', ret[0], ')')
     elif isinstance(ret, list):
-        print('You selected:', '[', ', '.join([opt.text for opt in ret]), ']')
+        print('You selected:', '[', ', '.join(ret), ']')
     else:
-        print('You selected:', ret.text)
+        print('You selected:', ret)
 
 
 if __name__ == '__main__':

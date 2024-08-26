@@ -3,6 +3,7 @@ import itertools
 import sys
 import threading
 import time
+import enum
 
 
 from . import lib_paints as paints
@@ -316,37 +317,53 @@ def getch(timeout=None, alias=True):
         termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
 
 
+class MenuType(enum.Enum):
+    SELECT = enum.auto()
+    RADIO = enum.auto()
+    CHECKBOX = enum.auto()
+
+
+class MenuOperation(enum.Enum):
+    QUIT = enum.auto()
+    SELECT = enum.auto()
+    TOGGLE = enum.auto()
+    CURSOR_UP = enum.auto()
+    CURSOR_DOWN = enum.auto()
+    CURSOR_HOME = enum.auto()
+    CURSOR_END = enum.auto()
+
+
 def _default_onkey(key, cursor):
     if key == 'q':
-        return 'quit'
+        return MenuOperation.QUIT
 
     if key == 'enter':
-        return 'select'
+        return MenuOperation.SELECT
 
     if key == 'space':
-        return 'toggle'
+        return MenuOperation.TOGGLE
 
     if key == 'up':
-        return 'up'
+        return MenuOperation.CURSOR_UP
 
     if key == 'down':
-        return 'down'
+        return MenuOperation.CURSOR_DOWN
 
     if key == 'home':
-        return 'home'
+        return MenuOperation.CURSOR_HOME
 
     if key == 'end':
-        return 'end'
+        return MenuOperation.CURSOR_END
 
 
 class MenuItem:
-    def __init__(self, obj):
+    def __init__(self, obj, format):
         self.obj = obj
-        self.text = str(obj).strip()
+        self.text = format(obj)
         self.selected = False
 
 
-def menu(question, options, type='select', wrap=False,
+def menu(question, options, format=str, type=MenuType.SELECT, wrap=False,
          onkey=_default_onkey,
          suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
     user_options = options
@@ -354,17 +371,16 @@ def menu(question, options, type='select', wrap=False,
     if not callable(onkey):
         raise TypeError('onkey should be a callable(key, cursor)')
 
-    if type == 'select':
+    if type == MenuType.SELECT:
         cursor_format = ['  ', '> ']
-    elif type == 'radio':
-        cursor_format = ['({selected}) ', '({selected})>']
-    elif type == 'checkbox':
-        cursor_format = ['[{selected}] ', '[{selected}]>']
+    elif type == MenuType.RADIO:
+        cursor_format = ['({selected}) ', '({selected}> ']
+    elif type == MenuType.CHECKBOX:
+        cursor_format = ['[{selected}] ', '[{selected}> ']
+    else:
+        raise ValueError('Invalid menu type: {}'.format(repr(type)))
 
-    if type not in ('select', 'radio', 'checkbox'):
-        raise ValueError('Invalid menu type: {}'.format(type))
-
-    options = [MenuItem(opt) for opt in user_options]
+    options = [MenuItem(opt, format) for opt in user_options]
 
     def printline(*args, **kwargs):
         args = list(args)
@@ -384,7 +400,7 @@ def menu(question, options, type='select', wrap=False,
 
                 for idx, o in enumerate(options):
                     text = (paints.black / paints.white)(o.text) if idx == cursor else o.text
-                    printline((cursor_format[idx == cursor] + text).format(selected='X' if o.selected else ' '))
+                    printline((cursor_format[idx == cursor] + text).format(selected='V' if o.selected else ' '))
 
                 printline('[' + message + ']', end='')
 
@@ -394,52 +410,46 @@ def menu(question, options, type='select', wrap=False,
                 if action is None:
                     action = _default_onkey(key=ch, cursor=options[cursor])
 
-                if not isinstance(action, str):
-                    pass
+                if isinstance(action, str):
+                    message = action
 
-                elif action.startswith(':'):
-                    message = action[1:]
-
-                elif action == 'quit':
+                elif action == MenuOperation.QUIT:
                     printline(end='')
                     return
 
-                elif action == 'select':
+                elif action == MenuOperation.SELECT:
                     printline(end='')
-                    if type == 'select':
-                        return options[cursor]
-                    elif type == 'radio':
-                        return tuple(opt for opt in options if opt.selected)
-                    elif type == 'checkbox':
-                        return [opt for opt in options if opt.selected]
+                    if type == MenuType.RADIO:
+                        return tuple(opt.obj for opt in options if opt.selected)
+                    elif type == MenuType.CHECKBOX:
+                        return [opt.obj for opt in options if opt.selected]
+                    else: # MenuType.SELECT
+                        return options[cursor].obj
 
-                elif action == 'toggle':
-                    if type in ('select', 'radio'):
+                elif action == MenuOperation.TOGGLE:
+                    if type in (MenuType.SELECT, MenuType.RADIO):
                         for opt in options:
                             opt.selected = False
 
                     options[cursor].selected = not options[cursor].selected
 
-                elif action == 'up':
+                elif action == MenuOperation.CURSOR_UP:
                     cursor = cursor - 1
 
-                elif action == 'down':
+                elif action == MenuOperation.CURSOR_DOWN:
                     cursor = cursor + 1
 
-                elif action == 'home':
+                elif action == MenuOperation.CURSOR_HOME:
                     cursor = 0
 
-                elif action == 'end':
+                elif action == MenuOperation.CURSOR_END:
                     cursor = len(options) - 1
-
-                else:
-                    message = action
 
                 if wrap:
                     cursor = (cursor + len(options)) % len(options)
                 elif cursor < 0:
                     cursor = 0
-                elif cursor > len(options):
+                elif cursor >= len(options):
                     cursor = len(options) - 1
 
                 printline('{' + message + '}', end='')
