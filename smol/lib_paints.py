@@ -278,7 +278,7 @@ def gradient_dye256_rgb(A, B, N=None):
             steps.append(step)
             delta = delta.map(lambda x: x - sgn(x))
 
-        ret = distribute(list(itertools.accumulate(steps, initial=rgb_a)), N)
+        ret = distribute(list(itertools.accumulate([rgb_a] + steps)), N)
 
     else:
         # N is shorter than minimum contiguous path

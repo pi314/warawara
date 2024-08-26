@@ -1,6 +1,14 @@
 __version__ = '2.0.0'
 
 
+def check_python_version():
+    import sys
+    assert sys.version_info.major, sys.version_info.minor >= (3, 7)
+
+check_python_version()
+del check_python_version
+
+
 def load_internal_modules():
     import os
     import importlib

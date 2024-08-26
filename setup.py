@@ -21,7 +21,7 @@ setup(
             'ntfy=smol:bin.ntfy.main',
             ],
     },
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
