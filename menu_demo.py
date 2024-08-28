@@ -51,6 +51,8 @@ def main():
                 return False
 
         if key == 'enter':
+            if not menu.type:
+                return
             if not menu[cursor].selected:
                 menu.toggle()
             else:
