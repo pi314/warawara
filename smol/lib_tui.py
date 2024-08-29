@@ -321,8 +321,11 @@ class Menu:
     def __init__(self, prompt, options, format=None,
                  cursor='>', type='',
                  onkey=None, wrap=False):
+        if onkey is not None and not callable(onkey):
+            raise TypeError('onkey should be a callable(menu, key, cursor)')
+
         self.prompt = prompt
-        self.options = [MenuItem(opt, format=format) for opt in options]
+        self.options = [MenuItem(self, opt, format=format) for opt in options]
         self.format = format
         self.cursor = cursor
 
@@ -394,7 +397,7 @@ class Menu:
                 return self
 
             if key == 'space':
-                self.toggle()
+                self[self.cidx].toggle()
 
             if key in ('up', 'down', 'home', 'end'):
                 self.cursor_move(key)
@@ -435,17 +438,26 @@ class Menu:
         elif self.type == '[]':
             return [opt.obj for opt in self.options if opt.selected]
 
-    def toggle(self):
+    def select(self, opt):
         if not self.type:
             return
 
         elif self.type == '()':
-            for opt in self.options:
-                opt.selected = False
-            self.options[self.cidx].selected = not self.options[self.cidx].selected
+            self.unselect_all()
+            opt.selected = True
 
         elif self.type == '[]':
-            self.options[self.cidx].selected = not self.options[self.cidx].selected
+            opt.selected = True
+
+    def unselect(self, opt):
+        if not self.type:
+            return
+
+        elif self.type == '()':
+            opt.selected = False
+
+        elif self.type == '[]':
+            opt.selected = False
 
     def select_all(self):
         if not self.type:
@@ -456,67 +468,64 @@ class Menu:
 
         elif self.type == '[]':
             for opt in self.options:
-                opt.selected = True
+                opt.select()
 
     def unselect_all(self):
         for opt in self.options:
-            opt.selected = False
+            opt.unselect()
+
+    def interact(self, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
+        with HijackStdio():
+            with ExceptionSuppressor(suppress):
+                while True:
+                    self.render()
+
+                    ch = getch()
+
+                    action = self.handle_key(ch)
+
+                    if action is self:
+                        s = self.selected()
+                        if s is not None:
+                            Menu.printline(end='')
+                            return s
+
+                    elif action is True:
+                        Menu.printline(end='')
+                        return
+
+                    print('\r\033[{}A'.format(len(self.options) + 1), end='')
 
 
 class MenuItem:
-    def __init__(self, obj, format):
+    def __init__(self, menu, obj, format):
+        self.menu = menu
         self.obj = obj
         if callable(format):
             self.text = format(obj)
         elif isinstance(format, str):
             self.text = format.format(option=obj)
-        elif hasattr(obj, __str__):
+        elif hasattr(obj, '__str__'):
             self.text = str(obj)
         else:
             self.text = repr(obj)
 
         self.selected = False
 
+    def toggle(self):
+        if self.selected:
+            self.unselect()
+        else:
+            self.select()
+
+    def select(self):
+        self.menu.select(self)
+
+    def unselect(self):
+        self.menu.unselect(self)
+
 
 class MenuType(enum.Enum):
     SELECT = enum.auto()
     RADIO = enum.auto()
     CHECKBOX = enum.auto()
-
-
-def menu(prompt, options, format=str, type=None, wrap=False,
-         onkey=None,
-         suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
-    if onkey is not None and not callable(onkey):
-        raise TypeError('onkey should be a callable(menu, key, cursor)')
-
-    m = Menu(prompt, options, format=format, type=type, onkey=onkey, wrap=wrap)
-
-    def printline(*args, **kwargs):
-        args = list(args)
-        if args:
-            args[0] = '\r\033[K' + args[0]
-        else:
-            args = ['\r\033[K']
-        print(*args, **kwargs)
-
-    with HijackStdio():
-        with ExceptionSuppressor(suppress):
-            while True:
-                m.render()
-
-                ch = getch()
-
-                action = m.handle_key(ch)
-
-                if action is m:
-                    s = m.selected()
-                    if s is not None:
-                        printline(end='')
-                        return s
-
-                elif action is True:
-                    printline(end='')
-                    return
-
-                print('\r\033[{}A'.format(len(m.options) + 1), end='')

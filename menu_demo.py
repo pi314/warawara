@@ -19,7 +19,8 @@ def main():
     # def fmt(option):
     #     return option.name.lower()
 
-    menu_type = smol.tui.menu('Select menu type:', options=map(lambda x: x.name.lower(), smol.tui.MenuType), wrap=True)
+    menu = smol.tui.Menu('Select menu type:', options=map(lambda x: x.name.lower(), smol.tui.MenuType), wrap=True)
+    menu_type = menu.interact()
     print(menu_type)
     print()
 
@@ -32,11 +33,15 @@ def main():
             return False
 
         if key == '\x01':
-            menu.message = 'uwu'
+            menu.message = 'AwA'
+            return False
+
+        if key == chr(ord('u') - ord('a') + 1):
+            menu.message = 'UwU'
             return False
 
         if key == 'tab':
-            menu.message = 'uwu'
+            menu.message = 'TwT'
             return False
 
         if key == 'space':
@@ -47,14 +52,14 @@ def main():
                 menu.unselect_all()
                 return False
             else:
-                menu.toggle()
+                menu[cursor].toggle()
                 return False
 
         if key == 'enter':
             if not menu.type:
                 return
             if not menu[cursor].selected:
-                menu.toggle()
+                menu[cursor].select()
             else:
                 return menu
 
@@ -68,7 +73,8 @@ def main():
             menu.select_all()
             return False
 
-    ret = smol.tui.menu('Select one you like:', options=['select all', 'unselect all'] + items, type=menu_type, onkey=onkey, wrap=True)
+    menu = smol.tui.Menu('Select one you like:', options=['select all', 'unselect all'] + items, type=menu_type, onkey=onkey, wrap=True)
+    ret = menu.interact()
     if isinstance(ret, tuple):
         print('You selected:', '(', ret[0], ')')
     elif isinstance(ret, list):
