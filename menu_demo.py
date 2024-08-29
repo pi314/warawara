@@ -47,6 +47,7 @@ def main():
         if key == 'space':
             if menu[cursor].text == 'select all':
                 menu.select_all()
+                menu[1].unselect()
                 return False
             elif menu[cursor].text == 'unselect all':
                 menu.unselect_all()
@@ -57,11 +58,11 @@ def main():
 
         if key == 'enter':
             if not menu.type:
-                return
+                return None
             if not menu[cursor].selected:
                 menu[cursor].select()
             else:
-                return menu
+                menu.done()
 
             return False
 

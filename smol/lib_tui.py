@@ -318,6 +318,12 @@ def getch(timeout=None, alias=True):
 
 
 class Menu:
+    class DoneSelection(Exception):
+        pass
+
+    class GiveUpSelection(Exception):
+        pass
+
     def __init__(self, prompt, options, format=None,
                  cursor='>', type='',
                  onkey=None, wrap=False):
@@ -391,10 +397,10 @@ class Menu:
         if result is None:
             if key == 'q':
                 self.unselect_all()
-                return True
+                self.quit()
 
             if key == 'enter':
-                return self
+                self.done()
 
             if key == 'space':
                 self[self.cidx].toggle()
@@ -474,6 +480,12 @@ class Menu:
         for opt in self.options:
             opt.unselect()
 
+    def done(self):
+        raise Menu.DoneSelection()
+
+    def quit(self):
+        raise Menu.GiveUpSelection()
+
     def interact(self, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
         with HijackStdio():
             with ExceptionSuppressor(suppress):
@@ -482,17 +494,18 @@ class Menu:
 
                     ch = getch()
 
-                    action = self.handle_key(ch)
+                    try:
+                        action = self.handle_key(ch)
 
-                    if action is self:
+                    except Menu.GiveUpSelection:
+                        Menu.printline(end='')
+                        return
+
+                    except Menu.DoneSelection:
                         s = self.selected()
                         if s is not None:
                             Menu.printline(end='')
                             return s
-
-                    elif action is True:
-                        Menu.printline(end='')
-                        return
 
                     print('\r\033[{}A'.format(len(self.options) + 1), end='')
 
