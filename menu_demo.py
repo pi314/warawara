@@ -55,7 +55,10 @@ def main():
         if key == 'enter':
             if not menu.type:
                 return None
-            if not menu[cursor].selected:
+
+            if menu[cursor].text == 'Done':
+                menu.done()
+            elif not menu[cursor].selected:
                 menu[cursor].select()
             else:
                 menu.done()
@@ -70,11 +73,12 @@ def main():
             menu.select_all()
             return False
 
-    meta_options = ['Select all', 'Unselect all'] if menu_type == 'checkbox' else []
-    menu = smol.tui.Menu('Select one you like:', options=meta_options + items, type=menu_type, onkey=onkey, wrap=True)
+    meta_options = ['Select all', 'Unselect all', 'Done'] if menu_type == 'checkbox' else []
+    menu = smol.tui.Menu('Select one you like:', options=meta_options[:2] + items + [meta_options[-1]], type=menu_type, onkey=onkey, wrap=True)
     if meta_options:
-        menu[0].set_meta(lambda menu: '*' if all(item.selected for item in menu[2:]) else '-' if any(item.selected for item in menu[2:]) else ' ')
-        menu[1].set_meta(lambda menu: ' ' if all(item.selected for item in menu[2:]) else '-' if any(item.selected for item in menu[2:]) else '*')
+        menu[0].set_meta(mark=lambda menu: '*' if all(item.selected for item in menu[2:-1]) else '-' if any(item.selected for item in menu[2:-1]) else ' ')
+        menu[1].set_meta(mark=lambda menu: ' ' if all(item.selected for item in menu[2:-1]) else '-' if any(item.selected for item in menu[2:-1]) else '*')
+        menu[-1].set_meta(mark='>')
 
     ret = menu.interact()
     if isinstance(ret, tuple):

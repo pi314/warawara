@@ -324,7 +324,7 @@ class Menu:
     class GiveUpSelection(Exception):
         pass
 
-    def __init__(self, prompt, options, format=None,
+    def __init__(self, prompt, options, *, format=None,
                  cursor='>', type='',
                  onkey=None, wrap=False):
         if onkey is not None and not callable(onkey):
@@ -488,7 +488,7 @@ class Menu:
     def quit(self):
         raise Menu.GiveUpSelection()
 
-    def interact(self, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
+    def interact(self, *, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
         with HijackStdio():
             with ExceptionSuppressor(suppress):
                 while True:
@@ -513,7 +513,7 @@ class Menu:
 
 
 class MenuItem:
-    def __init__(self, menu, obj, format=None, mark=None):
+    def __init__(self, menu, obj, *, format=None, mark=None):
         self.menu = menu
         self.obj = obj
         if callable(format):
@@ -530,7 +530,7 @@ class MenuItem:
         self.is_meta = False
         self.mark = mark
 
-    def set_meta(self, mark):
+    def set_meta(self, *, mark):
         self.is_meta = True
         self.mark = mark
 
