@@ -12,14 +12,11 @@ def main():
     else:
         items = os.listdir('.')
 
+    items.sort()
+
     print(shutil.get_terminal_size())
 
-    print(list(iter(smol.tui.MenuType)))
-
-    # def fmt(option):
-    #     return option.name.lower()
-
-    menu = smol.tui.Menu('Select menu type:', options=map(lambda x: x.name.lower(), smol.tui.MenuType), wrap=True)
+    menu = smol.tui.Menu('Select menu type:', options=['default', 'radio', 'checkbox'], wrap=True)
     menu_type = menu.interact()
     print(menu_type)
     print()
@@ -45,11 +42,10 @@ def main():
             return False
 
         if key == 'space':
-            if menu[cursor].text == 'select all':
+            if menu[cursor].text == 'Select all':
                 menu.select_all()
-                menu[1].unselect()
                 return False
-            elif menu[cursor].text == 'unselect all':
+            elif menu[cursor].text == 'Unselect all':
                 menu.unselect_all()
                 return False
             else:
@@ -74,7 +70,12 @@ def main():
             menu.select_all()
             return False
 
-    menu = smol.tui.Menu('Select one you like:', options=['select all', 'unselect all'] + items, type=menu_type, onkey=onkey, wrap=True)
+    meta_options = ['Select all', 'Unselect all'] if menu_type == 'checkbox' else []
+    menu = smol.tui.Menu('Select one you like:', options=meta_options + items, type=menu_type, onkey=onkey, wrap=True)
+    if meta_options:
+        menu[0].set_meta(lambda menu: '*' if all(item.selected for item in menu[2:]) else '-' if any(item.selected for item in menu[2:]) else ' ')
+        menu[1].set_meta(lambda menu: ' ' if all(item.selected for item in menu[2:]) else '-' if any(item.selected for item in menu[2:]) else '*')
+
     ret = menu.interact()
     if isinstance(ret, tuple):
         print('You selected:', '(', ret[0], ')')

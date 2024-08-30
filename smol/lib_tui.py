@@ -331,11 +331,9 @@ class Menu:
             raise TypeError('onkey should be a callable(menu, key, cursor)')
 
         self.prompt = prompt
-        self.options = [MenuItem(self, opt, format=format) for opt in options]
-        self.format = format
         self.cursor = cursor
 
-        if type in (None, 'select'):
+        if type in (None, 'default', 'select'):
             type = ''
         elif type.lower() == 'radio':
             type = '(*)'
@@ -349,14 +347,16 @@ class Menu:
         else:
             self.checkbox = (type[0], type[-1])
             self.type = self.checkbox[0] + self.checkbox[1]
-            self.mark = type[1:-1]
+            self.mark = type[1:-1] or '*'
+
+        self.options = [MenuItem(self, opt, format=format, mark=self.mark) for opt in options]
 
         self.message = ''
 
         self.onkey = onkey
         self.wrap = wrap
 
-        self.cidx = 0 # cursor index
+        self.index = 0 # cursor index
 
     def __len__(self):
         return len(self.options)
@@ -378,12 +378,17 @@ class Menu:
             Menu.printline(self.prompt)
 
         for idx, o in enumerate(self.options):
+            if o.selected or o.is_meta:
+                mark = o.mark(self) if callable(o.mark) else o.mark
+            else:
+                mark = ' ' * len(o.mark)
+
             Menu.printline('{cursor}{ll}{mark}{rr} {text}'.format(
-                cursor=self.cursor if idx == self.cidx else ' ' * len(self.cursor),
-                ll=self.checkbox[0],
-                rr=self.checkbox[1],
-                mark=self.mark if o.selected else ' ' * len(self.mark),
-                text=(paints.black / paints.white)(o.text) if idx == self.cidx else o.text
+                cursor=self.cursor if idx == self.index else ' ' * len(self.cursor),
+                ll=self.checkbox[0] if not o.is_meta else '{',
+                rr=self.checkbox[1] if not o.is_meta else '}',
+                mark=mark,
+                text=(paints.black / paints.white)(o.text) if idx == self.index else o.text
                 ))
 
         Menu.printline('[' + self.message + ']', end='')
@@ -392,7 +397,7 @@ class Menu:
         result = None
 
         if self.onkey:
-            result = self.onkey(menu=self, cursor=self.cidx, key=key)
+            result = self.onkey(menu=self, cursor=self.index, key=key)
 
         if result is None:
             if key == 'q':
@@ -403,7 +408,7 @@ class Menu:
                 self.done()
 
             if key == 'space':
-                self[self.cidx].toggle()
+                self[self.index].toggle()
 
             if key in ('up', 'down', 'home', 'end'):
                 self.cursor_move(key)
@@ -415,30 +420,27 @@ class Menu:
 
     def cursor_move(self, what):
         if isinstance(what, int):
-            self.cidx = what
+            self.index = what
 
         elif what == 'up':
-            self.cidx -= 1
-
+            self.index -= 1
         elif what == 'down':
-            self.cidx += 1
-
+            self.index += 1
         elif what == 'home':
-            self.cidx = 0
-
+            self.index = 0
         elif what == 'end':
-            self.cidx = len(self) - 1
+            self.index = len(self) - 1
 
         if self.wrap:
-            self.cidx = (self.cidx + len(self)) % len(self)
-        elif self.cidx < 0:
-            self.cidx = 0
-        elif self.cidx >= len(self):
-            self.cidx = len(self) - 1
+            self.index = (self.index + len(self)) % len(self)
+        elif self.index < 0:
+            self.index = 0
+        elif self.index >= len(self):
+            self.index = len(self) - 1
 
     def selected(self):
         if not self.type:
-            return self.options[self.cidx].obj
+            return self.options[self.index].obj
         elif self.type == '()':
             return tuple(opt.obj for opt in self.options if opt.selected)
         elif self.type == '[]':
@@ -511,19 +513,26 @@ class Menu:
 
 
 class MenuItem:
-    def __init__(self, menu, obj, format):
+    def __init__(self, menu, obj, format=None, mark=None):
         self.menu = menu
         self.obj = obj
         if callable(format):
             self.text = format(obj)
         elif isinstance(format, str):
             self.text = format.format(option=obj)
-        elif hasattr(obj, '__str__'):
-            self.text = str(obj)
         else:
-            self.text = repr(obj)
+            try:
+                self.text = str(obj)
+            except:
+                self.text = repr(obj)
 
         self.selected = False
+        self.is_meta = False
+        self.mark = mark
+
+    def set_meta(self, mark):
+        self.is_meta = True
+        self.mark = mark
 
     def toggle(self):
         if self.selected:
@@ -532,13 +541,9 @@ class MenuItem:
             self.select()
 
     def select(self):
+        if self.is_meta:
+            return
         self.menu.select(self)
 
     def unselect(self):
         self.menu.unselect(self)
-
-
-class MenuType(enum.Enum):
-    SELECT = enum.auto()
-    RADIO = enum.auto()
-    CHECKBOX = enum.auto()
