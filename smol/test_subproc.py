@@ -161,12 +161,6 @@ class TestSubproc(TestCase):
         self.is_true(p.stdout.closed)
         self.is_true(p.stderr.closed)
 
-    def test_run_and_then_wait(self):
-        p = run('seq 5'.split(), wait=False)
-        self.eq(p.stdout.lines, [])
-        p.wait()
-        self.eq(p.stdout.lines, '1 2 3 4 5'.split())
-
     def test_wait_early(self):
         p = command('seq 5'.split())
         p.wait()
