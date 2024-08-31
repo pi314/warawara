@@ -349,7 +349,7 @@ class Menu:
             self.type = self.checkbox[0] + self.checkbox[1]
             self.mark = type[1:-1] or '*'
 
-        self.options = [MenuItem(self, opt, format=format, mark=self.mark) for opt in options]
+        self.options = [MenuItem(self, opt, cursor=cursor, format=format, mark=self.mark) for opt in options]
 
         self.message = ''
 
@@ -378,13 +378,15 @@ class Menu:
             Menu.printline(self.prompt)
 
         for idx, o in enumerate(self.options):
+            cursor = o.cursor(self) if callable(o.cursor) else o.cursor
+
             if o.selected or o.is_meta:
                 mark = o.mark(self) if callable(o.mark) else o.mark
             else:
                 mark = ' ' * len(o.mark)
 
             Menu.printline('{cursor}{ll}{mark}{rr} {text}'.format(
-                cursor=self.cursor if idx == self.index else ' ' * len(self.cursor),
+                cursor=cursor if idx == self.index else ' ' * len(cursor),
                 ll=self.checkbox[0] if not o.is_meta else '{',
                 rr=self.checkbox[1] if not o.is_meta else '}',
                 mark=mark,
@@ -421,7 +423,6 @@ class Menu:
     def cursor_move(self, what):
         if isinstance(what, int):
             self.index = what
-
         elif what == 'up':
             self.index -= 1
         elif what == 'down':
@@ -430,6 +431,11 @@ class Menu:
             self.index = 0
         elif what == 'end':
             self.index = len(self) - 1
+        else:
+            for idx, item in enumerate(self):
+                if item.obj is what:
+                    self.index = idx
+                    break
 
         if self.wrap:
             self.index = (self.index + len(self)) % len(self)
@@ -513,7 +519,7 @@ class Menu:
 
 
 class MenuItem:
-    def __init__(self, menu, obj, *, format=None, mark=None):
+    def __init__(self, menu, obj, *, cursor=None, format=None, mark=None):
         self.menu = menu
         self.obj = obj
         if callable(format):
@@ -528,11 +534,13 @@ class MenuItem:
 
         self.selected = False
         self.is_meta = False
+        self.cursor = cursor
         self.mark = mark
 
-    def set_meta(self, *, mark):
+    def set_meta(self, *, mark=None, cursor=None):
         self.is_meta = True
-        self.mark = mark
+        self.mark = mark or self.mark
+        self.cursor = cursor or self.cursor
 
     def toggle(self):
         if self.selected:

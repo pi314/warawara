@@ -16,7 +16,15 @@ def main():
 
     print(shutil.get_terminal_size())
 
-    menu = smol.tui.Menu('Select menu type:', options=['default', 'radio', 'checkbox'], wrap=True)
+    def onkey(menu, cursor, key):
+        if key == 'd':
+            menu.cursor_move('default')
+        elif key == 'r':
+            menu.cursor_move('radio')
+        elif key == 'c':
+            menu.cursor_move('checkbox')
+
+    menu = smol.tui.Menu('Select menu type:', options=['default', 'radio', 'checkbox'], onkey=onkey, wrap=True)
     menu_type = menu.interact()
     print(menu_type)
     print()
@@ -78,7 +86,8 @@ def main():
     if meta_options:
         menu[0].set_meta(mark=lambda menu: '*' if all(item.selected for item in menu[2:-1]) else '-' if any(item.selected for item in menu[2:-1]) else ' ')
         menu[1].set_meta(mark=lambda menu: ' ' if all(item.selected for item in menu[2:-1]) else '-' if any(item.selected for item in menu[2:-1]) else '*')
-        menu[-1].set_meta(mark='>')
+        menu[-1].set_meta(mark=lambda menu: '>' if menu.index == len(menu) - 1 else ' ')
+        menu[-1].cursor = ' '
 
     ret = menu.interact()
     if isinstance(ret, tuple):
