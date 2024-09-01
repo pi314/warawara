@@ -349,7 +349,7 @@ class Menu:
             self.type = self.checkbox[0] + self.checkbox[1]
             self.mark = type[1:-1] or '*'
 
-        self.options = [MenuItem(self, opt, cursor=cursor, format=format, mark=self.mark) for opt in options]
+        self.options = [MenuItem(self, opt, format=format) for opt in options]
 
         self.message = ''
 
@@ -378,18 +378,18 @@ class Menu:
             Menu.printline(self.prompt)
 
         for idx, o in enumerate(self.options):
-            cursor = o.cursor(self) if callable(o.cursor) else o.cursor
+            cursor = o.cursor or self.cursor
+            cursor = cursor(self) if callable(cursor) else cursor
 
-            if o.selected or o.is_meta:
-                mark = o.mark(self) if callable(o.mark) else o.mark
-            else:
-                mark = ' ' * len(o.mark)
+            mark = o.mark or self.mark
+            if callable(mark):
+                mark = mark(self)
 
             Menu.printline('{cursor}{ll}{mark}{rr} {text}'.format(
                 cursor=cursor if idx == self.index else ' ' * len(cursor),
                 ll=self.checkbox[0] if not o.is_meta else '{',
                 rr=self.checkbox[1] if not o.is_meta else '}',
-                mark=mark,
+                mark=mark if o.selected or o.is_meta else ' ' * len(mark),
                 text=(paints.black / paints.white)(o.text) if idx == self.index else o.text
                 ))
 
@@ -398,7 +398,10 @@ class Menu:
     def handle_key(self, key):
         result = None
 
-        if self.onkey:
+        if self[self.index].onkey:
+            result = self[self.index].onkey(menu=self, cursor=self.index, key=key)
+
+        if result is None and self.onkey:
             result = self.onkey(menu=self, cursor=self.index, key=key)
 
         if result is None:
@@ -414,9 +417,6 @@ class Menu:
 
             if key in ('up', 'down', 'home', 'end'):
                 self.cursor_move(key)
-
-        elif isinstance(result, str):
-            self.message = result
 
         return result
 
@@ -503,7 +503,7 @@ class Menu:
                     ch = getch()
 
                     try:
-                        action = self.handle_key(ch)
+                        self.handle_key(ch)
 
                     except Menu.GiveUpSelection:
                         Menu.printline(end='')
@@ -519,7 +519,7 @@ class Menu:
 
 
 class MenuItem:
-    def __init__(self, menu, obj, *, cursor=None, format=None, mark=None):
+    def __init__(self, menu, obj, *, format=None):
         self.menu = menu
         self.obj = obj
         if callable(format):
@@ -534,13 +534,15 @@ class MenuItem:
 
         self.selected = False
         self.is_meta = False
-        self.cursor = cursor
-        self.mark = mark
+        self.cursor = None
+        self.mark = None
+        self.onkey = None
 
-    def set_meta(self, *, mark=None, cursor=None):
+    def set_meta(self, *, mark=None, cursor=None, onkey=None):
         self.is_meta = True
         self.mark = mark or self.mark
         self.cursor = cursor or self.cursor
+        self.onkey = onkey
 
     def toggle(self):
         if self.selected:

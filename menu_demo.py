@@ -50,23 +50,14 @@ def main():
             return False
 
         if key == 'space':
-            if menu[cursor].text == 'Select all':
-                menu.select_all()
-                return False
-            elif menu[cursor].text == 'Unselect all':
-                menu.unselect_all()
-                return False
-            else:
-                menu[cursor].toggle()
-                return False
+            menu[cursor].toggle()
+            return False
 
         if key == 'enter':
             if not menu.type:
                 return None
 
-            if menu[cursor].text == 'Done':
-                menu.done()
-            elif not menu[cursor].selected:
+            if not menu[cursor].selected:
                 menu[cursor].select()
             else:
                 menu.done()
@@ -85,9 +76,26 @@ def main():
     menu = smol.tui.Menu('Select one you like:', options=meta_options[:2] + items + [meta_options[-1]], type=menu_type, onkey=onkey, wrap=True)
     if meta_options:
         menu[0].set_meta(mark=lambda menu: '*' if all(item.selected for item in menu[2:-1]) else '-' if any(item.selected for item in menu[2:-1]) else ' ')
-        menu[1].set_meta(mark=lambda menu: ' ' if all(item.selected for item in menu[2:-1]) else '-' if any(item.selected for item in menu[2:-1]) else '*')
+        def select_all_onkey(menu, cursor, key):
+            if key == 'space':
+                menu.select_all()
+                return False
+        menu[0].onkey = select_all_onkey
+
+        def unselect_all_onkey(menu, cursor, key):
+            if key == 'space':
+                menu.unselect_all()
+                return False
+        menu[1].set_meta(
+                mark=lambda menu: ' ' if all(item.selected for item in menu[2:-1]) else '-' if any(item.selected for item in menu[2:-1]) else '*',
+                onkey=unselect_all_onkey)
+
         menu[-1].set_meta(mark=lambda menu: '>' if menu.index == len(menu) - 1 else ' ')
         menu[-1].cursor = ' '
+        def done_onkey(menu, cursor, key):
+            if key == 'enter':
+                menu.done()
+        menu[-1].onkey = done_onkey
 
     ret = menu.interact()
     if isinstance(ret, tuple):
