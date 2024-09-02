@@ -49,10 +49,6 @@ def main():
             menu.message = 'TwT'
             return False
 
-        if key == 'space':
-            menu[cursor].toggle()
-            return False
-
         if key == 'enter':
             if not menu.type:
                 return None
@@ -72,10 +68,20 @@ def main():
             menu.select_all()
             return False
 
-    meta_options = ['Select all', 'Unselect all', 'Done'] if menu_type == 'checkbox' else []
-    menu = smol.tui.Menu('Select one you like:', options=meta_options[:2] + items + [meta_options[-1]], type=menu_type, onkey=onkey, wrap=True)
-    if meta_options:
-        menu[0].set_meta(mark=lambda menu: '*' if all(item.selected for item in menu[2:-1]) else '-' if any(item.selected for item in menu[2:-1]) else ' ')
+    if menu_type == 'checkbox':
+        meta_options = ['Select all', 'Unselect all'] + items + [ 'Done']
+    else:
+        meta_options = items
+
+    menu = smol.tui.Menu('Select one you like:', options=meta_options, type=menu_type, onkey=onkey, wrap=True)
+
+    if menu_type == 'checkbox':
+        menu[0].set_meta(
+                mark=lambda menu: {
+                    len(items): '*',
+                    0: ' '
+                    }.get(sum(item.selected for item in menu if not item.is_meta), '-')
+                )
         def select_all_onkey(menu, cursor, key):
             if key == 'space':
                 menu.select_all()
@@ -86,8 +92,12 @@ def main():
             if key == 'space':
                 menu.unselect_all()
                 return False
+
         menu[1].set_meta(
-                mark=lambda menu: ' ' if all(item.selected for item in menu[2:-1]) else '-' if any(item.selected for item in menu[2:-1]) else '*',
+                mark=lambda menu: {
+                    len(items): ' ',
+                    0: '*'
+                    }.get(sum(item.selected for item in menu if not item.is_meta), '-'),
                 onkey=unselect_all_onkey)
 
         menu[-1].set_meta(mark=lambda menu: '>' if menu.index == len(menu) - 1 else ' ')

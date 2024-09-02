@@ -523,9 +523,9 @@ class Menu:
         if not self.type:
             return self.options[self.index].obj
         elif self.type == '()':
-            return tuple(opt.obj for opt in self.options if opt.selected)
+            return tuple(opt.obj for opt in self.options if opt.selected and not opt.is_meta)
         elif self.type == '[]':
-            return [opt.obj for opt in self.options if opt.selected]
+            return [opt.obj for opt in self.options if opt.selected and not opt.is_meta]
 
     def select(self, opt):
         if not self.type:
@@ -620,6 +620,8 @@ class MenuItem:
         self.onkey = onkey
 
     def toggle(self):
+        if self.is_meta:
+            return
         if self.selected:
             self.unselect()
         else:
@@ -631,4 +633,6 @@ class MenuItem:
         self.menu.select(self)
 
     def unselect(self):
+        if self.is_meta:
+            return
         self.menu.unselect(self)
