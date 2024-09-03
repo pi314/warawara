@@ -17,12 +17,25 @@ def main():
     print(shutil.get_terminal_size())
 
     def onkey(menu, cursor, key):
+        if key == 'j':
+            return 'down'
+        if key == 'k':
+            return 'up'
+        if key == 'H':
+            return 'home'
+        if key == 'L':
+            return 'end'
+        if key in ('0', '^'):
+            return 'home'
+        if key in ('G', '$'):
+            return 'end'
+
         if key == 'd':
-            menu.cursor_move('default')
+            menu.cursor = 'default'
         elif key == 'r':
-            menu.cursor_move('radio')
+            menu.cursor = 'radio'
         elif key == 'c':
-            menu.cursor_move('checkbox')
+            menu.cursor = 'checkbox'
 
     menu = smol.tui.Menu('Select menu type:', options=['default', 'radio', 'checkbox'], onkey=onkey, wrap=True)
     menu_type = menu.interact()
@@ -33,6 +46,19 @@ def main():
         return
 
     def onkey(menu, cursor, key):
+        if key == 'j':
+            return 'down'
+        if key == 'k':
+            return 'up'
+        if key == 'H':
+            return 'home'
+        if key == 'L':
+            return 'end'
+        if key in ('0', '^'):
+            return 'home'
+        if key in ('G', '$'):
+            return 'end'
+
         if key == '\x04':
             menu.message = 'DwD'
             return False
@@ -53,8 +79,8 @@ def main():
             if not menu.type:
                 return None
 
-            if not menu[cursor].selected:
-                menu[cursor].select()
+            if not cursor.selected:
+                cursor.select()
             else:
                 menu.done()
 
@@ -68,8 +94,11 @@ def main():
             menu.select_all()
             return False
 
+        if key == 'd':
+            menu.cursor = 'Done'
+
     if menu_type == 'checkbox':
-        meta_options = ['Select all', 'Unselect all'] + items + [ 'Done']
+        meta_options = ['Select all', 'Unselect all'] + items + ['Done']
     else:
         meta_options = items
 
@@ -100,9 +129,12 @@ def main():
                     }.get(sum(item.selected for item in menu if not item.is_meta), '-'),
                 onkey=unselect_all_onkey)
 
-        menu[-1].set_meta(mark=lambda menu: '>' if menu.index == len(menu) - 1 else ' ')
-        menu[-1].cursor = ' '
+        menu[-1].set_meta(mark=lambda menu: '>' if menu.cursor == 'Done' else ' ')
+        menu[-1].arrow = ' '
         def done_onkey(menu, cursor, key):
+            if key == 'space':
+                menu.cursor = '.gitignore'
+                return False
             if key == 'enter':
                 menu.done()
         menu[-1].onkey = done_onkey

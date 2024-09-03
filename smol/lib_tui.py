@@ -392,6 +392,47 @@ def getch(timeout=None, alias=True):
         termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
 
 
+class MenuCursor:
+    def __init__(self, menu, wrap):
+        self.menu = menu
+        self.wrap = wrap
+        self.index = 0
+
+    def __int__(self):
+        return self.index
+
+    def __eq__(self, what):
+        if isinstance(what, int):
+            l = len(self.menu)
+            return self.index == (what + l) % l
+        return self.menu[self.index].obj == what
+
+    def move(self, where):
+        if isinstance(where, int):
+            self.index = where
+        else:
+            for idx, item in enumerate(self.menu):
+                if item.obj == where:
+                    self.index = idx
+                    break
+
+        if self.wrap:
+            self.index = (self.index + len(self.menu)) % len(self.menu)
+        elif self.index < 0:
+            self.index = 0
+        elif self.index >= len(self.menu):
+            self.index = len(self.menu) - 1
+
+    def __iadd__(self, what):
+        self.index += what
+
+    def __isub__(self, what):
+        self.index -= what
+
+    def __getattr__(self, what):
+        return getattr(self.menu[self.index], what)
+
+
 class Menu:
     class DoneSelection(Exception):
         pass
@@ -400,13 +441,13 @@ class Menu:
         pass
 
     def __init__(self, prompt, options, *, format=None,
-                 cursor='>', type='',
+                 arrow='>', type='',
                  onkey=None, wrap=False):
         if onkey is not None and not callable(onkey):
-            raise TypeError('onkey should be a callable(menu, key, cursor)')
+            raise TypeError('onkey should be a callable(menu, cursor, key)')
 
         self.prompt = prompt
-        self.cursor = cursor
+        self.arrow = arrow
 
         if type in (None, 'default', 'select'):
             type = ''
@@ -425,19 +466,23 @@ class Menu:
             self.mark = type[1:-1] or '*'
 
         self.options = [MenuItem(self, opt, format=format) for opt in options]
-
         self.message = ''
-
         self.onkey = onkey
-        self.wrap = wrap
-
-        self.index = 0 # cursor index
+        self.crsr = MenuCursor(self, wrap) # cursor
 
     def __len__(self):
         return len(self.options)
 
     def __getitem__(self, key):
         return self.options[key]
+
+    @property
+    def cursor(self):
+        return self.crsr
+
+    @cursor.setter
+    def cursor(self, where):
+        self.crsr.move(where)
 
     @staticmethod
     def printline(*args, **kwargs):
@@ -453,75 +498,61 @@ class Menu:
             Menu.printline(self.prompt)
 
         for idx, o in enumerate(self.options):
-            cursor = o.cursor or self.cursor
-            cursor = cursor(self) if callable(cursor) else cursor
+            arrow = o.arrow or self.arrow
+            if callable(arrow):
+                arrow = arrow(self)
 
             mark = o.mark or self.mark
             if callable(mark):
                 mark = mark(self)
 
-            Menu.printline('{cursor}{ll}{mark}{rr} {text}'.format(
-                cursor=cursor if idx == self.index else ' ' * len(cursor),
+            Menu.printline('{arrow}{ll}{mark}{rr} {text}'.format(
+                arrow=arrow if idx == int(self.crsr) else ' ' * len(arrow),
                 ll=self.checkbox[0] if not o.is_meta else '{',
                 rr=self.checkbox[1] if not o.is_meta else '}',
                 mark=mark if o.selected or o.is_meta else ' ' * len(mark),
-                text=(paints.black / paints.white)(o.text) if idx == self.index else o.text
+                text=(paints.black / paints.white)(o.text) if idx == int(self.crsr) else o.text
                 ))
 
-        Menu.printline('[' + self.message + ']', end='')
+        Menu.printline('[{}]'.format(self.message), end='')
 
     def handle_key(self, key):
         result = None
 
-        if self[self.index].onkey:
-            result = self[self.index].onkey(menu=self, cursor=self.index, key=key)
+        if self[int(self.crsr)].onkey:
+            result = self[int(self.crsr)].onkey(menu=self, cursor=self.crsr, key=key)
+            if isinstance(result, str):
+                key = result
+                result = None
 
         if result is None and self.onkey:
-            result = self.onkey(menu=self, cursor=self.index, key=key)
+            result = self.onkey(menu=self, cursor=self.crsr, key=key)
+            if isinstance(result, str):
+                key = result
+                result = None
 
         if result is None:
             if key == 'q':
                 self.unselect_all()
                 self.quit()
-
-            if key == 'enter':
+            elif key == 'enter':
                 self.done()
-
-            if key == 'space':
-                self[self.index].toggle()
-
-            if key in ('up', 'down', 'home', 'end'):
-                self.cursor_move(key)
+            elif key == 'space':
+                self[int(self.crsr)].toggle()
+            elif key == 'up':
+                self.cursor -= 1
+            elif key == 'down':
+                self.cursor += 1
+            elif key == 'home':
+                self.cursor = 0
+            elif key == 'end':
+                self.cursor = -1
 
         return result
 
-    def cursor_move(self, what):
-        if isinstance(what, int):
-            self.index = what
-        elif what == 'up':
-            self.index -= 1
-        elif what == 'down':
-            self.index += 1
-        elif what == 'home':
-            self.index = 0
-        elif what == 'end':
-            self.index = len(self) - 1
-        else:
-            for idx, item in enumerate(self):
-                if item.obj is what:
-                    self.index = idx
-                    break
-
-        if self.wrap:
-            self.index = (self.index + len(self)) % len(self)
-        elif self.index < 0:
-            self.index = 0
-        elif self.index >= len(self):
-            self.index = len(self) - 1
-
     def selected(self):
         if not self.type:
-            return self.options[self.index].obj
+            return self.options[int(self.crsr)].obj
         elif self.type == '()':
             return tuple(opt.obj for opt in self.options if opt.selected and not opt.is_meta)
         elif self.type == '[]':
@@ -609,14 +640,14 @@ class MenuItem:
 
         self.selected = False
         self.is_meta = False
-        self.cursor = None
+        self.arrow = None
         self.mark = None
         self.onkey = None
 
-    def set_meta(self, *, mark=None, cursor=None, onkey=None):
+    def set_meta(self, *, mark=None, arrow=None, onkey=None):
         self.is_meta = True
         self.mark = mark or self.mark
-        self.cursor = cursor or self.cursor
+        self.arrow = arrow or self.arrow
         self.onkey = onkey
 
     def toggle(self):
