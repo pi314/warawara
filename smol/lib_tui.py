@@ -393,10 +393,11 @@ def getch(timeout=None, alias=True):
 
 
 class MenuCursor:
-    def __init__(self, menu, wrap):
+    def __init__(self, menu, wrap, color):
         self.menu = menu
         self.wrap = wrap
         self.index = 0
+        self.color = color
 
     def __int__(self):
         return self.index
@@ -441,13 +442,13 @@ class Menu:
         pass
 
     def __init__(self, prompt, options, *, format=None,
-                 arrow='>', type='',
-                 onkey=None, wrap=False):
+                 arrow=None, type=None,
+                 onkey=None, wrap=False, color=None):
         if onkey is not None and not callable(onkey):
             raise TypeError('onkey should be a callable(menu, cursor, key)')
 
         self.prompt = prompt
-        self.arrow = arrow
+        self.arrow = arrow or '>'
 
         if type in (None, 'default', 'select'):
             type = ''
@@ -468,7 +469,9 @@ class Menu:
         self.options = [MenuItem(self, opt, format=format) for opt in options]
         self.message = ''
         self.onkey = onkey
-        self.crsr = MenuCursor(self, wrap) # cursor
+        self.crsr = MenuCursor(self, wrap=wrap,
+                               color=color or paints.black/paints.white
+                               )
 
     def __len__(self):
         return len(self.options)
@@ -511,7 +514,7 @@ class Menu:
                 ll=self.checkbox[0] if not o.is_meta else '{',
                 rr=self.checkbox[1] if not o.is_meta else '}',
                 mark=mark if o.selected or o.is_meta else ' ' * len(mark),
-                text=(paints.black / paints.white)(o.text) if idx == int(self.crsr) else o.text
+                text=self.cursor.color(o.text) if idx == int(self.crsr) else o.text
                 ))
 
         Menu.printline('[{}]'.format(self.message), end='')

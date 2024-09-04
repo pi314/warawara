@@ -114,12 +114,14 @@ def main():
         def select_all_onkey(menu, cursor, key):
             if key == 'space':
                 menu.select_all()
+                menu.cursor.color = smol.black / smol.green
                 return False
         menu[0].onkey = select_all_onkey
 
         def unselect_all_onkey(menu, cursor, key):
             if key == 'space':
                 menu.unselect_all()
+                menu.cursor.color = smol.black / smol.red
                 return False
 
         menu[1].set_meta(
@@ -134,6 +136,7 @@ def main():
         def done_onkey(menu, cursor, key):
             if key == 'space':
                 menu.cursor = '.gitignore'
+                menu.cursor.color = smol.black / smol.white
                 return False
             if key == 'enter':
                 menu.done()
