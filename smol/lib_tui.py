@@ -470,13 +470,14 @@ class Menu:
         self.message = ''
         self.onkey = onkey
         self.crsr = MenuCursor(self, wrap=wrap,
-                               color=color or paints.black/paints.white
-                               )
+                               color=color or paints.black/paints.white)
 
     def __len__(self):
         return len(self.options)
 
     def __getitem__(self, key):
+        if key == self.cursor:
+            return self.options[int(key)]
         return self.options[key]
 
     @property
@@ -501,18 +502,19 @@ class Menu:
             Menu.printline(self.prompt)
 
         for idx, o in enumerate(self.options):
-            arrow = o.arrow or self.arrow
-            if callable(arrow):
-                arrow = arrow(self)
+            layer = o if o.arrow else self
+            arrow = layer.arrow(layer) if callable(layer.arrow) else layer.arrow
 
-            mark = o.mark or self.mark
-            if callable(mark):
-                mark = mark(self)
+            layer = o if o.checkbox else self
+            checkbox = layer.checkbox(layer) if callable(layer.checkbox) else layer.checkbox
+
+            layer = o if o.mark else self
+            mark = layer.mark(layer) if callable(layer.mark) else layer.mark
 
             Menu.printline('{arrow}{ll}{mark}{rr} {text}'.format(
                 arrow=arrow if idx == int(self.crsr) else ' ' * len(arrow),
-                ll=self.checkbox[0] if not o.is_meta else '{',
-                rr=self.checkbox[1] if not o.is_meta else '}',
+                ll=checkbox[0],
+                rr=checkbox[1],
                 mark=mark if o.selected or o.is_meta else ' ' * len(mark),
                 text=self.cursor.color(o.text) if idx == int(self.crsr) else o.text
                 ))
@@ -522,14 +524,14 @@ class Menu:
     def handle_key(self, key):
         result = None
 
-        if self[int(self.crsr)].onkey:
-            result = self[int(self.crsr)].onkey(menu=self, cursor=self.crsr, key=key)
+        if self[self.crsr].onkey:
+            result = self[self.crsr].onkey(item=self[self.crsr], key=key)
             if isinstance(result, str):
                 key = result
                 result = None
 
         if result is None and self.onkey:
-            result = self.onkey(menu=self, cursor=self.crsr, key=key)
+            result = self.onkey(menu=self, key=key)
             if isinstance(result, str):
                 key = result
                 result = None
@@ -644,13 +646,15 @@ class MenuItem:
         self.selected = False
         self.is_meta = False
         self.arrow = None
+        self.checkbox = None
         self.mark = None
         self.onkey = None
 
-    def set_meta(self, *, mark=None, arrow=None, onkey=None):
+    def set_meta(self, *, mark=None, arrow=None, checkbox=None, onkey=None):
         self.is_meta = True
-        self.mark = mark or self.mark
         self.arrow = arrow or self.arrow
+        self.checkbox = checkbox or self.checkbox or '{}'
+        self.mark = mark or self.mark
         self.onkey = onkey
 
     def toggle(self):
@@ -670,3 +674,7 @@ class MenuItem:
         if self.is_meta:
             return
         self.menu.unselect(self)
+
+    @property
+    def focused(self):
+        return self is self.menu[self.menu.cursor]

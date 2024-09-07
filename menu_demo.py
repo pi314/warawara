@@ -16,7 +16,7 @@ def main():
 
     print(shutil.get_terminal_size())
 
-    def onkey(menu, cursor, key):
+    def onkey(menu, key):
         if key == 'j':
             return 'down'
         if key == 'k':
@@ -45,7 +45,7 @@ def main():
     if menu_type is None:
         return
 
-    def onkey(menu, cursor, key):
+    def onkey(menu, key):
         if key == 'j':
             return 'down'
         if key == 'k':
@@ -79,8 +79,8 @@ def main():
             if not menu.type:
                 return None
 
-            if not cursor.selected:
-                cursor.select()
+            if not menu.cursor.selected:
+                menu.cursor.select()
             else:
                 menu.done()
 
@@ -106,40 +106,42 @@ def main():
 
     if menu_type == 'checkbox':
         menu[0].set_meta(
-                mark=lambda menu: {
+                mark=lambda item: {
                     len(items): '*',
                     0: ' '
-                    }.get(sum(item.selected for item in menu if not item.is_meta), '-')
+                    }.get(sum(i.selected for i in item.menu if not i.is_meta), '-')
                 )
-        def select_all_onkey(menu, cursor, key):
+        def select_all_onkey(item, key):
             if key == 'space':
-                menu.select_all()
-                menu.cursor.color = smol.black / smol.green
+                item.menu.select_all()
+                item.menu.cursor.color = smol.black / smol.green
                 return False
         menu[0].onkey = select_all_onkey
 
-        def unselect_all_onkey(menu, cursor, key):
+        def unselect_all_onkey(item, key):
             if key == 'space':
-                menu.unselect_all()
-                menu.cursor.color = smol.black / smol.red
+                item.menu.unselect_all()
+                item.menu.cursor.color = smol.black / smol.red
                 return False
-
         menu[1].set_meta(
-                mark=lambda menu: {
+                mark=lambda item: {
                     len(items): ' ',
                     0: '*'
-                    }.get(sum(item.selected for item in menu if not item.is_meta), '-'),
+                    }.get(sum(i.selected for i in item.menu if not i.is_meta), '-'),
                 onkey=unselect_all_onkey)
 
-        menu[-1].set_meta(mark=lambda menu: '>' if menu.cursor == 'Done' else ' ')
+        menu[-1].set_meta(mark=lambda item: '>' if item.focused else ' ')
         menu[-1].arrow = ' '
-        def done_onkey(menu, cursor, key):
+        def done_onkey(item, key):
             if key == 'space':
-                menu.cursor = '.gitignore'
-                menu.cursor.color = smol.black / smol.white
+                item.menu.cursor.color = smol.black / smol.white
+                if not item.checkbox or item.checkbox == '{}':
+                    item.checkbox = '()'
+                else:
+                    item.checkbox = '{}'
                 return False
             if key == 'enter':
-                menu.done()
+                item.menu.done()
         menu[-1].onkey = done_onkey
 
     ret = menu.interact()
