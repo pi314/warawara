@@ -333,27 +333,86 @@ def prompt(question, options=tuple(),
     return user_selection
 
 
-special_key_table = {
-        '\033[A':   'up',
-        '\033[B':   'down',
-        '\033[C':   'right',
-        '\033[D':   'left',
-        '\033':     'esc',
-        '\033[1~':  'home',
-        '\033[4~':  'end',
-        '\033[5~':  'pgup',
-        '\033[6~':  'pgdn',
-        '\x7f':     'backspace',
-        '\n':       'enter',
-        '\t':       'tab',
-        ' ':        'space',
+class Key:
+    def __init__(self, seq, *aliases):
+        if not aliases:
+            raise ValueError('At least one alias should be specified')
+
+        self.seq = seq
+        self.aliases = [str(name) for name in aliases]
+
+    def __hash__(self):
+        return hash(self.seq)
+
+    def __repr__(self):
+        return self.aliases[0]
+
+    def name(self, name):
+        if name not in self.aliases:
+            self.aliases.append(name)
+
+    def __eq__(self, other):
+        if type(self) == type(other):
+            return self.seq == other.seq
+        else:
+            return other == self.seq or other in self.aliases
+
+
+KEY_UP = Key('\033[A', 'up')
+KEY_DOWN = Key('\033[B', 'down')
+KEY_RIGHT = Key('\033[C', 'right')
+KEY_LEFT = Key('\033[D', 'left')
+KEY_ESCAPE = Key('\033', 'esc', 'escape')
+KEY_HOME = Key('\033[1~', 'home')
+KEY_END = Key('\033[4~', 'end')
+KEY_PGUP = Key('\033[5~', 'pgup', 'pageup')
+KEY_PGDN = Key('\033[6~', 'pgdn', 'pagedown')
+KEY_BACKSPACE = Key('\x7f', 'backspace')
+KEY_TAB = Key('\t', 'tab')
+KEY_ENTER = Key('\n', 'enter')
+KEY_SPACE = Key(' ', 'space')
+KEY_F1 = Key('\033OP', 'f1')
+KEY_F2 = Key('\033OQ', 'f2')
+KEY_F3 = Key('\033OR', 'f3')
+KEY_F4 = Key('\033OS', 'f4')
+KEY_F5 = Key('\033[15~', 'f5')
+KEY_F6 = Key('\033[17~', 'f6')
+KEY_F7 = Key('\033[18~', 'f7')
+KEY_F8 = Key('\033[19~', 'f8')
+KEY_F9 = Key('\033[20~', 'f9')
+KEY_F10 = Key('\033[21~', 'f10')
+KEY_F11 = Key('\033[23~', 'f11')
+KEY_F12 = Key('\033[24~', 'f12')
+
+__all__ += [key for key in globals().keys() if key.startswith('KEY_')]
+
+
+key_table = {
+        v.seq : v
+        for k,v in globals().items()
+        if k.startswith('KEY_')
         }
 
 
-def getch(timeout=None, alias=True):
+__all__ += ['register_key']
+def register_key(seq, *aliases):
+    if not seq or not isinstance(seq, str):
+        raise ValueError('huh?')
+
+    if seq not in key_table:
+        key_table[seq] = Key(seq, *aliases)
+        return key_table[seq]
+
+    key = key_table[seq]
+    for name in aliases:
+        key.name(name)
+
+    return key
+
+
+def getch(timeout=None):
     import termios, tty
     import os
-    import time
     import select
 
     fd = sys.stdin.fileno()
@@ -377,13 +436,13 @@ def getch(timeout=None, alias=True):
             acc += read_one_byte()
 
             if not has_data():
-                return special_key_table.get(acc, acc) if alias else acc
+                return key_table.get(acc, acc)
 
-            if acc != '\033' and acc in special_key_table:
-                return special_key_table[acc] if alias else acc
+            if acc != '\033' and acc in key_table:
+                return key_table[acc]
 
-            # prefix match: collectmore char
-            if any(key_seq for key_seq in special_key_table.keys() if key_seq.startswith(acc)):
+            # prefix match: collect more char
+            if any(key_seq for key_seq in key_table.keys() if key_seq.startswith(acc)):
                 continue
 
             return acc

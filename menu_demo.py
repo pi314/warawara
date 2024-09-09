@@ -1,9 +1,42 @@
+# menu
+# menu[n]
+# menu.cursor
+#
+# menu.prompt
+# menu.arrow
+# ?x menu.onkey
+# ? menu.onkey(func[menu, key])
+# ? menu.onkey(key, func[menu])
+# menu.message
+# ?menu.color
+#
+# ?x menu[n].onkey = func
+# ? menu[n].onkey(func[item, key])
+# ? menu[n].onkey(key, func[item])
+# menu[n].text
+# menu[n].arrow
+# menu[n].mark
+# menu[n].select()
+# menu[n].unselect()
+# menu[n].color
+#
+# menu.cursor
+# menu.cursor.select()
+# menu.cursor.unselect()
+# menu.cursor.color
+
+
+
+
 import sys
 import os
 import shutil
 
 
 import smol
+
+smol.register_key(chr(ord('u') - ord('a') + 1), 'uwu')
+smol.register_key(chr(ord('w') - ord('a') + 1), 'wuw')
 
 
 def main():
@@ -37,6 +70,8 @@ def main():
         elif key == 'c':
             menu.cursor = 'checkbox'
 
+        menu.message = repr(key)
+
     menu = smol.tui.Menu('Select menu type:', options=['default', 'radio', 'checkbox'], onkey=onkey, wrap=True)
     menu_type = menu.interact()
     print(menu_type)
@@ -67,8 +102,12 @@ def main():
             menu.message = 'AwA'
             return False
 
-        if key == chr(ord('u') - ord('a') + 1):
+        if key == 'uwu':
             menu.message = 'UwU'
+            return False
+
+        if key == 'wuw':
+            menu.message = 'WuW'
             return False
 
         if key == 'tab':
