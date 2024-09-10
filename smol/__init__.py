@@ -9,41 +9,50 @@ check_python_version()
 del check_python_version
 
 
-def load_internal_modules():
-    import os
+def load_internal_modules(prefix, post_load_hook):
     import importlib
-    for f in os.listdir(os.path.dirname(__file__)):
-        if f.startswith('lib_') and f.endswith('.py'):
-            int_name = os.path.splitext(f)[0]
-            ext_name = int_name[4:]
-            module = importlib.import_module('.' + int_name, 'smol')
+    import pkgutil
+    scope_prefix = __name__ + '.'
+    for mod_info in pkgutil.iter_modules(__path__, scope_prefix):
+        mod_name = mod_info.name[len(scope_prefix):]
+        if not mod_name.startswith(prefix):
+            continue
 
-            if '__all__' in module.__dict__:
-                attrs = module.__dict__['__all__']
-            else:
-                attrs = [x for x in module.__dict__ if not x.startswith('_')]
+        module = importlib.import_module(mod_info.name)
+        post_load_hook(module, mod_name)
 
-            globals()[ext_name] = globals()[int_name]
-            globals().update({attr: getattr(module, attr) for attr in attrs})
 
-            del globals()[int_name]
+def post_load_lib(module, mod_name):
+    ext_name = mod_name[4:]
 
-load_internal_modules()
-del load_internal_modules
+    if '__all__' in module.__dict__:
+        attrs = module.__dict__['__all__']
+    else:
+        attrs = [x for x in module.__dict__ if not x.startswith('_')]
+
+    # Register module into package namespace with external name
+    globals()[ext_name] = module
+    globals().update({attr: getattr(module, attr) for attr in attrs})
+
+    # Delete old name from package namespace
+    del globals()[mod_name]
+
+
+def post_load_bin(module, mod_name):
+    ext_name = mod_name[4:]
+
+    # Register module into smol.bin with external name
+    setattr(bin, ext_name, module)
+
+    # Delete old name from package namespace
+    del globals()[mod_name]
 
 
 from . import bin
 
-def load_cli_entry_points():
-    import os
-    import importlib
-    for f in os.listdir(os.path.dirname(__file__)):
-        if f.startswith('bin_') and f.endswith('.py'):
-            int_name = os.path.splitext(f)[0]
-            ext_name = int_name[4:]
-            module = importlib.import_module('.' + int_name, 'smol')
-            setattr(bin, ext_name, module)
-            del globals()[int_name]
+load_internal_modules('lib_', post_load_lib)
+load_internal_modules('bin_', post_load_bin)
 
-load_cli_entry_points()
-del load_cli_entry_points
+del post_load_lib
+del post_load_bin
+del load_internal_modules
