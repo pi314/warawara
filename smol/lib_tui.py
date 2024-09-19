@@ -387,11 +387,19 @@ KEY_F12 = Key('\033[24~', 'f12')
 __all__ += [key for key in globals().keys() if key.startswith('KEY_')]
 
 
-key_table = {
-        v.seq : v
-        for k,v in globals().items()
-        if k.startswith('KEY_')
-        }
+key_table = {}
+reverse_key_table = {}
+
+def _init_key_table():
+    for k, v in globals().items():
+        if not k.startswith('KEY_'):
+            continue
+        key_table[v.seq] = v
+
+        for alias in v.aliases:
+            reverse_key_table[alias] = v
+
+_init_key_table()
 
 
 __all__ += ['register_key']
@@ -504,7 +512,7 @@ class Menu:
                  arrow=None, type=None,
                  onkey=None, wrap=False, color=None):
         if onkey is not None and not callable(onkey):
-            raise TypeError('onkey should be a callable(menu, cursor, key)')
+            raise TypeError('onkey should be a callable(menu, key)')
 
         self.prompt = prompt
         self.arrow = arrow or '>'
@@ -527,7 +535,7 @@ class Menu:
 
         self.options = [MenuItem(self, opt, format=format) for opt in options]
         self.message = ''
-        self.onkey = onkey
+        self.key_handlers = {None: onkey}
         self.crsr = MenuCursor(self, wrap=wrap,
                                color=color or paints.black/paints.white)
 
@@ -574,26 +582,59 @@ class Menu:
                 arrow=arrow if idx == int(self.crsr) else ' ' * len(arrow),
                 ll=checkbox[0],
                 rr=checkbox[1],
-                mark=mark if o.selected or o.is_meta else ' ' * len(mark),
+                mark=mark if o.selected or o.is_phony else ' ' * len(mark),
                 text=self.cursor.color(o.text) if idx == int(self.crsr) else o.text
                 ))
 
         Menu.printline('[{}]'.format(self.message), end='')
 
+    def onkey(self, key, handler=None):
+        if isinstance(key, str):
+            key = reverse_key_table[key]
+        elif callable(key) and handler is None:
+            key, handler = None, key
+
+        if handler is None:
+            # Remove key/handler binding
+            if key in self.key_handlers:
+                del self.key_handlers[key]
+
+        elif (isinstance(key, Key) or key is None) and callable(handler):
+            # Set key/handler binding
+            self.key_handlers[key] = handler
+
+        else:
+            raise TypeError('handler should be a callable or None')
+
     def handle_key(self, key):
         result = None
 
-        if self[self.crsr].onkey:
-            result = self[self.crsr].onkey(item=self[self.crsr], key=key)
+        if key in self[self.crsr].key_handlers:
+            result = self[self.crsr].key_handlers[key](item=self[self.crsr], key=key)
             if isinstance(result, str):
                 key = result
                 result = None
 
-        if result is None and self.onkey:
-            result = self.onkey(menu=self, key=key)
-            if isinstance(result, str):
-                key = result
-                result = None
+        if result is None:
+            if None in self[self.crsr].key_handlers:
+                result = self[self.crsr].key_handlers[None](item=self[self.crsr], key=key)
+                if isinstance(result, str):
+                    key = result
+                    result = None
+
+        if result is None:
+            if key in self.key_handlers:
+                result = self.key_handlers[key](menu=self, key=key)
+                if isinstance(result, str):
+                    key = result
+                    result = None
+
+        if result is None:
+            if None in self.key_handlers:
+                result = self.key_handlers[None](menu=self, key=key)
+                if isinstance(result, str):
+                    key = result
+                    result = None
 
         if result is None:
             if key == 'q':
@@ -618,9 +659,9 @@ class Menu:
         if not self.type:
             return self.options[int(self.crsr)].obj
         elif self.type == '()':
-            return tuple(opt.obj for opt in self.options if opt.selected and not opt.is_meta)
+            return tuple(opt.obj for opt in self.options if opt.selected and not opt.is_phony)
         elif self.type == '[]':
-            return [opt.obj for opt in self.options if opt.selected and not opt.is_meta]
+            return [opt.obj for opt in self.options if opt.selected and not opt.is_phony]
 
     def select(self, opt):
         if not self.type:
@@ -702,22 +743,34 @@ class MenuItem:
             except:
                 self.text = repr(obj)
 
+        self.key_handlers = {}
+
         self.selected = False
-        self.is_meta = False
+        self.is_phony = False
         self.arrow = None
         self.checkbox = None
         self.mark = None
-        self.onkey = None
 
-    def set_meta(self, *, mark=None, arrow=None, checkbox=None, onkey=None):
-        self.is_meta = True
-        self.arrow = arrow or self.arrow
-        self.checkbox = checkbox or self.checkbox or '{}'
-        self.mark = mark or self.mark
-        self.onkey = onkey
+    def onkey(self, key, handler=None):
+        if isinstance(key, str):
+            key = reverse_key_table[key]
+        elif callable(key) and handler is None:
+            key, handler = None, key
+
+        if handler is None:
+            # Remove key/handler binding
+            if key in self.key_handlers:
+                del self.key_handlers[key]
+
+        elif (isinstance(key, Key) or key is None) and callable(handler):
+            # Set key/handler binding
+            self.key_handlers[key] = handler
+
+        else:
+            raise TypeError('handler should be a callable or None')
 
     def toggle(self):
-        if self.is_meta:
+        if self.is_phony:
             return
         if self.selected:
             self.unselect()
@@ -725,12 +778,12 @@ class MenuItem:
             self.select()
 
     def select(self):
-        if self.is_meta:
+        if self.is_phony:
             return
         self.menu.select(self)
 
     def unselect(self):
-        if self.is_meta:
+        if self.is_phony:
             return
         self.menu.unselect(self)
 

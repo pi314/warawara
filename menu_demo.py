@@ -137,39 +137,37 @@ def main():
             menu.cursor = 'Done'
 
     if menu_type == 'checkbox':
-        meta_options = ['Select all', 'Unselect all'] + items + ['Done']
+        phony_options = ['Select all', 'Unselect all'] + items + ['Done']
     else:
-        meta_options = items
+        phony_options = items
 
-    menu = smol.tui.Menu('Select one you like:', options=meta_options, type=menu_type, onkey=onkey, wrap=True)
+    menu = smol.tui.Menu('Select one you like:', options=phony_options, type=menu_type, onkey=onkey, wrap=True)
 
     if menu_type == 'checkbox':
-        menu[0].set_meta(
-                mark=lambda item: {
-                    len(items): '*',
-                    0: ' '
-                    }.get(sum(i.selected for i in item.menu if not i.is_meta), '-')
-                )
+        menu[0].is_phony = True
+        menu[0].mark = lambda item: {
+                len(items): '*',
+                0: ' '
+                }.get(sum(i.selected for i in item.menu if not i.is_phony), '-')
         def select_all_onkey(item, key):
-            if key == 'space':
-                item.menu.select_all()
-                item.menu.cursor.color = smol.black / smol.green
-                return False
-        menu[0].onkey = select_all_onkey
+            item.menu.select_all()
+            item.menu.cursor.color = smol.black / smol.green
+            return False
+        menu[0].onkey('space', select_all_onkey)
 
         def unselect_all_onkey(item, key):
-            if key == 'space':
-                item.menu.unselect_all()
-                item.menu.cursor.color = smol.black / smol.red
-                return False
-        menu[1].set_meta(
-                mark=lambda item: {
-                    len(items): ' ',
-                    0: '*'
-                    }.get(sum(i.selected for i in item.menu if not i.is_meta), '-'),
-                onkey=unselect_all_onkey)
+            item.menu.unselect_all()
+            item.menu.cursor.color = smol.black / smol.red
+            return False
+        menu[1].is_phony = True
+        menu[1].mark = lambda item: {
+                len(items): ' ',
+                0: '*'
+                }.get(sum(i.selected for i in item.menu if not i.is_phony), '-')
+        menu[1].onkey('space', unselect_all_onkey)
 
-        menu[-1].set_meta(mark=lambda item: '>' if item.focused else ' ')
+        menu[-1].is_phony = True
+        menu[-1].mark = lambda item: '>' if item.focused else ' '
         menu[-1].arrow = ' '
         def done_onkey(item, key):
             if key == 'space':
@@ -181,7 +179,7 @@ def main():
                 return False
             if key == 'enter':
                 item.menu.done()
-        menu[-1].onkey = done_onkey
+        menu[-1].onkey(done_onkey)
 
     ret = menu.interact()
     if isinstance(ret, tuple):
