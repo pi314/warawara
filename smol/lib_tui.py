@@ -460,9 +460,8 @@ def getch(timeout=None):
 
 
 class MenuCursor:
-    def __init__(self, menu, wrap, color):
+    def __init__(self, menu, color):
         self.menu = menu
-        self.wrap = wrap
         self.index = 0
         self.color = color
 
@@ -484,7 +483,7 @@ class MenuCursor:
                     self.index = idx
                     break
 
-        if self.wrap:
+        if self.menu.wrap:
             self.index = (self.index + len(self.menu)) % len(self.menu)
         elif self.index < 0:
             self.index = 0
@@ -535,9 +534,9 @@ class Menu:
 
         self.options = [MenuItem(self, opt, format=format) for opt in options]
         self.message = ''
+        self.wrap = wrap
         self.key_handlers = {None: onkey}
-        self.crsr = MenuCursor(self, wrap=wrap,
-                               color=color or paints.black/paints.white)
+        self.crsr = MenuCursor(self, color=color or paints.black/paints.white)
 
     def __len__(self):
         return len(self.options)
