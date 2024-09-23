@@ -1,14 +1,36 @@
 import itertools
 
 
+def iterable(obj):
+    try:
+        iter(obj)
+        return True
+    except TypeError:
+        return False
+
+
 def unwrap_one(obj):
     try:
-        if len(obj) == 1 and not isinstance(obj[0], str) and iter(obj[0]):
-            return obj[0]
+        while True:
+            if len(obj) == 1 and iter(obj[0]) and not isinstance(obj[0], str):
+                obj = obj[0]
+            else:
+                return obj
     except TypeError:
         pass
 
     return obj
+
+
+def flatten(tree):
+    if not iterable(tree) or isinstance(tree, str):
+        return tree
+
+    wrapper_type = type(tree)
+    return wrapper_type(itertools.chain.from_iterable(
+        flatten(i) if iterable(i) and not isinstance(i, str) else [i]
+        for i in tree
+        ))
 
 
 def lookahead(iterable):
@@ -20,11 +42,6 @@ def lookahead(iterable):
         lookahead = val
 
     yield lookahead, True
-
-
-def flatten(listlist):
-    wrapper_type = type(listlist)
-    return wrapper_type(itertools.chain.from_iterable(listlist))
 
 
 def zip_longest(*iterables, fillvalues=None):
