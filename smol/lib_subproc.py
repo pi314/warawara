@@ -272,11 +272,13 @@ class command:
             self.thread.start()
 
         else:
-            self.proc = sub.Popen(self.cmd,
+            self.proc = sub.Popen(
+                    self.cmd,
                     stdin=self.proc_stdin,
                     stdout=self.proc_stdout,
                     stderr=self.proc_stderr,
-                    encoding='utf-8', bufsize=1, universal_newlines=True,
+                    encoding='utf-8', errors='backslashreplace',
+                    bufsize=1, universal_newlines=True,
                     env=self.env)
 
             def writer(self_stream, proc_stream):
