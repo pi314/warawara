@@ -63,7 +63,7 @@ def main():
             sponged_lines = [line.rstrip() for line in sys.stdin.readlines()]
             for line in sponged_lines:
                 print(line)
-            exit()
+            sys.exit()
 
         stop_signal = threading.Event()
 

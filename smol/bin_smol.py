@@ -15,7 +15,7 @@ def main():
             if f.startswith('bin_') and f.endswith('.py'):
                 m = os.path.splitext(f[4:])[0]
                 print(m)
-        exit(1)
+        sys.exit(1)
 
     subcmd = sys.argv[0]
 
@@ -23,7 +23,7 @@ def main():
         getattr(bin, subcmd).main()
     except AttributeError:
         print(f'Unknown subcommand: {subcmd}', file=sys.stderr)
-        exit(1)
+        sys.exit(1)
     except ModuleNotFoundError:
         print(f'Unknown subcommand: {subcmd}', file=sys.stderr)
-        exit(1)
+        sys.exit(1)
