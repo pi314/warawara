@@ -9,7 +9,7 @@ import unicodedata
 
 from . import lib_paints as paints
 
-from .lib_itertools import zip_longest
+from .lib_itertools import zip_longest, unwrap_one, flatten
 from .lib_paints import decolor
 
 
@@ -388,7 +388,7 @@ __all__ += [key for key in globals().keys() if key.startswith('KEY_')]
 
 
 key_table = {}
-reverse_key_table = {}
+key_table_reverse = {}
 
 def _init_key_table():
     for k, v in globals().items():
@@ -397,7 +397,7 @@ def _init_key_table():
         key_table[v.seq] = v
 
         for alias in v.aliases:
-            reverse_key_table[alias] = v
+            key_table_reverse[alias] = v
 
 _init_key_table()
 
@@ -500,6 +500,57 @@ class MenuCursor:
         return getattr(self.menu[self.index], what)
 
 
+class KeyHandler:
+    def __init__(self, who, default=None):
+        self.who = who
+        self.key_handlers = {
+                None: [] if default is None else unwrap_one([default])
+                }
+
+    def bind(self, key, handler=None):
+        if isinstance(key, str):
+            key = key_table_reverse.get(key, key)
+        elif key is not None and handler is None:
+            key, handler = None, key
+
+        handlers = flatten([handler])
+        for h in handlers:
+            if not callable(h):
+                raise ValueError('handler should be a callable', h)
+
+        # Set key/handler binding
+        if key not in self.key_handlers:
+            self.key_handlers[key] = []
+        self.key_handlers[key] += handlers
+
+    def unbind(self, key=None, handler=None):
+        if isinstance(key, str):
+            key = key_table_reverse.get(key, key)
+        elif callable(key) and handler is None:
+            key, handler = None, key
+
+        if key not in self.key_handlers:
+            return
+
+        if handler is None:
+            # Remove all key/handler binding
+            self.key_handlers[key] = []
+        else:
+            # Remove that key/handler binding
+            self.key_handlers[key].remove(handler)
+
+    def onkey(self, key):
+        handlers = (
+                self.key_handlers.get(key, []) +
+                self.key_handlers.get(None, [])
+                )
+
+        for handler in handlers:
+            result = handler(self.who, key=key)
+            if result is not None:
+                return result
+
+
 class Menu:
     class DoneSelection(Exception):
         pass
@@ -510,8 +561,8 @@ class Menu:
     def __init__(self, prompt, options, *, format=None,
                  arrow=None, type=None,
                  onkey=None, wrap=False, color=None):
-        if onkey is not None and not callable(onkey):
-            raise TypeError('onkey should be a callable(menu, key)')
+        # if onkey is not None and not callable(onkey):
+        #     raise TypeError('onkey should be a callable(menu, key)')
 
         self.prompt = prompt
         self.arrow = arrow or '>'
@@ -535,7 +586,7 @@ class Menu:
         self.options = [MenuItem(self, opt, format=format) for opt in options]
         self.message = ''
         self.wrap = wrap
-        self.key_handlers = {None: onkey}
+        self.key_handler = KeyHandler(self, default=onkey)
         self.crsr = MenuCursor(self, color=color or paints.black/paints.white)
 
     def __len__(self):
@@ -587,53 +638,29 @@ class Menu:
 
         Menu.printline('[{}]'.format(self.message), end='')
 
-    def onkey(self, key, handler=None):
-        if isinstance(key, str):
-            key = reverse_key_table[key]
-        elif callable(key) and handler is None:
-            key, handler = None, key
+    def bind(self, *args, **kwargs):
+        self.key_handler.bind(*args, **kwargs)
 
-        if handler is None:
-            # Remove key/handler binding
-            if key in self.key_handlers:
-                del self.key_handlers[key]
+    def unbind(self, *args, **kwargs):
+        self.key_handler.unbind(*args, **kwargs)
 
-        elif (isinstance(key, Key) or key is None) and callable(handler):
-            # Set key/handler binding
-            self.key_handlers[key] = handler
+    def onkey(self, key):
+        result = self[self.crsr].key_handler.onkey(key)
+        if isinstance(result, str):
+            key = key_table_reverse.get(result, key)
+            result = None
+        if isinstance(result, Key):
+            key = result
+            result = None
 
-        else:
-            raise TypeError('handler should be a callable or None')
-
-    def handle_key(self, key):
-        result = None
-
-        if key in self[self.crsr].key_handlers:
-            result = self[self.crsr].key_handlers[key](item=self[self.crsr], key=key)
+        if result is None:
+            result = self.key_handler.onkey(key)
             if isinstance(result, str):
+                key = key_table_reverse.get(result, key)
+                result = None
+            if isinstance(result, Key):
                 key = result
                 result = None
-
-        if result is None:
-            if None in self[self.crsr].key_handlers:
-                result = self[self.crsr].key_handlers[None](item=self[self.crsr], key=key)
-                if isinstance(result, str):
-                    key = result
-                    result = None
-
-        if result is None:
-            if key in self.key_handlers:
-                result = self.key_handlers[key](menu=self, key=key)
-                if isinstance(result, str):
-                    key = result
-                    result = None
-
-        if result is None:
-            if None in self.key_handlers:
-                result = self.key_handlers[None](menu=self, key=key)
-                if isinstance(result, str):
-                    key = result
-                    result = None
 
         if result is None:
             if key == 'q':
@@ -677,10 +704,7 @@ class Menu:
         if not self.type:
             return
 
-        elif self.type == '()':
-            opt.selected = False
-
-        elif self.type == '[]':
+        elif self.type in ('()', '[]'):
             opt.selected = False
 
     def select_all(self):
@@ -713,7 +737,7 @@ class Menu:
                     ch = getch()
 
                     try:
-                        self.handle_key(ch)
+                        self.onkey(ch)
 
                     except Menu.GiveUpSelection:
                         Menu.printline(end='')
@@ -742,7 +766,7 @@ class MenuItem:
             except:
                 self.text = repr(obj)
 
-        self.key_handlers = {}
+        self.key_handler = KeyHandler(self)
 
         self.selected = False
         self.is_phony = False
@@ -750,23 +774,23 @@ class MenuItem:
         self.checkbox = None
         self.mark = None
 
+    @property
+    def phony(self):
+        return self.is_phony
+
+    @phony.setter
+    def phony(self, value):
+        self.is_phony = value
+        self.checkbox = '{}' if self.is_phony else None
+
+    def bind(self, *args, **kwargs):
+        self.key_handler.bind(*args, **kwargs)
+
+    def unbind(self, *args, **kwargs):
+        self.key_handler.unbind(*args, **kwargs)
+
     def onkey(self, key, handler=None):
-        if isinstance(key, str):
-            key = reverse_key_table[key]
-        elif callable(key) and handler is None:
-            key, handler = None, key
-
-        if handler is None:
-            # Remove key/handler binding
-            if key in self.key_handlers:
-                del self.key_handlers[key]
-
-        elif (isinstance(key, Key) or key is None) and callable(handler):
-            # Set key/handler binding
-            self.key_handlers[key] = handler
-
-        else:
-            raise TypeError('handler should be a callable or None')
+        return self.key_handler.onkey(key)
 
     def toggle(self):
         if self.is_phony:

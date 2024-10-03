@@ -49,7 +49,7 @@ def main():
 
     print(shutil.get_terminal_size())
 
-    def onkey(menu, key):
+    def vim_key(who, key):
         if key == 'j':
             return 'down'
         if key == 'k':
@@ -63,6 +63,13 @@ def main():
         if key in ('G', '$'):
             return 'end'
 
+    def vim_scroll(who, key):
+        if key == 'y':
+            return 'up'
+        if key == 'e':
+            return 'down'
+
+    def onkey(menu, key):
         if key == 'd':
             menu.cursor = 'default'
         elif key == 'r':
@@ -70,9 +77,8 @@ def main():
         elif key == 'c':
             menu.cursor = 'checkbox'
 
-        menu.message = repr(key)
-
-    menu = smol.tui.Menu('Select menu type:', options=['default', 'radio', 'checkbox'], onkey=onkey, wrap=True)
+    menu = smol.tui.Menu('Select menu type:', options=['default', 'radio', 'checkbox'], onkey=[vim_key, onkey], wrap=True)
+    # menu.bind(onkey)
     menu_type = menu.interact()
     print(menu_type)
     print()
@@ -81,19 +87,6 @@ def main():
         return
 
     def onkey(menu, key):
-        if key == 'j':
-            return 'down'
-        if key == 'k':
-            return 'up'
-        if key == 'H':
-            return 'home'
-        if key == 'L':
-            return 'end'
-        if key in ('0', '^'):
-            return 'home'
-        if key in ('G', '$'):
-            return 'end'
-
         if key == '\x04':
             menu.message = 'DwD'
             return False
@@ -118,10 +111,10 @@ def main():
             if not menu.type:
                 return None
 
-            if not menu.cursor.selected:
-                menu.cursor.select()
-            else:
+            if menu.cursor == -1:
                 menu.done()
+            else:
+                return False
 
             return False
 
@@ -141,32 +134,34 @@ def main():
     else:
         phony_options = items
 
-    menu = smol.tui.Menu('Select one you like:', options=phony_options, type=menu_type, onkey=onkey, wrap=True)
+    menu = smol.tui.Menu('Select one you like:', options=phony_options, type=menu_type, onkey=None, wrap=True)
+    menu.bind(vim_key)
+    menu.bind([vim_scroll, onkey])
 
     if menu_type == 'checkbox':
-        menu[0].is_phony = True
+        menu[0].phony = True
         menu[0].mark = lambda item: {
                 len(items): '*',
                 0: ' '
-                }.get(sum(i.selected for i in item.menu if not i.is_phony), '-')
+                }.get(sum(i.selected for i in item.menu if not i.phony), '-')
         def select_all_onkey(item, key):
             item.menu.select_all()
             item.menu.cursor.color = smol.black / smol.green
             return False
-        menu[0].onkey('space', select_all_onkey)
+        menu[0].bind('space', select_all_onkey)
 
         def unselect_all_onkey(item, key):
             item.menu.unselect_all()
             item.menu.cursor.color = smol.black / smol.red
             return False
-        menu[1].is_phony = True
+        menu[1].phony = True
         menu[1].mark = lambda item: {
                 len(items): ' ',
                 0: '*'
-                }.get(sum(i.selected for i in item.menu if not i.is_phony), '-')
-        menu[1].onkey('space', unselect_all_onkey)
+                }.get(sum(i.selected for i in item.menu if not i.phony), '-')
+        menu[1].bind('space', unselect_all_onkey)
 
-        menu[-1].is_phony = True
+        menu[-1].phony = True
         menu[-1].mark = lambda item: '>' if item.focused else ' '
         menu[-1].arrow = ' '
         def done_onkey(item, key):
@@ -179,13 +174,13 @@ def main():
                 return False
             if key == 'enter':
                 item.menu.done()
-        menu[-1].onkey(done_onkey)
+        menu[-1].bind(done_onkey)
 
     ret = menu.interact()
     if isinstance(ret, tuple):
-        print('You selected:', '(', ret[0], ')')
+        print('You selected:', repr(ret))
     elif isinstance(ret, list):
-        print('You selected:', '[', ', '.join(ret), ']')
+        print('You selected:', repr(ret))
     else:
         print('You selected:', ret)
 
