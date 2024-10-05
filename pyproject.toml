@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "warawara"
+version = "0.0.1"
+authors = [
+  { name="Cychih", email="michael66230@gmail.com" },
+]
+description = "Some cute utilties for my other projects"
+readme = "README.rst"
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities",
+]
+
+
+[project.scripts]
+wara = "warawara:bin.wara.main"
+palette = "warawara:bin.palette.main"
+rainbow = "warawara:bin.rainbow.main"
+sponge = "warawara:bin.sponge.main"
+ntfy = "warawara:bin.ntfy.main"
+
+
+[project.urls]
+Homepage = "https://github.com/pi314/warawara"
