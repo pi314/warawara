@@ -267,7 +267,7 @@ class UserSelection:
         return self.selected
 
     def __repr__(self):
-        return '<smol.tui.UserSelection selected=[{}]>'.format(self.selected)
+        return '<warawara.tui.UserSelection selected=[{}]>'.format(self.selected)
 
 
 class HijackStdio:

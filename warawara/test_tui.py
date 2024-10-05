@@ -8,7 +8,7 @@ from collections import namedtuple
 
 from .test_utils import *
 
-from smol import *
+from warawara import *
 
 
 class TestTypesettingUtils(TestCase):

@@ -2,7 +2,7 @@ import queue
 
 from .test_utils import *
 
-from smol import *
+from warawara import *
 
 
 def queue_to_list(Q):
@@ -22,8 +22,8 @@ class TestEventBroadcaster(TestCase):
         def handler2(arg):
             data2.append(arg)
 
-        import smol
-        hub = smol.subproc.EventBroadcaster()
+        import warawara
+        hub = warawara.subproc.EventBroadcaster()
         hub.broadcast('...')
 
         hub += handler1
