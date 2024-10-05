@@ -2,6 +2,8 @@ import queue
 import subprocess as sub
 import threading
 
+from .lib_itertools import unwrap_one
+
 
 __all__ = ['stream', 'command', 'run', 'pipe']
 __all__ += ['TimeoutExpired', 'AlreadyRunningError']
@@ -12,8 +14,14 @@ TimeoutExpired = sub.TimeoutExpired
 
 
 class AlreadyRunningError(Exception):
-    def __init__(self, command):
-        super().__init__(' '.join(command.cmd))
+    def __init__(self, cmd):
+        if callable(cmd.cmd[0]):
+            prog = cmd.cmd[0].__name__ + '()'
+        else:
+            prog = cmd.cmd[0]
+
+        super().__init__(' '.join(
+            [prog] + cmd.cmd[1:]))
 
 
 class EventBroadcaster:
@@ -76,7 +84,12 @@ class stream:
         line = self.queue.get()
         return line
 
-    def writeline(self, line):
+    def writeline(self, line, suppress=True):
+        if self.closed:
+            if suppress:
+                return
+            raise BrokenPipeError('stream already closed')
+
         if self.keep:
             self.lines.append(line)
 
@@ -97,7 +110,7 @@ class stream:
 
     @property
     def empty(self):
-        return not self.lines and not self.queue.empty()
+        return not self.lines and self.queue.empty()
 
     def __bool__(self):
         return not self.empty
@@ -162,20 +175,19 @@ class command:
         The environment variables.
     '''
 
-    def __init__(self, cmd,
+    def __init__(self, *cmd,
             stdin=None, stdout=True, stderr=True,
             newline='\n', env=None):
 
-        if callable(cmd):
-            cmd = [cmd]
+        cmd = unwrap_one(cmd)
+
+        if not cmd:
+            raise ValueError('command is empty')
 
         if callable(cmd[0]):
             self.cmd = [token for token in cmd]
         else:
             self.cmd = [str(token) for token in cmd]
-
-        if not self.cmd:
-            raise ValueError('command is empty')
 
         self.newline = newline
 
@@ -260,11 +272,13 @@ class command:
             self.thread.start()
 
         else:
-            self.proc = sub.Popen(self.cmd,
+            self.proc = sub.Popen(
+                    self.cmd,
                     stdin=self.proc_stdin,
                     stdout=self.proc_stdout,
                     stderr=self.proc_stderr,
-                    encoding='utf-8', bufsize=1, universal_newlines=True,
+                    encoding='utf-8', errors='backslashreplace',
+                    bufsize=1, universal_newlines=True,
                     env=self.env)
 
             def writer(self_stream, proc_stream):
@@ -357,13 +371,20 @@ class command:
             self.thread.join()
 
 
-def run(cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
-    ret = command(cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
+def run(*cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
+    ret = command(*cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
     ret.run(wait=wait, timeout=timeout)
     return ret
 
 
 def pipe(istream, *ostreams):
+    if istream.closed:
+        raise EOFError('istream already closed')
+
+    for ostream in ostreams:
+        if ostream.closed:
+            raise BrokenPipeError('ostream already closed')
+
     def worker(istream, ostreams):
         for line in istream:
             for ostream in ostreams:

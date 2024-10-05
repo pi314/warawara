@@ -1,4 +1,3 @@
-import coverage
 import unittest
 
 try:
@@ -15,6 +14,7 @@ except ModuleNotFoundError:
 
 
 if __name__ == '__main__':
+    cov.set_option("run:branch", True)
     cov.start()
 
     loader = unittest.TestLoader()
@@ -25,4 +25,4 @@ if __name__ == '__main__':
     cov.stop()
     cov.save()
 
-    cov.html_report()
+    cov.html_report(omit=['test_*.py', '*/site-packages/*'])

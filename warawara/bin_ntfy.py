@@ -3,8 +3,8 @@ import shlex
 import sys
 
 
-from . import subproc
-from . import paints
+from . import lib_subproc as subproc
+from . import lib_paints as paints
 
 
 def print_cmd(cmd):

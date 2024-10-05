@@ -1,9 +1,40 @@
 from .test_utils import *
 
-from smol.itertools import *
+from warawara import *
 
 
 class TestItertools(TestCase):
+    def test_unwrap_one(self):
+        self.eq(unwrap_one(1), 1)
+        self.eq(unwrap_one(False), False)
+        self.eq(unwrap_one('text'), 'text')
+        self.eq(unwrap_one([1, 2, 3]), [1, 2, 3])
+        self.eq(unwrap_one([[1, 2, 3]]), [1, 2, 3])
+        self.eq(unwrap_one([[[1, 2, 3]]]), [1, 2, 3])
+        self.eq(unwrap_one([[[[1, 2, 3]]]]), [1, 2, 3])
+        self.eq(unwrap_one([(1, 2, 3)]), (1, 2, 3))
+        self.eq(unwrap_one(((1, 2, 3))), (1, 2, 3))
+        self.eq(unwrap_one(([1, 2, 3])), [1, 2, 3])
+
+    def test_flatten(self):
+        self.eq(flatten(False), False)
+        self.eq(flatten('text'), 'text')
+
+        self.eq(
+                flatten([[1, 2, 3], [4, 5, 6], [7], [8, 9]]),
+                [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                )
+
+        self.eq(
+                flatten(([1, 2, 3], [4, 5, 6], [7], [8, 9])),
+                (1, 2, 3, 4, 5, 6, 7, 8, 9)
+                )
+
+        self.eq(
+                flatten(([[1, 2, [[]], 3], [4, ([5], 6)], 7, [8, 9]],)),
+                (1, 2, 3, 4, 5, 6, 7, 8, 9)
+                )
+
     def test_lookahead(self):
         data = []
         for val, is_last in lookahead([1, 2, 3, 4, 5]):
@@ -16,17 +47,6 @@ class TestItertools(TestCase):
             (4, False),
             (5, True),
             ])
-
-    def test_flatten(self):
-        self.eq(
-                flatten([[1,2,3], [4,5,6], [7], [8,9]]),
-                [1, 2, 3, 4, 5, 6, 7, 8, 9]
-                )
-
-        self.eq(
-                flatten(([1,2,3], [4,5,6], [7], [8,9])),
-                (1, 2, 3, 4, 5, 6, 7, 8, 9)
-                )
 
     def test_zip_longest(self):
         self.eq(

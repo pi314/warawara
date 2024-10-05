@@ -1,13 +1,90 @@
 import contextlib
+import enum
 import itertools
+import re
 import sys
 import threading
 import time
+import unicodedata
 
-from .paints import paint
+from . import lib_paints as paints
+
+from .lib_itertools import zip_longest, unwrap_one, flatten
+from .lib_paints import decolor
 
 
-__all__ = ['ThreadedSpinner', 'prompt']
+__all__ = ['strwidth', 'ljust', 'rjust']
+__all__ += ['ThreadedSpinner', 'prompt']
+
+
+def strwidth(s):
+    return sum((1 + (unicodedata.east_asian_width(c) in 'WF')) for c in decolor(s))
+
+
+def lpad(text, padding):
+    return text + padding
+
+
+def rpad(text, padding):
+    return padding + text
+
+
+def just_elem(func):
+    def wrapper(elem, width, fillchar):
+        row, col, text = elem
+        padding = (width - strwidth(text)) * fillchar(row=row, col=col, text=text)
+        return func(text, padding)
+    return wrapper
+
+
+def just_generator(just_func, data, width, fillchar):
+    for row, vector in enumerate(data):
+        if isinstance(width, int):
+            width = (width,) * len(vector)
+        yield tuple(
+                just_func((row, col, text), w, fillchar)
+                for col, (text, w) in enumerate(zip_longest(vector, width[:len(vector)], fillvalues=('', 0)))
+                )
+
+
+def just(just_func, data, width, fillchar):
+    if not callable(fillchar):
+        _fillchar = fillchar
+        fillchar = lambda row, col, text: _fillchar
+
+    if isinstance(data, str):
+        return just_func((0, 0, data), width, fillchar)
+
+    if width:
+        if isinstance(data, (tuple, list)):
+            t = type(data)
+        else:
+            t = lambda x: x
+        return t(just_generator(just_func, data, width, fillchar))
+
+    maxwidth = []
+    for vector in data:
+        maxwidth = [
+                max(w, strwidth(text))
+                for text, w in zip_longest(vector, maxwidth, fillvalues=('', 0))
+                ]
+
+    return [
+            tuple(
+                just_func((row, col, text), w, fillchar)
+                for col, (text, w) in enumerate(zip_longest(vector, maxwidth, fillvalues=('', 0)))
+                )
+            for row, vector in enumerate(data)
+            ]
+
+
+def ljust(data, width=None, fillchar=' '):
+    return just(just_elem(lpad), data, width, fillchar)
+
+
+def rjust(data, width=None, fillchar=' '):
+    return just(just_elem(rpad), data, width, fillchar)
+
 
 
 class ThreadedSpinner:
@@ -16,10 +93,6 @@ class ThreadedSpinner:
             self.icon_entry = '⠉⠛⠿⣿⠿⠛⠉⠙'
             self.icon_loop = '⠹⢸⣰⣤⣆⡇⠏⠛'
             self.icon_leave = '⣿'
-        elif isinstance(icon, str):
-            self.icon_entry = tuple()
-            self.icon_loop = [icon]
-            self.icon_leave = '.'
         elif len(icon) == 1:
             self.icon_entry = tuple()
             self.icon_loop = icon
@@ -35,8 +108,14 @@ class ThreadedSpinner:
         else:
             raise ValueError('Invalid value: ' + repr(icon))
 
-        if not isinstance(self.icon_leave, str):
-            raise ValueError('Icon[leave] needs to be a single string')
+        ok = True
+        for name, icon in (('entry', self.icon_entry), ('loop', self.icon_loop), ('leave', self.icon_leave)):
+            if isinstance(icon, str):
+                ok = True
+            elif isinstance(icon, (tuple, list)) and all(isinstance(c, str) for c in icon):
+                ok = True
+            else:
+                raise ValueError('Invalid value of icon[{}]: {}'.format(name, icon))
 
         self.delay = delay
         self.is_end = False
@@ -188,7 +267,46 @@ class UserSelection:
         return self.selected
 
     def __repr__(self):
-        return '<smol.tui.UserSelection selected=[{}]>'.format(self.selected)
+        return '<warawara.tui.UserSelection selected=[{}]>'.format(self.selected)
+
+
+class HijackStdio:
+    def __init__(self, replace_with='/dev/tty'):
+        self.replace_with = replace_with
+
+    def __enter__(self):
+        self.stdin_backup = sys.stdin
+        self.stdout_backup = sys.stdout
+        self.stderr_backup = sys.stderr
+
+        sys.stdin = open(self.replace_with)
+        sys.stdout = open(self.replace_with, 'w')
+        sys.stderr = open(self.replace_with, 'w')
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        sys.stdin.close()
+        sys.stdout.close()
+        sys.stderr.close()
+
+        sys.stdin = self.stdin_backup
+        sys.stdout = self.stdout_backup
+        sys.stderr = self.stderr_backup
+
+
+class ExceptionSuppressor:
+    def __init__(self, *exc_group):
+        if isinstance(exc_group[0], tuple):
+            self.exc_group = exc_group[0]
+        else:
+            self.exc_group = exc_group
+
+    def __enter__(self, *exc_group):
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type in (EOFError, KeyboardInterrupt):
+            print()
+        return exc_type in self.exc_group
 
 
 def prompt(question, options=tuple(),
@@ -203,37 +321,7 @@ def prompt(question, options=tuple(),
 
     user_selection = UserSelection(options, accept_cr=accept_cr, abbr=abbr, sep=sep, ignorecase=ignorecase)
 
-    class SingleUseContextManager:
-        def __enter__(self):
-            self.stdin_backup = sys.stdin
-            self.stdout_backup = sys.stdout
-            self.stderr_backup = sys.stderr
-
-        def __exit__(self, exc_type, exc_value, traceback):
-            sys.stdin = self.stdin_backup
-            sys.stdout = self.stdout_backup
-            sys.stderr = self.stderr_backup
-
-    class ExceptionSuppressor:
-        def __init__(self, *exc_group):
-            if isinstance(exc_group[0], tuple):
-                self.exc_group = exc_group[0]
-            else:
-                self.exc_group = exc_group
-
-        def __enter__(self, *exc_group):
-            pass
-
-        def __exit__(self, exc_type, exc_value, traceback):
-            if exc_type in (EOFError, KeyboardInterrupt):
-                print()
-            return exc_type in self.exc_group
-
-    with SingleUseContextManager():
-        sys.stdin = open('/dev/tty')
-        sys.stdout = open('/dev/tty', 'w')
-        sys.stderr = open('/dev/tty', 'w')
-
+    with HijackStdio():
         with ExceptionSuppressor(suppress):
             while user_selection.selected is None:
                 print((question + (user_selection.prompt)), end=' ')
@@ -241,9 +329,5 @@ def prompt(question, options=tuple(),
                 with contextlib.suppress(ValueError):
                     i = input().strip()
                     user_selection.select(i)
-
-        sys.stdin.close()
-        sys.stdout.close()
-        sys.stderr.close()
 
     return user_selection

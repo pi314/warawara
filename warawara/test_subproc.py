@@ -2,7 +2,7 @@ import queue
 
 from .test_utils import *
 
-from smol.subproc import *
+from warawara import *
 
 
 def queue_to_list(Q):
@@ -12,46 +12,154 @@ def queue_to_list(Q):
     return ret
 
 
+class TestEventBroadcaster(TestCase):
+    def test_all(self):
+        data1 = []
+        def handler1(arg):
+            data1.append(arg)
+
+        data2 = []
+        def handler2(arg):
+            data2.append(arg)
+
+        import warawara
+        hub = warawara.subproc.EventBroadcaster()
+        hub.broadcast('...')
+
+        hub += handler1
+        hub.broadcast('wah')
+
+        hub += handler2
+        hub.broadcast('Wah')
+
+        hub += handler2
+        hub.broadcast('WAAAAAH')
+
+        hub -= handler1
+        hub.broadcast('wah?')
+
+        hub -= handler2
+        hub.broadcast('wow')
+
+        hub -= handler2
+        hub.broadcast('bye')
+
+        self.eq(data1, ['wah', 'Wah', 'WAAAAAH'])
+        self.eq(data2, ['Wah', 'WAAAAAH', 'WAAAAAH', 'wah?', 'wah?', 'wow'])
+
+
 class TestStream(TestCase):
-    def test_stream(self):
+    def test_stream_basic_io(self):
         s = stream()
-        s.keep = True
+        self.eq(s.keep, False)
+
         s.writeline('line1')
         s.writeline('line2')
         s.writeline('line3')
         self.is_false(s.closed)
+
         s.close()
         self.is_true(s.closed)
-        self.eq(s.lines, ['line1', 'line2', 'line3'])
+
+        self.eq(s.lines, [])
+        self.eq(s.readline(), 'line1')
+        self.eq(s.readline(), 'line2')
+        self.eq(s.readline(), 'line3')
+
+    def test_stream_iter(self):
+        s = stream()
+        self.eq(s.keep, False)
+        s.writelines(['line1', 'line2', 'line3'])
+
+        i = iter(s)
+        self.eq(next(i), 'line1')
+        self.eq(next(i), 'line2')
+        self.eq(next(i), 'line3')
+
+        s.close()
+
+        with self.assertRaises(StopIteration):
+            next(iter(s))
+
+    def test_stream_keep(self):
+        s = stream()
+        s.keep = True
+
+        lines = ['line1', 'line2', 'line3']
+        for line in lines:
+            s.writeline(line)
+
+        self.eq(s.lines, lines)
+        self.eq(len(s), 3)
+
+        self.is_false(s.empty)
+        self.is_true(bool(s))
+
+        self.eq(s.readline(), 'line1')
+        self.eq(s.readline(), 'line2')
+        self.eq(s.readline(), 'line3')
+
+        self.eq(s.lines, lines)
+        self.eq(len(s), 3)
+
+    def test_stream_subscribers(self):
+        data1 = []
+        def handler1(line):
+            data1.append(line)
+
+        data2 = []
+        def handler2(line):
+            data2.append(line)
+
+        Q = queue.Queue()
 
         s = stream()
+        s.welcome([handler1, handler2])
+        s.welcome(Q)
+        s.welcome(True)
+
+        with self.assertRaises(TypeError):
+            s.welcome(s)
+
         lines = ['line1', 'line2', 'line3']
         s.writelines(lines)
-        s.close()
-        self.eq(s.lines, [])
-        for nr, line in enumerate(s):
-            self.eq(lines[nr], line)
-        self.eq(s.lines, [])
 
-    def test_stream_nokeep(self):
+        self.eq(data1, lines)
+        self.eq(data2, lines)
+
+    def test_stream_write_after_close(self):
+        def should_not_be_called_handler(line):
+            self.fail()
+
+        # test in test
+        with self.assertRaises(AssertionError):
+            should_not_be_called_handler('wah')
+
         s = stream()
-        # s.keep = False # Default
+        s.welcome(should_not_be_called_handler)
+        s.close()
+
         s.writeline('line1')
-        s.writeline('line2')
-        s.writeline('line3')
-        self.is_true(s.empty)
+
+        with self.assertRaises(BrokenPipeError):
+            s.writeline('line2', suppress=False)
 
 
 class TestSubproc(TestCase):
+    def test_default_properties(self):
+        def prog(proc):
+            self.eq(proc[0].readline(), 'line')
+
+        p = run(prog, stdin='line', stdout=False, stderr=False)
+
     def test_stdout(self):
         p = run('seq 5'.split())
         self.eq(p.stdout.lines, '1 2 3 4 5'.split())
 
-    def test_run_and_then_wait(self):
-        p = run('seq 5'.split(), wait=False)
-        self.eq(p.stdout.lines, [])
-        p.wait()
-        self.eq(p.stdout.lines, '1 2 3 4 5'.split())
+    def test_disable_stdout_and_stderr(self):
+        p = command('seq 5'.split(), stdout=None, stderr=None)
+        self.is_true(p.stdout.closed)
+        self.is_true(p.stderr.closed)
 
     def test_wait_early(self):
         p = command('seq 5'.split())
@@ -60,10 +168,49 @@ class TestSubproc(TestCase):
         p.wait()
         self.eq(p.stdout.lines, '1 2 3 4 5'.split())
 
-    def test_context_manager_nowait(self):
-        with command('seq 5'.split()) as p:
-            self.eq(p.stdout.lines, [])
-        self.eq(p.stdout.lines, '1 2 3 4 5'.split())
+    def test_already_running_error(self):
+        checkpoint = self.checkpoint()
+
+        def prog(proc, *args):
+            checkpoint.wait()
+
+        p = command(prog)
+        p.run(wait=False)
+
+        with self.assertRaises(AlreadyRunningError):
+            p.run()
+
+        checkpoint.set()
+        p.wait()
+
+        p = command(['sleep', 1])
+        p.run(wait=False)
+        with self.assertRaises(AlreadyRunningError):
+            p.run(wait=False)
+        p.kill()
+
+    def test_word(self):
+        p = run('true')
+        self.eq(p.returncode, 0)
+
+        p = run('false')
+        self.eq(p.returncode, 1)
+
+    def test_empty_cmd(self):
+        with self.assertRaises(ValueError):
+            p = command()
+
+        with self.assertRaises(ValueError):
+            p = command([])
+
+    def test_run_with_context_manager(self):
+        barrier = threading.Barrier(2)
+
+        def prog(proc, *args):
+            barrier.wait()
+
+        with command(prog) as p:
+            barrier.wait()
 
     def test_stdout_nokeep(self):
         p = command('seq 5'.split(), stdout=False)
@@ -86,7 +233,7 @@ class TestSubproc(TestCase):
         self.eq(p.stderr.lines, ['how are you ', 'thank you '])
         self.eq(p.returncode, 2024)
 
-    def test_callback(self):
+    def test_stdout_callback(self):
         lines = []
         def callback(line):
             lines.append(line)
@@ -126,7 +273,7 @@ class TestSubproc(TestCase):
 
     def test_stdin(self):
         p = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
-        p.run(wait=False).wait()
+        p.run()
         self.eq(p.stdout.lines, ['1:hello', '2:world'])
 
     def test_stdin_delayed_write(self):
@@ -170,6 +317,22 @@ class TestSubproc(TestCase):
         p2.wait()
         self.eq(p2.stdin.lines, ['1:hello', '2:world'])
         self.eq(p2.stdout.lines, ['1/1:hello', '2/2:world'])
+
+    def test_pipe_istream_already_closed(self):
+        i = stream()
+        o = stream()
+        i.close()
+
+        with self.assertRaises(EOFError):
+            pipe(i, o)
+
+    def test_pipe_ostream_already_closed(self):
+        i = stream()
+        o = stream()
+        o.close()
+
+        with self.assertRaises(BrokenPipeError):
+            pipe(i, o)
 
     def test_callable_with_pipe(self):
         def prog(proc, *args):
@@ -289,6 +452,18 @@ class TestSubprocRunMocker(TestCase):
         p = mock_run('wah wah wah'.split())
         self.eq(p.stdout.lines, ['mock wah', 'wah wah'])
 
+    def test_mock_meaningless_mock(self):
+        mock_run = RunMocker()
+
+        with self.assertRaises(ValueError):
+            mock_run.register('cmd')
+
+    def test_mock_ambiguous_mock(self):
+        mock_run = RunMocker()
+
+        with self.assertRaises(ValueError):
+            mock_run.register('wah', lambda: None, stdout='wah')
+
     def test_mock_unregistered_cmd(self):
         mock_run = RunMocker()
 
@@ -397,6 +572,12 @@ class TestSubprocRunMocker(TestCase):
 
         with self.assertRaises(ValueError):
             mock_run('rm non_exist -f'.split())
+
+    def test_mock_with_returncode(self):
+        mock_run = RunMocker()
+        mock_run.register('wah', returncode=1)
+        p = mock_run(['wah'])
+        self.eq(p.returncode, 1)
 
     def test_mock_with_stdout_stderr_returncode(self):
         mock_run = RunMocker()
