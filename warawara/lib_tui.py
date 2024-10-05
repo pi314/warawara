@@ -331,3 +331,485 @@ def prompt(question, options=tuple(),
                     user_selection.select(i)
 
     return user_selection
+
+
+class Key:
+    def __init__(self, seq, *aliases):
+        if not aliases:
+            raise ValueError('At least one alias should be specified')
+
+        self.seq = seq
+        self.aliases = [str(name) for name in aliases]
+
+    def __hash__(self):
+        return hash(self.seq)
+
+    def __repr__(self):
+        return self.aliases[0]
+
+    def name(self, name):
+        if name not in self.aliases:
+            self.aliases.append(name)
+
+    def __eq__(self, other):
+        if type(self) == type(other):
+            return self.seq == other.seq
+        else:
+            return other == self.seq or other in self.aliases
+
+
+KEY_UP = Key('\033[A', 'up')
+KEY_DOWN = Key('\033[B', 'down')
+KEY_RIGHT = Key('\033[C', 'right')
+KEY_LEFT = Key('\033[D', 'left')
+KEY_ESCAPE = Key('\033', 'esc', 'escape')
+KEY_HOME = Key('\033[1~', 'home')
+KEY_END = Key('\033[4~', 'end')
+KEY_PGUP = Key('\033[5~', 'pgup', 'pageup')
+KEY_PGDN = Key('\033[6~', 'pgdn', 'pagedown')
+KEY_BACKSPACE = Key('\x7f', 'backspace')
+KEY_TAB = Key('\t', 'tab')
+KEY_ENTER = Key('\n', 'enter')
+KEY_SPACE = Key(' ', 'space')
+KEY_F1 = Key('\033OP', 'f1')
+KEY_F2 = Key('\033OQ', 'f2')
+KEY_F3 = Key('\033OR', 'f3')
+KEY_F4 = Key('\033OS', 'f4')
+KEY_F5 = Key('\033[15~', 'f5')
+KEY_F6 = Key('\033[17~', 'f6')
+KEY_F7 = Key('\033[18~', 'f7')
+KEY_F8 = Key('\033[19~', 'f8')
+KEY_F9 = Key('\033[20~', 'f9')
+KEY_F10 = Key('\033[21~', 'f10')
+KEY_F11 = Key('\033[23~', 'f11')
+KEY_F12 = Key('\033[24~', 'f12')
+
+__all__ += [key for key in globals().keys() if key.startswith('KEY_')]
+
+
+key_table = {}
+key_table_reverse = {}
+
+def _init_key_table():
+    for k, v in globals().items():
+        if not k.startswith('KEY_'):
+            continue
+        key_table[v.seq] = v
+
+        for alias in v.aliases:
+            key_table_reverse[alias] = v
+
+_init_key_table()
+
+
+__all__ += ['register_key']
+def register_key(seq, *aliases):
+    if not seq or not isinstance(seq, str):
+        raise ValueError('huh?')
+
+    if seq not in key_table:
+        key_table[seq] = Key(seq, *aliases)
+        return key_table[seq]
+
+    key = key_table[seq]
+    for name in aliases:
+        key.name(name)
+
+    return key
+
+
+def getch(timeout=None):
+    import termios, tty
+    import os
+    import select
+
+    fd = sys.stdin.fileno()
+    orig = termios.tcgetattr(fd)
+
+    def has_data(t=0):
+        return select.select([fd], [], [], t)[0]
+
+    def read_one_byte():
+        return os.read(sys.stdin.fileno(), 1).decode('utf8')
+
+    try:
+        tty.setcbreak(fd)  # or tty.setraw(fd) if you prefer raw mode's behavior.
+
+        # Wait for input until timeout
+        if not has_data(timeout):
+            return None
+
+        acc = ''
+        while True:
+            acc += read_one_byte()
+
+            if not has_data():
+                return key_table.get(acc, acc)
+
+            if acc != '\033' and acc in key_table:
+                return key_table[acc]
+
+            # prefix match: collect more char
+            if any(key_seq for key_seq in key_table.keys() if key_seq.startswith(acc)):
+                continue
+
+            return acc
+
+    finally:
+        termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
+
+
+class MenuCursor:
+    def __init__(self, menu, color):
+        self.menu = menu
+        self.index = 0
+        self.color = color
+
+    def __int__(self):
+        return self.index
+
+    def __eq__(self, what):
+        if isinstance(what, int):
+            l = len(self.menu)
+            return self.index == (what + l) % l
+        return self.menu[self.index].obj == what
+
+    def move(self, where):
+        if isinstance(where, int):
+            self.index = where
+        else:
+            for idx, item in enumerate(self.menu):
+                if item.obj == where:
+                    self.index = idx
+                    break
+
+        if self.menu.wrap:
+            self.index = (self.index + len(self.menu)) % len(self.menu)
+        elif self.index < 0:
+            self.index = 0
+        elif self.index >= len(self.menu):
+            self.index = len(self.menu) - 1
+
+    def __iadd__(self, what):
+        self.index += what
+
+    def __isub__(self, what):
+        self.index -= what
+
+    def __getattr__(self, what):
+        return getattr(self.menu[self.index], what)
+
+
+class KeyHandler:
+    def __init__(self, who, default=None):
+        self.who = who
+        self.key_handlers = {
+                None: [] if default is None else unwrap_one([default])
+                }
+
+    def bind(self, key, handler=None):
+        if isinstance(key, str):
+            key = key_table_reverse.get(key, key)
+        elif key is not None and handler is None:
+            key, handler = None, key
+
+        handlers = flatten([handler])
+        for h in handlers:
+            if not callable(h):
+                raise ValueError('handler should be a callable', h)
+
+        # Set key/handler binding
+        if key not in self.key_handlers:
+            self.key_handlers[key] = []
+        self.key_handlers[key] += handlers
+
+    def unbind(self, key=None, handler=None):
+        if isinstance(key, str):
+            key = key_table_reverse.get(key, key)
+        elif callable(key) and handler is None:
+            key, handler = None, key
+
+        if key not in self.key_handlers:
+            return
+
+        if handler is None:
+            # Remove all key/handler binding
+            self.key_handlers[key] = []
+        else:
+            # Remove that key/handler binding
+            self.key_handlers[key].remove(handler)
+
+    def onkey(self, key):
+        handlers = (
+                self.key_handlers.get(key, []) +
+                self.key_handlers.get(None, [])
+                )
+
+        for handler in handlers:
+            result = handler(self.who, key=key)
+            if result is not None:
+                return result
+
+
+class Menu:
+    class DoneSelection(Exception):
+        pass
+
+    class GiveUpSelection(Exception):
+        pass
+
+    def __init__(self, prompt, options, *, format=None,
+                 arrow=None, type=None,
+                 onkey=None, wrap=False, color=None):
+        # if onkey is not None and not callable(onkey):
+        #     raise TypeError('onkey should be a callable(menu, key)')
+
+        self.prompt = prompt
+        self.arrow = arrow or '>'
+
+        if type in (None, 'default', 'select'):
+            type = ''
+        elif type.lower() == 'radio':
+            type = '(*)'
+        elif type.lower() == 'checkbox':
+            type = '[*]'
+
+        if len(type) < 2:
+            self.checkbox = ('', '')
+            self.type = ''
+            self.mark = ''
+        else:
+            self.checkbox = (type[0], type[-1])
+            self.type = self.checkbox[0] + self.checkbox[1]
+            self.mark = type[1:-1] or '*'
+
+        self.options = [MenuItem(self, opt, format=format) for opt in options]
+        self.message = ''
+        self.wrap = wrap
+        self.key_handler = KeyHandler(self, default=onkey)
+        self.crsr = MenuCursor(self, color=color or paints.black/paints.white)
+
+    def __len__(self):
+        return len(self.options)
+
+    def __getitem__(self, key):
+        if key == self.cursor:
+            return self.options[int(key)]
+        return self.options[key]
+
+    @property
+    def cursor(self):
+        return self.crsr
+
+    @cursor.setter
+    def cursor(self, where):
+        self.crsr.move(where)
+
+    @staticmethod
+    def printline(*args, **kwargs):
+        args = list(args)
+        if args:
+            args[0] = '\r\033[K' + args[0]
+        else:
+            args = ['\r\033[K']
+        print(*args, **kwargs)
+
+    def render(self):
+        if self.prompt:
+            Menu.printline(self.prompt)
+
+        for idx, o in enumerate(self.options):
+            layer = o if o.arrow else self
+            arrow = layer.arrow(layer) if callable(layer.arrow) else layer.arrow
+
+            layer = o if o.checkbox else self
+            checkbox = layer.checkbox(layer) if callable(layer.checkbox) else layer.checkbox
+
+            layer = o if o.mark else self
+            mark = layer.mark(layer) if callable(layer.mark) else layer.mark
+
+            Menu.printline('{arrow}{ll}{mark}{rr} {text}'.format(
+                arrow=arrow if idx == int(self.crsr) else ' ' * len(arrow),
+                ll=checkbox[0],
+                rr=checkbox[1],
+                mark=mark if o.selected or o.is_phony else ' ' * len(mark),
+                text=self.cursor.color(o.text) if idx == int(self.crsr) else o.text
+                ))
+
+        Menu.printline('[{}]'.format(self.message), end='')
+
+    def bind(self, *args, **kwargs):
+        self.key_handler.bind(*args, **kwargs)
+
+    def unbind(self, *args, **kwargs):
+        self.key_handler.unbind(*args, **kwargs)
+
+    def onkey(self, key):
+        result = self[self.crsr].key_handler.onkey(key)
+        if isinstance(result, str):
+            key = key_table_reverse.get(result, key)
+            result = None
+        if isinstance(result, Key):
+            key = result
+            result = None
+
+        if result is None:
+            result = self.key_handler.onkey(key)
+            if isinstance(result, str):
+                key = key_table_reverse.get(result, key)
+                result = None
+            if isinstance(result, Key):
+                key = result
+                result = None
+
+        if result is None:
+            if key == 'q':
+                self.unselect_all()
+                self.quit()
+            elif key == 'enter':
+                self.done()
+            elif key == 'space':
+                self[int(self.crsr)].toggle()
+            elif key == 'up':
+                self.cursor -= 1
+            elif key == 'down':
+                self.cursor += 1
+            elif key == 'home':
+                self.cursor = 0
+            elif key == 'end':
+                self.cursor = -1
+
+        return result
+
+    def selected(self):
+        if not self.type:
+            return self.options[int(self.crsr)].obj
+        elif self.type == '()':
+            return tuple(opt.obj for opt in self.options if opt.selected and not opt.is_phony)
+        elif self.type == '[]':
+            return [opt.obj for opt in self.options if opt.selected and not opt.is_phony]
+
+    def select(self, opt):
+        if not self.type:
+            return
+
+        elif self.type == '()':
+            self.unselect_all()
+            opt.selected = True
+
+        elif self.type == '[]':
+            opt.selected = True
+
+    def unselect(self, opt):
+        if not self.type:
+            return
+
+        elif self.type in ('()', '[]'):
+            opt.selected = False
+
+    def select_all(self):
+        if not self.type:
+            return
+
+        elif self.type == '()':
+            return
+
+        elif self.type == '[]':
+            for opt in self.options:
+                opt.select()
+
+    def unselect_all(self):
+        for opt in self.options:
+            opt.unselect()
+
+    def done(self):
+        raise Menu.DoneSelection()
+
+    def quit(self):
+        raise Menu.GiveUpSelection()
+
+    def interact(self, *, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
+        with HijackStdio():
+            with ExceptionSuppressor(suppress):
+                while True:
+                    self.render()
+
+                    ch = getch()
+
+                    try:
+                        self.onkey(ch)
+
+                    except Menu.GiveUpSelection:
+                        Menu.printline(end='')
+                        return
+
+                    except Menu.DoneSelection:
+                        s = self.selected()
+                        if s is not None:
+                            Menu.printline(end='')
+                            return s
+
+                    print('\r\033[{}A'.format(len(self.options) + 1), end='')
+
+
+class MenuItem:
+    def __init__(self, menu, obj, *, format=None):
+        self.menu = menu
+        self.obj = obj
+        if callable(format):
+            self.text = format(obj)
+        elif isinstance(format, str):
+            self.text = format.format(option=obj)
+        else:
+            try:
+                self.text = str(obj)
+            except:
+                self.text = repr(obj)
+
+        self.key_handler = KeyHandler(self)
+
+        self.selected = False
+        self.is_phony = False
+        self.arrow = None
+        self.checkbox = None
+        self.mark = None
+
+    @property
+    def phony(self):
+        return self.is_phony
+
+    @phony.setter
+    def phony(self, value):
+        self.is_phony = value
+        self.checkbox = '{}' if self.is_phony else None
+
+    def bind(self, *args, **kwargs):
+        self.key_handler.bind(*args, **kwargs)
+
+    def unbind(self, *args, **kwargs):
+        self.key_handler.unbind(*args, **kwargs)
+
+    def onkey(self, key, handler=None):
+        return self.key_handler.onkey(key)
+
+    def toggle(self):
+        if self.is_phony:
+            return
+        if self.selected:
+            self.unselect()
+        else:
+            self.select()
+
+    def select(self):
+        if self.is_phony:
+            return
+        self.menu.select(self)
+
+    def unselect(self):
+        if self.is_phony:
+            return
+        self.menu.unselect(self)
+
+    @property
+    def focused(self):
+        return self is self.menu[self.menu.cursor]
