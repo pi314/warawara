@@ -14,7 +14,7 @@ setup(
     keywords=['warawara', 'utiliy', 'toolbox'],
     entry_points = {
         'console_scripts': [
-            'wara=warawara:bin.warawara.main',
+            'wara=warawara:bin.wara.main',
             'palette=warawara:bin.palette.main',
             'rainbow=warawara:bin.rainbow.main',
             'sponge=warawara:bin.sponge.main',
