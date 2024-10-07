@@ -6,6 +6,7 @@ import sys
 import threading
 import time
 import unicodedata
+import shutil
 
 from . import lib_paints as paints
 
@@ -605,39 +606,6 @@ class Menu:
     def cursor(self, where):
         self.crsr.move(where)
 
-    @staticmethod
-    def printline(*args, **kwargs):
-        args = list(args)
-        if args:
-            args[0] = '\r\033[K' + args[0]
-        else:
-            args = ['\r\033[K']
-        print(*args, **kwargs)
-
-    def render(self):
-        if self.prompt:
-            Menu.printline(self.prompt)
-
-        for idx, o in enumerate(self.options):
-            layer = o if o.arrow else self
-            arrow = layer.arrow(layer) if callable(layer.arrow) else layer.arrow
-
-            layer = o if o.checkbox else self
-            checkbox = layer.checkbox(layer) if callable(layer.checkbox) else layer.checkbox
-
-            layer = o if o.mark else self
-            mark = layer.mark(layer) if callable(layer.mark) else layer.mark
-
-            Menu.printline('{arrow}{ll}{mark}{rr} {text}'.format(
-                arrow=arrow if idx == int(self.crsr) else ' ' * len(arrow),
-                ll=checkbox[0],
-                rr=checkbox[1],
-                mark=mark if o.selected or o.is_phony else ' ' * len(mark),
-                text=self.cursor.color(o.text) if idx == int(self.crsr) else o.text
-                ))
-
-        Menu.printline('[{}]'.format(self.message), end='')
-
     def bind(self, *args, **kwargs):
         self.key_handler.bind(*args, **kwargs)
 
@@ -728,6 +696,46 @@ class Menu:
     def quit(self):
         raise Menu.GiveUpSelection()
 
+    @staticmethod
+    def putline(*args, **kwargs):
+        args = list(args)
+        if args:
+            args[0] = '\r\033[K' + args[0]
+        else:
+            args = ['\r\033[K']
+        print(*args, **kwargs)
+
+    def render(self):
+        avail_space = shutil.get_terminal_size().lines - 1
+
+        output = []
+
+        if self.prompt:
+            output.append(self.prompt)
+
+        for idx, o in enumerate(self.options):
+            layer = o if o.arrow else self
+            arrow = layer.arrow(layer) if callable(layer.arrow) else layer.arrow
+
+            layer = o if o.checkbox else self
+            checkbox = layer.checkbox(layer) if callable(layer.checkbox) else layer.checkbox
+
+            layer = o if o.mark else self
+            mark = layer.mark(layer) if callable(layer.mark) else layer.mark
+
+            output.append('{arrow}{ll}{mark}{rr} {text}'.format(
+                arrow=arrow if idx == int(self.crsr) else ' ' * len(arrow),
+                ll=checkbox[0],
+                rr=checkbox[1],
+                mark=mark if o.selected or o.is_phony else ' ' * len(mark),
+                text=self.cursor.color(o.text) if idx == int(self.crsr) else o.text
+                ))
+
+        for line in output[(-avail_space):]:
+            Menu.putline(line)
+
+        Menu.putline('[{}]'.format(self.message), end='')
+
     def interact(self, *, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
         with HijackStdio():
             with ExceptionSuppressor(suppress):
@@ -740,16 +748,18 @@ class Menu:
                         self.onkey(ch)
 
                     except Menu.GiveUpSelection:
-                        Menu.printline(end='')
+                        Menu.putline(end='')
                         return
 
                     except Menu.DoneSelection:
                         s = self.selected()
                         if s is not None:
-                            Menu.printline(end='')
+                            Menu.putline(end='')
                             return s
 
-                    print('\r\033[{}A'.format(len(self.options) + 1), end='')
+                    avail_space = shutil.get_terminal_size().lines
+                    wipe = min(len(self.options) + (not (not self.prompt)), avail_space - 1)
+                    print('\r\033[{}A'.format(wipe), end='')
 
 
 class MenuItem:
