@@ -705,8 +705,11 @@ class Menu:
             args = ['\r\033[K']
         print(*args, **kwargs)
 
-    def render(self):
-        avail_space = shutil.get_terminal_size().lines - 1
+    def render(self, first):
+        if first:
+            avail_space = (not(not self.prompt)) + len(self.options) + 1
+        else:
+            avail_space = shutil.get_terminal_size().lines
 
         output = []
 
@@ -731,7 +734,7 @@ class Menu:
                 text=self.cursor.color(o.text) if idx == int(self.crsr) else o.text
                 ))
 
-        for line in output[(-avail_space):]:
+        for line in output[(-avail_space + 1):]:
             Menu.putline(line)
 
         Menu.putline('[{}]'.format(self.message), end='')
@@ -739,8 +742,10 @@ class Menu:
     def interact(self, *, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
         with HijackStdio():
             with ExceptionSuppressor(suppress):
+                first = True
                 while True:
-                    self.render()
+                    self.render(first)
+                    first = False
 
                     ch = getch()
 
@@ -758,7 +763,7 @@ class Menu:
                             return s
 
                     avail_space = shutil.get_terminal_size().lines
-                    wipe = min(len(self.options) + (not (not self.prompt)), avail_space - 1)
+                    wipe = min((not(not self.prompt)) + len(self.options), avail_space - 1)
                     print('\r\033[{}A'.format(wipe), end='')
 
 
