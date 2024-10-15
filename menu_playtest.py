@@ -37,6 +37,7 @@ import warawara as wara
 
 wara.register_key(chr(ord('u') - ord('a') + 1), 'uwu')
 wara.register_key(chr(ord('w') - ord('a') + 1), 'wuw')
+wara.register_key(chr(ord('c') - ord('a') + 1), 'cuc')
 
 
 def main():
@@ -49,10 +50,60 @@ def main():
 
     print(shutil.get_terminal_size())
 
+#     def has_data(t=0):
+#         import select
+#         return select.select([sys.stdin.fileno()], [], [], t)[0]
+#
+#     import termios, tty
+#     import select
+#     try:
+#         fd = sys.stdin.fileno()
+#         orig = termios.tcgetattr(fd)
+#         tty.setraw(fd, when=termios.TCSADRAIN)
+#         def read_one_byte():
+#             return os.read(sys.stdin.fileno(), 1)
+#
+#         ch = b''
+#         ch += read_one_byte()
+#         ch += read_one_byte()
+#         ch += read_one_byte()
+#
+#     finally:
+#         termios.tcsetattr(fd, termios.TCSADRAIN, orig)
+#
+#     '''
+# 測試
+# '''
+
+    # print(ch.decode('utf8'))
+    # print(input())
+
+    # print(has_data())
+    # ch = wara.tui.getchs()
+    # if ch == 'ctrl-z':
+    #     import signal
+    #     os.kill(os.getpid(), signal.SIGTSTP)
+    #
+    # print(ch)
+    # print(has_data())
+
+    # import termios
+    # print(dir(termios))
+    # print(termios.tcgetattr(sys.stdin.fileno())[6][termios.VINTR], 'VINTR')
+    # print(termios.tcgetattr(sys.stdin.fileno())[6][termios.VEOF], 'VEOF')
+    # print(termios.tcgetattr(sys.stdin.fileno())[6][termios.VSUSP], 'VSUSP')
+    # exit()
+
+    # kt = wara.tui.key_table
+    # print(kt.keys())
+    # print([key_seq for key_seq in kt.keys() if key_seq.startswith(b'\033')])
+    # exit()
+
     def vim_key(who, key):
-        if key == 'j':
+        menu.message = repr(key)
+        if key == b'j':
             return 'down'
-        if key == 'k':
+        if key == b'k':
             return 'up'
         if key == 'H':
             return 'home'
@@ -70,6 +121,7 @@ def main():
             return 'down'
 
     def onkey(menu, key):
+        menu.message = key
         if key == 'd':
             menu.cursor = 'default'
         elif key == 'r':

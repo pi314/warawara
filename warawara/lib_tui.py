@@ -1,12 +1,13 @@
 import contextlib
 import enum
 import itertools
+import os
 import re
+import shutil
 import sys
 import threading
 import time
 import unicodedata
-import shutil
 
 from . import lib_paints as paints
 
@@ -336,8 +337,14 @@ def prompt(question, options=tuple(),
 
 class Key:
     def __init__(self, seq, *aliases):
-        if not aliases:
-            raise ValueError('At least one alias should be specified')
+        if isinstance(seq, str):
+            seq = seq.encode('utf8')
+
+        if not isinstance(seq, bytes):
+            raise TypeError('seq should be in type bytes, not {}'.format(type(seq)))
+
+        if not all(isinstance(a, str) for a in aliases):
+            raise TypeError('Aliases should be in type str')
 
         self.seq = seq
         self.aliases = [str(name) for name in aliases]
@@ -346,7 +353,13 @@ class Key:
         return hash(self.seq)
 
     def __repr__(self):
-        return self.aliases[0]
+        fmt = type(self).__name__ + '({})'
+        if self.aliases:
+            return fmt.format(self.aliases[0])
+        try:
+            return fmt.format(self.seq.decode('utf8'))
+        except UnicodeError:
+            return fmt.format(repr(self.seq))
 
     def name(self, name):
         if name not in self.aliases:
@@ -355,35 +368,49 @@ class Key:
     def __eq__(self, other):
         if type(self) == type(other):
             return self.seq == other.seq
+        elif self.seq == other:
+            return True
+        elif isinstance(other, str) and self.seq == other.encode('utf8'):
+            return True
         else:
-            return other == self.seq or other in self.aliases
+            return other in self.aliases
 
 
-KEY_UP = Key('\033[A', 'up')
-KEY_DOWN = Key('\033[B', 'down')
-KEY_RIGHT = Key('\033[C', 'right')
-KEY_LEFT = Key('\033[D', 'left')
-KEY_ESCAPE = Key('\033', 'esc', 'escape')
-KEY_HOME = Key('\033[1~', 'home')
-KEY_END = Key('\033[4~', 'end')
-KEY_PGUP = Key('\033[5~', 'pgup', 'pageup')
-KEY_PGDN = Key('\033[6~', 'pgdn', 'pagedown')
-KEY_BACKSPACE = Key('\x7f', 'backspace')
-KEY_TAB = Key('\t', 'tab')
-KEY_ENTER = Key('\n', 'enter')
-KEY_SPACE = Key(' ', 'space')
-KEY_F1 = Key('\033OP', 'f1')
-KEY_F2 = Key('\033OQ', 'f2')
-KEY_F3 = Key('\033OR', 'f3')
-KEY_F4 = Key('\033OS', 'f4')
-KEY_F5 = Key('\033[15~', 'f5')
-KEY_F6 = Key('\033[17~', 'f6')
-KEY_F7 = Key('\033[18~', 'f7')
-KEY_F8 = Key('\033[19~', 'f8')
-KEY_F9 = Key('\033[20~', 'f9')
-KEY_F10 = Key('\033[21~', 'f10')
-KEY_F11 = Key('\033[23~', 'f11')
-KEY_F12 = Key('\033[24~', 'f12')
+KEY_UP = Key(b'\033[A', 'up')
+KEY_DOWN = Key(b'\033[B', 'down')
+KEY_RIGHT = Key(b'\033[C', 'right')
+KEY_LEFT = Key(b'\033[D', 'left')
+KEY_ESCAPE = Key(b'\033', 'esc', 'escape')
+KEY_HOME = Key(b'\033[1~', 'home')
+KEY_END = Key(b'\033[4~', 'end')
+KEY_PGUP = Key(b'\033[5~', 'pgup', 'pageup')
+KEY_PGDN = Key(b'\033[6~', 'pgdn', 'pagedown')
+KEY_BACKSPACE = Key(b'\x7f', 'backspace')
+KEY_TAB = Key(b'\t', 'tab', 'ctrl-i', 'ctrl+i', '^I')
+KEY_ENTER = Key(b'\r', 'enter', 'ctrl-m', 'ctrl+m', '^M')
+KEY_SPACE = Key(b' ', 'space')
+KEY_F1 = Key(b'\033OP', 'f1')
+KEY_F2 = Key(b'\033OQ', 'f2')
+KEY_F3 = Key(b'\033OR', 'f3')
+KEY_F4 = Key(b'\033OS', 'f4')
+KEY_F5 = Key(b'\033[15~', 'f5')
+KEY_F6 = Key(b'\033[17~', 'f6')
+KEY_F7 = Key(b'\033[18~', 'f7')
+KEY_F8 = Key(b'\033[19~', 'f8')
+KEY_F9 = Key(b'\033[20~', 'f9')
+KEY_F10 = Key(b'\033[21~', 'f10')
+KEY_F11 = Key(b'\033[23~', 'f11')
+KEY_F12 = Key(b'\033[24~', 'f12')
+
+def _register_ctrl_n_keys():
+    for c in 'abcdefghjklnopqrstuvwxyz':
+        C = c.upper()
+        idx = ord(c) - ord('a') + 1
+        aliases = ('ctrl-' + c, 'ctrl+' + c, '^' + C)
+        globals()['KEY_CTRL_' + C] = Key(chr(idx), *aliases)
+
+_register_ctrl_n_keys()
+del _register_ctrl_n_keys
 
 __all__ += [key for key in globals().keys() if key.startswith('KEY_')]
 
@@ -401,11 +428,15 @@ def _init_key_table():
             key_table_reverse[alias] = v
 
 _init_key_table()
+del _init_key_table
 
 
 __all__ += ['register_key']
 def register_key(seq, *aliases):
-    if not seq or not isinstance(seq, str):
+    if isinstance(seq, str):
+        seq = seq.encode('utf8')
+
+    if not seq:
         raise ValueError('huh?')
 
     if seq not in key_table:
@@ -425,39 +456,55 @@ def getch(timeout=None):
     import select
 
     fd = sys.stdin.fileno()
-    orig = termios.tcgetattr(fd)
+    orig_term_attr = termios.tcgetattr(fd)
+    when = termios.TCSADRAIN
 
     def has_data(t=0):
         return select.select([fd], [], [], t)[0]
 
     def read_one_byte():
-        return os.read(sys.stdin.fileno(), 1).decode('utf8')
+        return os.read(sys.stdin.fileno(), 1)
 
     try:
-        tty.setcbreak(fd)  # or tty.setraw(fd) if you prefer raw mode's behavior.
+        tty.setraw(fd, when=when)
 
         # Wait for input until timeout
         if not has_data(timeout):
             return None
 
-        acc = ''
+        acc = b''
+        candidate_matches = set(key_table.keys())
         while True:
             acc += read_one_byte()
 
             if not has_data():
-                return key_table.get(acc, acc)
+                return key_table.get(acc, Key(acc))
 
-            if acc != '\033' and acc in key_table:
+            # eliminate potential matches
+            candidate_matches = set(key_seq for key_seq in candidate_matches if key_seq.startswith(acc))
+
+            # Perfect match, return
+            if candidate_matches == {acc}:
                 return key_table[acc]
 
-            # prefix match: collect more char
-            if any(key_seq for key_seq in key_table.keys() if key_seq.startswith(acc)):
+            # multiple prefix matchs: collect more byte
+            if candidate_matches:
                 continue
 
-            return acc
+            break
+
+        # Collect enough bytes to decode at least one unicode char
+        while has_data():
+            try:
+                acc.decode('utf8')
+                return Key(acc)
+            except UnicodeError:
+                acc += read_one_byte()
+
+        return Key(acc)
 
     finally:
-        termios.tcsetattr(fd, termios.TCSAFLUSH, orig)
+        termios.tcsetattr(fd, when, orig_term_attr)
 
 
 class MenuCursor:
@@ -631,7 +678,14 @@ class Menu:
                 result = None
 
         if result is None:
-            if key == 'q':
+            import termios
+            import signal
+            term_attr = termios.tcgetattr(sys.stdin.fileno())[6]
+            if key == term_attr[termios.VINTR]: # normally ctrl-c
+                raise KeyboardInterrupt()
+            elif key == term_attr[termios.VSUSP]: # normally ctrl-z
+                os.kill(os.getpid(), signal.SIGTSTP)
+            elif key == 'q':
                 self.unselect_all()
                 self.quit()
             elif key == 'enter':
