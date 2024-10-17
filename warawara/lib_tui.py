@@ -450,7 +450,7 @@ def register_key(seq, *aliases):
     return key
 
 
-def getch(timeout=None):
+def getch(timeout=None, encoding='utf8'):
     import termios, tty
     import os
     import select
@@ -478,30 +478,39 @@ def getch(timeout=None):
             acc += read_one_byte()
 
             if not has_data():
-                return key_table.get(acc, Key(acc))
+                break
 
-            # eliminate potential matches
-            candidate_matches = set(key_seq for key_seq in candidate_matches if key_seq.startswith(acc))
-
-            # Perfect match, return
-            if candidate_matches == {acc}:
-                return key_table[acc]
-
-            # multiple prefix matchs: collect more byte
+            # Still have change to match in key table
             if candidate_matches:
+                # eliminate potential matches
+                candidate_matches = set(key_seq for key_seq in candidate_matches if key_seq.startswith(acc))
+
+                # Perfect match, return
+                if candidate_matches == {acc}:
+                    break
+
+                # multiple prefix matchs: collect more byte
+                if candidate_matches:
+                    continue
+
+            # Input sequence does not match anything in key table
+            # Collect enough bytes to decode at least one unicode char
+            try:
+                acc.decode(encoding)
+                break
+            except UnicodeError:
                 continue
 
-            break
+        if not acc:
+            return None
 
-        # Collect enough bytes to decode at least one unicode char
-        while has_data():
-            try:
-                acc.decode('utf8')
-                return Key(acc)
-            except UnicodeError:
-                acc += read_one_byte()
+        if acc in key_table:
+            return key_table[acc]
 
-        return Key(acc)
+        try:
+            return acc.decode(encoding)
+        except UnicodeError:
+            return acc
 
     finally:
         termios.tcsetattr(fd, when, orig_term_attr)

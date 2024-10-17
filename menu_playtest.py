@@ -74,6 +74,7 @@ def main():
 #     '''
 # 測試
 # '''
+#     exit()
 
     # print(ch.decode('utf8'))
     # print(input())
@@ -100,7 +101,6 @@ def main():
     # exit()
 
     def vim_key(who, key):
-        menu.message = repr(key)
         if key == b'j':
             return 'down'
         if key == b'k':
@@ -121,13 +121,10 @@ def main():
             return 'down'
 
     def onkey(menu, key):
-        menu.message = key
-        if key == 'd':
-            menu.cursor = 'default'
-        elif key == 'r':
-            menu.cursor = 'radio'
-        elif key == 'c':
-            menu.cursor = 'checkbox'
+        if key == 'backspace':
+            menu.message = ''
+        elif isinstance(key, str):
+            menu.message += key
 
     menu = wara.tui.Menu('Select menu type:', options=['default', 'radio', 'checkbox'], onkey=[vim_key, onkey], wrap=True)
     # menu.bind(onkey)
