@@ -470,3 +470,93 @@ class TestPromotAskUser(TestCase):
         self.eq(yn, 'Coffee')
         self.eq(yn, 'COFFEE')
         self.ne(yn, 'tea')
+
+
+class TestKey(TestCase):
+    def test_key_up(self):
+        self.eq(KEY_UP, b'\033[A')
+        self.eq(KEY_UP, '\033[A')
+        self.eq(KEY_UP, 'up')
+
+        self.eq(KEY_DOWN, b'\033[B')
+        self.eq(KEY_DOWN, '\033[B')
+        self.eq(KEY_DOWN, 'down')
+
+        self.eq(KEY_RIGHT, b'\033[C')
+        self.eq(KEY_RIGHT, '\033[C')
+        self.eq(KEY_RIGHT, 'right')
+
+        self.eq(KEY_LEFT, b'\033[D')
+        self.eq(KEY_LEFT, '\033[D')
+        self.eq(KEY_LEFT, 'left')
+
+        self.eq(KEY_ESCAPE, b'\033')
+        self.eq(KEY_ESCAPE, '\033')
+        self.eq(KEY_ESCAPE, 'esc')
+        self.eq(KEY_ESCAPE, 'escape')
+
+        self.eq(KEY_BACKSPACE, b'\x7f')
+        self.eq(KEY_BACKSPACE, 'backspace')
+
+        self.eq(KEY_ENTER, b'\r')
+        self.eq(KEY_ENTER, '\r')
+        self.eq(KEY_ENTER, 'enter')
+
+        self.eq(KEY_SPACE, b' ')
+        self.eq(KEY_SPACE, ' ')
+        self.eq(KEY_SPACE, 'space')
+
+
+class TestGetch(TestCase):
+    def setUp(self):
+        self.patch('select.select', self.mock_select)
+        self.patch('os.read', self.mock_read)
+        self.patch('tty.setraw', self.mock_setraw)
+        self.patch('termios.tcgetattr', self.mock_tcgetattr)
+        self.patch('termios.tcsetattr', self.mock_tcsetattr)
+        self.buffer = bytearray()
+        self.default_term_attr = [
+                'iflag', 'oflag', 'cflag', 'lflag',
+                'ispeed', 'ospeed',
+                'cc']
+
+        self.term_attr = list(self.default_term_attr)
+
+    def tearDown(self):
+        self.eq(self.term_attr, self.default_term_attr)
+
+    def mock_select(self, rlist, wlist, xlist, timeout=None):
+        self.eq(self.term_attr[0], 'raw')
+        if self.buffer:
+            return (rlist, [], [])
+        return ([], [], [])
+
+    def mock_read(self, fd, n):
+        self.eq(self.term_attr[0], 'raw')
+        ret = self.buffer[:n]
+        del self.buffer[:n]
+        return ret
+
+    def mock_setraw(self, fd, when=None):
+        import termios
+        self.eq(when, termios.TCSADRAIN)
+        self.term_attr = ['raw', 'raw', 'raw', 'raw', 'raw', 'raw', 'cc']
+
+    def mock_tcgetattr(self, fd):
+        return self.term_attr
+
+    def mock_tcsetattr(self, fd, when, attributes):
+        import termios
+        self.eq(when, termios.TCSADRAIN)
+        self.term_attr = attributes
+
+    def test_getch(self):
+        self.eq(getch(), None)
+        self.buffer += b'abc'
+        self.eq(getch(), 'a')
+        self.eq(getch(), 'b')
+        self.eq(getch(), 'c')
+        self.buffer += '測試'.encode('utf8')
+        self.eq(getch(), '測')
+        self.eq(getch(), '試')
+        self.eq(getch(), None)

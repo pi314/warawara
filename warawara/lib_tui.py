@@ -450,6 +450,7 @@ def register_key(seq, *aliases):
     return key
 
 
+__all__ += ['getch']
 def getch(timeout=None, encoding='utf8'):
     import termios, tty
     import os
