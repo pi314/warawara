@@ -474,6 +474,31 @@ class TestPromotAskUser(TestCase):
 
 class TestKey(TestCase):
     def test_key_up(self):
+        self.eq(KEY_ESCAPE, b'\033')
+        self.eq(KEY_ESCAPE, '\033')
+        self.eq(KEY_ESCAPE, 'esc')
+        self.eq(KEY_ESCAPE, 'escape')
+
+        self.eq(KEY_BACKSPACE, b'\x7f')
+        self.eq(KEY_BACKSPACE, 'backspace')
+
+        self.eq(KEY_TAB, b'\t')
+        self.eq(KEY_TAB, 'tab')
+        self.eq(KEY_TAB, 'ctrl-i')
+        self.eq(KEY_TAB, 'ctrl+i')
+        self.eq(KEY_TAB, '^I')
+
+        self.eq(KEY_ENTER, b'\r')
+        self.eq(KEY_ENTER, '\r')
+        self.eq(KEY_ENTER, 'enter')
+        self.eq(KEY_ENTER, 'ctrl-m')
+        self.eq(KEY_ENTER, 'ctrl+m')
+        self.eq(KEY_ENTER, '^M')
+
+        self.eq(KEY_SPACE, b' ')
+        self.eq(KEY_SPACE, ' ')
+        self.eq(KEY_SPACE, 'space')
+
         self.eq(KEY_UP, b'\033[A')
         self.eq(KEY_UP, '\033[A')
         self.eq(KEY_UP, 'up')
@@ -490,21 +515,66 @@ class TestKey(TestCase):
         self.eq(KEY_LEFT, '\033[D')
         self.eq(KEY_LEFT, 'left')
 
-        self.eq(KEY_ESCAPE, b'\033')
-        self.eq(KEY_ESCAPE, '\033')
-        self.eq(KEY_ESCAPE, 'esc')
-        self.eq(KEY_ESCAPE, 'escape')
+        self.eq(KEY_HOME, b'\033[1~')
+        self.eq(KEY_HOME, '\033[1~')
+        self.eq(KEY_HOME, 'home')
 
-        self.eq(KEY_BACKSPACE, b'\x7f')
-        self.eq(KEY_BACKSPACE, 'backspace')
+        self.eq(KEY_END, b'\033[4~')
+        self.eq(KEY_END, '\033[4~')
+        self.eq(KEY_END, 'end')
 
-        self.eq(KEY_ENTER, b'\r')
-        self.eq(KEY_ENTER, '\r')
-        self.eq(KEY_ENTER, 'enter')
+        self.eq(KEY_PGUP, b'\033[5~')
+        self.eq(KEY_PGUP, '\033[5~')
+        self.eq(KEY_PGUP, 'pgup')
+        self.eq(KEY_PGUP, 'pageup')
 
-        self.eq(KEY_SPACE, b' ')
-        self.eq(KEY_SPACE, ' ')
-        self.eq(KEY_SPACE, 'space')
+        self.eq(KEY_PGDN, b'\033[6~')
+        self.eq(KEY_PGDN, '\033[6~')
+        self.eq(KEY_PGDN, 'pgdn')
+        self.eq(KEY_PGDN, 'pagedown')
+
+        self.eq(KEY_F1, b'\033OP')
+        self.eq(KEY_F1, 'F1')
+
+        self.eq(KEY_F2, b'\033OQ')
+        self.eq(KEY_F2, 'F2')
+
+        self.eq(KEY_F3, b'\033OR')
+        self.eq(KEY_F3, 'F3')
+
+        self.eq(KEY_F4, b'\033OS')
+        self.eq(KEY_F4, 'F4')
+
+        self.eq(KEY_F5, b'\033[15~')
+        self.eq(KEY_F5, 'F5')
+
+        self.eq(KEY_F6, b'\033[17~')
+        self.eq(KEY_F6, 'F6')
+
+        self.eq(KEY_F7, b'\033[18~')
+        self.eq(KEY_F7, 'F7')
+
+        self.eq(KEY_F8, b'\033[19~')
+        self.eq(KEY_F8, 'F8')
+
+        self.eq(KEY_F9, b'\033[20~')
+        self.eq(KEY_F9, 'F9')
+
+        self.eq(KEY_F10, b'\033[21~')
+        self.eq(KEY_F10, 'F10')
+
+        self.eq(KEY_F11, b'\033[23~')
+        self.eq(KEY_F11, 'F11')
+
+        self.eq(KEY_F12, b'\033[24~')
+        self.eq(KEY_F12, 'F12')
+
+        for c in 'abcdefghjklnopqrstuvwxyz':
+            key = globals()['KEY_CTRL_' + c.upper()]
+            self.eq(key, chr(ord(c) - ord('a') + 1))
+            self.eq(key, 'ctrl-' + c)
+            self.eq(key, 'ctrl+' + c)
+            self.eq(key, '^' + c.upper())
 
 
 class TestGetch(TestCase):
