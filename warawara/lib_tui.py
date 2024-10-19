@@ -15,10 +15,11 @@ from .lib_itertools import zip_longest, unwrap_one, flatten
 from .lib_paints import decolor
 
 
-__all__ = ['strwidth', 'ljust', 'rjust']
-__all__ += ['ThreadedSpinner', 'prompt']
+from .internal_utils import exporter
+export, __all__ = exporter()
 
 
+@export
 def strwidth(s):
     return sum((1 + (unicodedata.east_asian_width(c) in 'WF')) for c in decolor(s))
 
@@ -80,15 +81,17 @@ def just(just_func, data, width, fillchar):
             ]
 
 
+@export
 def ljust(data, width=None, fillchar=' '):
     return just(just_elem(lpad), data, width, fillchar)
 
 
+@export
 def rjust(data, width=None, fillchar=' '):
     return just(just_elem(rpad), data, width, fillchar)
 
 
-
+@export
 class ThreadedSpinner:
     def __init__(self, *icon, delay=0.1):
         if not icon:
@@ -311,6 +314,7 @@ class ExceptionSuppressor:
         return exc_type in self.exc_group
 
 
+@export
 def prompt(question, options=tuple(),
            accept_cr=None,
            abbr=None,
@@ -415,7 +419,14 @@ def _register_ctrl_n_keys():
 _register_ctrl_n_keys()
 del _register_ctrl_n_keys
 
-__all__ += [key for key in globals().keys() if key.startswith('KEY_')]
+
+def _export_all_keys():
+    for key in globals().keys():
+        if key.startswith('KEY_'):
+            export(key)
+
+_export_all_keys()
+del _export_all_keys
 
 
 key_table = {}
@@ -434,7 +445,7 @@ _init_key_table()
 del _init_key_table
 
 
-__all__ += ['register_key']
+@export
 def register_key(seq, *aliases):
     if isinstance(seq, str):
         seq = seq.encode('utf8')
@@ -453,7 +464,7 @@ def register_key(seq, *aliases):
     return key
 
 
-__all__ += ['getch']
+@export
 def getch(timeout=None, encoding='utf8'):
     import termios, tty
     import os

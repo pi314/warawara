@@ -1,9 +1,10 @@
 import re
 
+from .internal_utils import exporter
+export, __all__ = exporter()
 
-__all__ = ['rere']
 
-
+@export
 class rere:
     def __init__(self, text):
         self.text = text
