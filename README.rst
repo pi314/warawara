@@ -29,12 +29,18 @@ A small library that provides cute utilities for my other projects
 Test
 ***************************************************************************
 
-Testing
+Testing:
 
 ..  code:: shell
 
-    $ python3 runtest.py
+    $ python -m unittest --verbose
 
-If coverage_ package is installed, it will be called to generate report into ``htmlcov/``.
+With coverage_:
 
-.. _coverage: https://coverage.readthedocs.io/en/7.5.4/index.html
+..  code:: shell
+
+    $ pipx install coverage[toml]
+    $ coverage run
+    $ coverage html
+
+.. _coverage: https://coverage.readthedocs.io/en/latest/index.html
