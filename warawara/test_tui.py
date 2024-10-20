@@ -595,6 +595,11 @@ class TestGetch(TestCase):
     def tearDown(self):
         self.eq(self.term_attr, self.default_term_attr)
 
+    def press(self, key):
+        if isinstance(key, str):
+            key = key.encode('utf8')
+        self.buffer += key
+
     def mock_select(self, rlist, wlist, xlist, timeout=None):
         self.eq(self.term_attr[0], 'raw')
         if self.buffer:
@@ -622,11 +627,18 @@ class TestGetch(TestCase):
 
     def test_getch(self):
         self.eq(getch(), None)
-        self.buffer += b'abc'
+
+        self.press(b'abc')
         self.eq(getch(), 'a')
         self.eq(getch(), 'b')
         self.eq(getch(), 'c')
-        self.buffer += '測試'.encode('utf8')
+        self.eq(getch(), None)
+
+        self.press('測試')
         self.eq(getch(), '測')
         self.eq(getch(), '試')
         self.eq(getch(), None)
+
+        self.press('\033[AA')
+        self.eq(getch(), 'up')
+        self.eq(getch(), 'A')
