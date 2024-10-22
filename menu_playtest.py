@@ -101,9 +101,9 @@ def main():
     # exit()
 
     def vim_key(who, key):
-        if key == b'j':
+        if key == 'j':
             return 'down'
-        if key == b'k':
+        if key == 'k':
             return 'up'
         if key == 'H':
             return 'home'
@@ -115,9 +115,9 @@ def main():
             return 'end'
 
     def vim_scroll(who, key):
-        if key == 'y':
+        if key == 'ctrl-y':
             return 'up'
-        if key == 'e':
+        if key == 'ctrl-e':
             return 'down'
 
     def onkey(menu, key):

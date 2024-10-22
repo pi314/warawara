@@ -625,20 +625,31 @@ class TestGetch(TestCase):
         self.eq(when, termios.TCSADRAIN)
         self.term_attr = attributes
 
-    def test_getch(self):
+    def test_getch_basic(self):
         self.eq(getch(), None)
-
         self.press(b'abc')
         self.eq(getch(), 'a')
         self.eq(getch(), 'b')
         self.eq(getch(), 'c')
         self.eq(getch(), None)
 
+    def test_getch_unicode(self):
+        self.eq(getch(), None)
         self.press('測試')
         self.eq(getch(), '測')
         self.eq(getch(), '試')
         self.eq(getch(), None)
 
+    def test_getch_escape_keys(self):
+        self.eq(getch(), None)
         self.press('\033[AA')
         self.eq(getch(), 'up')
         self.eq(getch(), 'A')
+        self.eq(getch(), None)
+
+    def test_getch_unicode_error(self):
+        self.eq(getch(), None)
+        test_data = '測'.encode('utf8')[:-1]
+        self.press(test_data)
+        self.eq(getch(), test_data)
+        self.eq(getch(), None)

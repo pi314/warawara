@@ -516,9 +516,6 @@ def getch(timeout=None, encoding='utf8'):
             except UnicodeError:
                 continue
 
-        if not acc:
-            return None
-
         if acc in key_table:
             return key_table[acc]
 
