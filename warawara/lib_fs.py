@@ -1,3 +1,6 @@
+__all__ = ['open']
+
+
 _open = open
 def open(*args, **kwargs):
     if 'encoding' not in kwargs:

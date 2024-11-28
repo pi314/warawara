@@ -1,6 +1,9 @@
 import os
 
 
+__all__ = ['pushd', 'popd', 'dirs']
+
+
 _dirs = []
 class pushd:
     def __init__(self, d):
