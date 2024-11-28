@@ -1,17 +1,25 @@
 import os
+from pathlib import Path
 
 
-__all__ = ['pushd', 'popd', 'dirs']
+__all__ = ['cwd', 'pushd', 'popd', 'dirs']
+
+
+def cwd(path=None):
+    if path:
+        os.chdir(path)
+
+    return Path(os.getcwd())
 
 
 _dirs = []
 class pushd:
     def __init__(self, d):
-        _dirs.append(os.getcwd())
+        _dirs.append(Path(os.getcwd()))
         os.chdir(d)
 
     def __enter__(self):
-        return self
+        return Path(self)
 
     def __exit__(self, exc_type, exc_value, traceback):
         popd()
@@ -23,4 +31,4 @@ def popd():
 
 
 def dirs():
-    return _dirs
+    return list(_dirs) + [cwd()]
