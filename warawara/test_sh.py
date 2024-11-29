@@ -16,7 +16,7 @@ class TestSh(TestCase):
     def tearDown(self):
         shutil.rmtree('tmp')
 
-    def test_sh(self):
+    def test_pushd_popd_dirs(self):
         cwd1 = wrwr.cwd()
 
         wrwr.pushd('tmp')
