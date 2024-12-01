@@ -1,18 +1,25 @@
 from .lib_itertools import unwrap_one
 
+from .internal_utils import exporter
+export, __all__ = exporter()
 
-__all__ = ['is_int', 'sgn', 'lerp', 'interval']
-__all__ += ['vector', 'distribute']
 
-
+@export
 def is_int(o):
     return isinstance(o, int)
 
 
+@export
+def is_uint8(i):
+    return isinstance(i, int) and not isinstance(i, bool) and 0 <= i < 256
+
+
+@export
 def sgn(i):
     return (i > 0) - (i < 0)
 
 
+@export
 def lerp(a, b, t):
     if t == 0:
         return a
@@ -21,6 +28,7 @@ def lerp(a, b, t):
     return a + t * (b - a)
 
 
+@export
 class vector:
     def __init__(self, *args):
         args = unwrap_one(args)
@@ -85,6 +93,7 @@ class vector:
         return vector(func(i) for i in self)
 
 
+@export
 def interval(a, b, close=True):
     direction = sgn(b - a)
     if direction == 0:
@@ -96,6 +105,7 @@ def interval(a, b, close=True):
     return ret[1:-1]
 
 
+@export
 def distribute(samples, N):
     if N is None:
         return samples

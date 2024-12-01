@@ -38,3 +38,16 @@ ntfy = "warawara:bin.ntfy.main"
 
 [project.urls]
 Homepage = "https://github.com/pi314/warawara"
+
+
+[tool.coverage.run]
+branch = true
+source = ["warawara/"]
+command_line = "-m unittest --verbose"
+
+
+[tool.coverage.report]
+omit = [
+    "test_*.py",
+    "__init__.py",
+    ]

@@ -4,15 +4,15 @@ import threading
 
 from .lib_itertools import unwrap_one
 
-
-__all__ = ['stream', 'command', 'run', 'pipe']
-__all__ += ['TimeoutExpired', 'AlreadyRunningError']
-__all__ += ['RunMocker']
+from .internal_utils import exporter
+export, __all__ = exporter()
 
 
+export('TimeoutExpired')
 TimeoutExpired = sub.TimeoutExpired
 
 
+@export
 class AlreadyRunningError(Exception):
     def __init__(self, cmd):
         if callable(cmd.cmd[0]):
@@ -49,6 +49,7 @@ class QueueEventAdapter:
         self.Q.put(line)
 
 
+@export
 class stream:
     def __init__(self):
         self.queue = queue.Queue()
@@ -130,6 +131,7 @@ class stream:
                 yield line
 
 
+@export
 class command:
     '''
     A line-oriented wrapper for running external commands.
@@ -371,12 +373,14 @@ class command:
             self.thread.join()
 
 
+@export
 def run(*cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
     ret = command(*cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
     ret.run(wait=wait, timeout=timeout)
     return ret
 
 
+@export
 def pipe(istream, *ostreams):
     if istream.closed:
         raise EOFError('istream already closed')
@@ -399,6 +403,7 @@ def pipe(istream, *ostreams):
     t.start()
 
 
+@export
 class RunMocker:
     def __init__(self):
         self.rules = {}

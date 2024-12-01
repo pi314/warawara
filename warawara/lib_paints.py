@@ -7,23 +7,18 @@ from .lib_math import vector
 from .lib_math import lerp
 from .lib_math import interval
 from .lib_math import distribute
+from .lib_math import is_uint8
 
 from .lib_itertools import unwrap_one
+
+from .internal_utils import exporter
+export, __all__ = exporter()
+
 
 try: # pragma: no cover
     from icecream import ic
 except ImportError:  # pragma: no cover
     ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
-
-
-__all__ = ['paint']
-__all__ += ['nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange']
-__all__ += ['decolor']
-__all__ += ['dye', 'dye256', 'dyergb', 'gradient']
-
-
-def is_uint8(i):
-    return isinstance(i, int) and not isinstance(i, bool) and 0 <= i < 256
 
 
 class DyeTrait(abc.ABC):
@@ -73,6 +68,7 @@ class DyeTrait(abc.ABC):
         return paint(fg=self) | other
 
 
+@export
 class dye(abc.ABC):
     def __new__(cls, *args, **kwargs):
         args = unwrap_one(args)
@@ -100,6 +96,7 @@ class dye(abc.ABC):
         raise TypeError('Invalid arguments')
 
 
+@export
 class dye256(DyeTrait):
     def __init__(self, code=None):
         if isinstance(code, self.__class__):
@@ -123,6 +120,7 @@ class dye256(DyeTrait):
 dye.register(dye256)
 
 
+@export
 class dyergb(DyeTrait):
     def __init__(self, *args):
         args = unwrap_one(args)
@@ -161,6 +159,7 @@ class dyergb(DyeTrait):
 dye.register(dyergb)
 
 
+@export
 class paint:
     def __init__(self, fg=None, bg=None):
         self.fg = dye(fg)
@@ -197,6 +196,7 @@ class paint:
         return self.seq == other.seq
 
 
+export('nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange')
 nocolor = dye()
 black = dye(0)
 red = dye(1)
@@ -210,10 +210,13 @@ orange = dye(208)
 
 
 decolor_regex = re.compile('\033' + r'\[[\d;]*m')
+
+@export
 def decolor(s):
     return decolor_regex.sub('', s)
 
 
+@export
 def gradient(A, B, N=None):
     if not isinstance(A, dye) or not isinstance(B, dye):
         raise TypeError('Can only calculate gradient() on dye objects')

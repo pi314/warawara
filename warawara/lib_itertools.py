@@ -1,6 +1,10 @@
 import itertools
 
+from .internal_utils import exporter
+export, __all__ = exporter()
 
+
+@export
 def iterable(obj):
     try:
         iter(obj)
@@ -9,6 +13,7 @@ def iterable(obj):
         return False
 
 
+@export
 def unwrap_one(obj):
     try:
         while True:
@@ -22,6 +27,7 @@ def unwrap_one(obj):
     return obj
 
 
+@export
 def flatten(tree):
     if not iterable(tree) or isinstance(tree, str):
         return tree
@@ -33,6 +39,7 @@ def flatten(tree):
         ))
 
 
+@export
 def lookahead(iterable):
     it = iter(iterable)
     lookahead = next(it)
@@ -44,6 +51,7 @@ def lookahead(iterable):
     yield lookahead, True
 
 
+@export
 def zip_longest(*iterables, fillvalues=None):
     if not isinstance(fillvalues, (tuple, list)):
         fillvalues = (fillvalues,) * len(iterables)
