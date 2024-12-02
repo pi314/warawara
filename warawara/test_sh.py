@@ -1,6 +1,8 @@
 import os
 import shutil
 
+from os.path import exists, isdir
+
 from .test_utils import *
 
 import warawara as wrwr
@@ -8,7 +10,9 @@ import warawara as wrwr
 
 class TestSh(TestCase):
     def setUp(self):
-        shutil.rmtree('tmp')
+        if exists('tmp') and isdir('tmp'):
+            shutil.rmtree('tmp')
+
         os.mkdir('tmp')
         os.mkdir('tmp/a')
         os.mkdir('tmp/a/b')
