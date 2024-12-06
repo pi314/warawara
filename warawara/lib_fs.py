@@ -30,3 +30,21 @@ def open(*args, **kwargs):
     f.readlines = readlines
 
     return f
+
+
+@export
+def fsorted(iterable, key=None):
+    import re
+    def filename_as_key(name):
+        def int_or_not(x):
+            if x and x[0] in '1234567890':
+                return int(x)
+            return x
+        return tuple(int_or_not(x) for x in re.split(r'([0-9]+)', name))
+
+    if key is None:
+        sort_key = filename_as_key
+    else:
+        sort_key = lambda x: filename_as_key(key(x))
+
+    return sorted(iterable, key=sort_key)
