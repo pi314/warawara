@@ -1,10 +1,11 @@
 import os
 from pathlib import Path
 
+from .internal_utils import exporter
+export, __all__ = exporter()
 
-__all__ = ['cwd', 'pushd', 'popd', 'dirs']
 
-
+@export
 def cwd(path=None):
     if path:
         os.chdir(path)
@@ -13,6 +14,8 @@ def cwd(path=None):
 
 
 _dirs = []
+
+@export
 class pushd:
     def __init__(self, d):
         _dirs.append(Path(os.getcwd()))
@@ -25,10 +28,12 @@ class pushd:
         popd()
 
 
+@export
 def popd():
     if _dirs:
         os.chdir(_dirs.pop())
 
 
+@export
 def dirs():
     return list(_dirs) + [cwd()]

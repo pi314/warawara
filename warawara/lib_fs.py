@@ -1,7 +1,10 @@
-__all__ = ['open']
+from .internal_utils import exporter
+export, __all__ = exporter()
 
 
 _open = open
+
+@export
 def open(*args, **kwargs):
     if 'encoding' not in kwargs:
         kwargs['encoding'] = 'utf-8'
