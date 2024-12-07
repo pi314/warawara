@@ -23,26 +23,33 @@ class TestSh(TestCase):
     def test_pushd_popd_dirs(self):
         cwd1 = wrwr.cwd()
 
-        wrwr.pushd('tmp')
-        wrwr.pushd('a')
-        self.eq(wrwr.cwd(), cwd1 / 'tmp/a')
-        self.eq(wrwr.dirs(),
-                [
-                    cwd1,
-                    cwd1 / 'tmp',
-                    cwd1 / 'tmp' / 'a',
-                ])
+        with wrwr.pushd('tmp'):
+            self.eq(wrwr.cwd(), cwd1 / 'tmp')
 
-        wrwr.popd()
-        self.eq(wrwr.dirs(),
-                [
-                    cwd1,
-                    cwd1 / 'tmp',
-                ])
+            wrwr.pushd('a')
+            self.eq(wrwr.cwd(), cwd1 / 'tmp/a')
+            self.eq(wrwr.dirs(),
+                    [
+                        cwd1,
+                        cwd1 / 'tmp',
+                        cwd1 / 'tmp' / 'a',
+                    ])
 
-        wrwr.popd()
+            wrwr.cwd(cwd1 / 'tmp' / 'a' / 'b')
+            self.eq(wrwr.cwd(), cwd1 / 'tmp' / 'a' / 'b')
+            wrwr.popd()
+
+            self.eq(wrwr.cwd(), cwd1 / 'tmp')
+            self.eq(wrwr.dirs(),
+                    [
+                        cwd1,
+                        cwd1 / 'tmp',
+                    ])
+
         self.eq(wrwr.cwd(), cwd1)
         self.eq(wrwr.dirs(),
                 [
                     cwd1,
                 ])
+
+        wrwr.popd()

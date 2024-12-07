@@ -22,7 +22,7 @@ class pushd:
         os.chdir(d)
 
     def __enter__(self):
-        return Path(self)
+        return
 
     def __exit__(self, exc_type, exc_value, traceback):
         popd()
