@@ -53,3 +53,15 @@ class TestSh(TestCase):
                 ])
 
         wrwr.popd()
+
+    def test_shrinkuser(self):
+        HOME = wrwr.home()
+        self.eq(wrwr.shrinkuser(HOME), '~')
+        self.eq(wrwr.shrinkuser(str(HOME) + '/'), '~/')
+
+        self.eq(wrwr.shrinkuser(HOME / 'bana'), '~/bana')
+        self.eq(wrwr.shrinkuser(HOME / 'bana/'), '~/bana')
+        self.eq(wrwr.shrinkuser(str(HOME) + '/bana/'), '~/bana/')
+
+        self.eq(wrwr.shrinkuser('bana/na/'), 'bana/na/')
+        self.eq(wrwr.shrinkuser('bana/na'), 'bana/na')
