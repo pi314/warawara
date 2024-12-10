@@ -1,18 +1,24 @@
 ===============================================================================
 Warawara
 ===============================================================================
-A small library that provides cute utilities for my other projects
+A swiss-knife-like library that collects cute utilities for my other projects.
 
+This library only depends on Python standard library and Python itselfs.
+It's functionalities will not depend on any third-party packages in a foreseeable future.
+
+Examples:
 
 ..  code::python3
 
+    # color strings
     import warawara
     warawara.orange('TEXT')   # \e[38;5;208mTEXT\e[m
 
+    # Invoke external commands and receive the result
     p = warawara.run(['seq', '5'])
     p.stdout.lines  # ['1', '2', '3', '4', '5']
 
-
+    # Invoke external commands and receive the result, in parallel
     p1 = warawara.command(['seq', '5'])
 
     def func(streams, *args):
@@ -26,6 +32,10 @@ A small library that provides cute utilities for my other projects
     p2.stdout.lines   # ['wara: 1', 'wara: 2', 'wara: 3', 'wara: 4', 'wara: 5']
 
 
+From my own perspective, Python's subprocess interface is not friendly enough
+for simple uses.
+
+
 Test
 ***************************************************************************
 
@@ -33,7 +43,7 @@ Testing:
 
 ..  code:: shell
 
-    $ python -m unittest --verbose
+    $ runtest.sh
 
 With coverage_:
 
