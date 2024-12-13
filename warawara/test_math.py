@@ -4,10 +4,6 @@ from warawara import *
 
 
 class TestMath(TestCase):
-    def test_is_int(self):
-        self.is_true(is_int(3))
-        self.is_false(is_int('banana'))
-
     def test_sgn(self):
         self.eq(sgn(2024), 1)
         self.eq(sgn(0), 0)

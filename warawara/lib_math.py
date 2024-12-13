@@ -5,11 +5,6 @@ export, __all__ = exporter()
 
 
 @export
-def is_int(o):
-    return isinstance(o, int)
-
-
-@export
 def is_uint8(i):
     return isinstance(i, int) and not isinstance(i, bool) and 0 <= i < 256
 
@@ -141,6 +136,8 @@ def distribute(samples, N):
 
 # class matrix:
 #     def __init__(self, *args):
+#         def is_int(o):
+#             return isinstance(o, int)
 #         if len(args) == 2 and is_int(args[0]) and is_int(args[1]):
 #             self.rows = args[0]
 #             self.cols = args[1]
