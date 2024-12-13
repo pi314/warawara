@@ -15,12 +15,6 @@ from .internal_utils import exporter
 export, __all__ = exporter()
 
 
-try: # pragma: no cover
-    from icecream import ic
-except ImportError:  # pragma: no cover
-    ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
-
-
 class DyeTrait(abc.ABC):
     @abc.abstractmethod
     def __init__(self, *args, **kwargs): # pragma: no cover
