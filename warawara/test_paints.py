@@ -35,7 +35,7 @@ class TestColorFacade(TestCase):
 
     def test_color_invalid_value(self):
         with self.assertRaises(TypeError):
-            Color(True)
+            color(True)
 
         with self.assertRaises(TypeError):
             Color256(True)

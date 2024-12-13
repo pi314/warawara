@@ -15,7 +15,8 @@ from .internal_utils import exporter
 export, __all__ = exporter()
 
 
-class ColorTrait(abc.ABC):
+@export
+class Color(abc.ABC):
     @abc.abstractmethod
     def __init__(self, *args, **kwargs): # pragma: no cover
         raise NotImplementedError
@@ -63,38 +64,34 @@ class ColorTrait(abc.ABC):
 
 
 @export
-class Color(abc.ABC):
-    def __new__(cls, *args, **kwargs):
-        args = unwrap_one(args)
+def color(*args, **kwargs):
+    args = unwrap_one(args)
 
-        # empty
-        if not args:
-            return Color256(None)
+    # empty
+    if not args:
+        return Color256(None)
 
-        # copy ctor
-        elif len(args) == 1 and issubclass(type(args[0]), Color):
-            return type(args[0])(*args, **kwargs)
+    # copy ctor
+    elif len(args) == 1 and issubclass(type(args[0]), Color):
+        return type(args[0])(*args, **kwargs)
 
-        # Color256 ctor
-        elif len(args) == 1 and (args[0] is None or is_uint8(args[0])):
-            return Color256(*args, **kwargs)
+    # Color256 ctor
+    elif len(args) == 1 and (args[0] is None or is_uint8(args[0])):
+        return Color256(*args, **kwargs)
 
-        # ColorRGB ctor
-        elif len(args) == 3 and all(is_uint8(i) for i in args):
-            return ColorRGB(*args, **kwargs)
+    # ColorRGB ctor
+    elif len(args) == 3 and all(is_uint8(i) for i in args):
+        return ColorRGB(*args, **kwargs)
 
-        # ColorRGB ctor #xxxxxx
-        elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
-            return ColorRGB(*args, **kwargs)
+    # ColorRGB ctor #xxxxxx
+    elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
+        return ColorRGB(*args, **kwargs)
 
-        raise TypeError('Invalid arguments')
-
-export('color')
-color = Color
+    raise TypeError('Invalid arguments')
 
 
 @export
-class Color256(ColorTrait):
+class Color256(Color):
     def __init__(self, code=None):
         if isinstance(code, self.__class__):
             code = code.code
@@ -114,11 +111,9 @@ class Color256(ColorTrait):
     def __int__(self):
         return self.code
 
-Color.register(Color256)
-
 
 @export
-class ColorRGB(ColorTrait):
+class ColorRGB(Color):
     def __init__(self, *args):
         args = unwrap_one(args)
 
@@ -153,14 +148,12 @@ class ColorRGB(ColorTrait):
     def __int__(self):
         return (self.r << 16) | (self.g << 8) | (self.b)
 
-Color.register(ColorRGB)
-
 
 @export
 class ColorCompound:
     def __init__(self, fg=None, bg=None):
-        self.fg = Color(fg)
-        self.bg = Color(bg)
+        self.fg = color(fg)
+        self.bg = color(bg)
 
         seq = ';'.join(filter(None, [
             '38;' + self.fg.seq if self.fg.seq else None,
@@ -197,16 +190,16 @@ paint = ColorCompound
 
 
 export('nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange')
-nocolor = Color()
-black = Color(0)
-red = Color(1)
-green = Color(2)
-yellow = Color(3)
-blue = Color(4)
-magenta = Color(5)
-cyan = Color(6)
-white = Color(7)
-orange = Color(208)
+nocolor = color()
+black = color(0)
+red = color(1)
+green = color(2)
+yellow = color(3)
+blue = color(4)
+magenta = color(5)
+cyan = color(6)
+white = color(7)
+orange = color(208)
 
 
 decolor_regex = re.compile('\033' + r'\[[\d;]*m')
