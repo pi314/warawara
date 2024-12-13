@@ -4,7 +4,7 @@ import sys
 
 
 from . import lib_subproc as subproc
-from . import lib_paints as paints
+from . import lib_colors as paints
 
 
 def print_cmd(cmd):

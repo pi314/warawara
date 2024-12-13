@@ -9,10 +9,10 @@ import threading
 import time
 import unicodedata
 
-from . import lib_paints as paints
+from . import lib_colors as paints
 
 from .lib_itertools import zip_longest, unwrap_one, flatten
-from .lib_paints import decolor
+from .lib_colors import decolor
 
 
 from .internal_utils import exporter
