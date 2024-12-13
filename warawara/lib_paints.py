@@ -15,7 +15,7 @@ from .internal_utils import exporter
 export, __all__ = exporter()
 
 
-class DyeTrait(abc.ABC):
+class ColorTrait(abc.ABC):
     @abc.abstractmethod
     def __init__(self, *args, **kwargs): # pragma: no cover
         raise NotImplementedError
@@ -49,49 +49,52 @@ class DyeTrait(abc.ABC):
         return '\033[38;{}m'.format(self.seq) if self.seq else '\033[m'
 
     def __invert__(self):
-        return paint(bg=self)
+        return ColorCompound(bg=self)
 
     def __truediv__(self, other):
-        if not isinstance(other, dye):
-            raise TypeError('Only dye() / dye() is allowed')
-        return paint(fg=self, bg=other)
+        if not isinstance(other, Color):
+            raise TypeError('Only Color() / Color() is allowed')
+        return ColorCompound(fg=self, bg=other)
 
     def __or__(self, other):
-        if isinstance(other, dye):
+        if isinstance(other, Color):
             return self if self.seq else other
-        return paint(fg=self) | other
+        return ColorCompound(fg=self) | other
 
 
 @export
-class dye(abc.ABC):
+class Color(abc.ABC):
     def __new__(cls, *args, **kwargs):
         args = unwrap_one(args)
 
         # empty
         if not args:
-            return dye256(None)
+            return Color256(None)
 
         # copy ctor
-        elif len(args) == 1 and issubclass(type(args[0]), dye):
+        elif len(args) == 1 and issubclass(type(args[0]), Color):
             return type(args[0])(*args, **kwargs)
 
-        # dye256 ctor
+        # Color256 ctor
         elif len(args) == 1 and (args[0] is None or is_uint8(args[0])):
-            return dye256(*args, **kwargs)
+            return Color256(*args, **kwargs)
 
-        # dyergb ctor
+        # ColorRGB ctor
         elif len(args) == 3 and all(is_uint8(i) for i in args):
-            return dyergb(*args, **kwargs)
+            return ColorRGB(*args, **kwargs)
 
-        # dyergb ctor #xxxxxx
+        # ColorRGB ctor #xxxxxx
         elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
-            return dyergb(*args, **kwargs)
+            return ColorRGB(*args, **kwargs)
 
         raise TypeError('Invalid arguments')
 
+export('color')
+color = Color
+
 
 @export
-class dye256(DyeTrait):
+class Color256(ColorTrait):
     def __init__(self, code=None):
         if isinstance(code, self.__class__):
             code = code.code
@@ -111,11 +114,11 @@ class dye256(DyeTrait):
     def __int__(self):
         return self.code
 
-dye.register(dye256)
+Color.register(Color256)
 
 
 @export
-class dyergb(DyeTrait):
+class ColorRGB(ColorTrait):
     def __init__(self, *args):
         args = unwrap_one(args)
 
@@ -145,19 +148,19 @@ class dyergb(DyeTrait):
         self.seq = '2;{};{};{}'.format(self.r, self.g, self.b)
 
     def __repr__(self):
-        return 'dyergb({}, {}, {})'.format(self.r, self.g, self.b)
+        return 'ColorRGB({}, {}, {})'.format(self.r, self.g, self.b)
 
     def __int__(self):
         return (self.r << 16) | (self.g << 8) | (self.b)
 
-dye.register(dyergb)
+Color.register(ColorRGB)
 
 
 @export
-class paint:
+class ColorCompound:
     def __init__(self, fg=None, bg=None):
-        self.fg = dye(fg)
-        self.bg = dye(bg)
+        self.fg = Color(fg)
+        self.bg = Color(bg)
 
         seq = ';'.join(filter(None, [
             '38;' + self.fg.seq if self.fg.seq else None,
@@ -166,7 +169,7 @@ class paint:
         self.seq = '' if not seq else ('\033[' + seq + 'm')
 
     def __repr__(self):
-        return 'paint(fg={fg}, bg={bg})'.format(fg=self.fg, bg=self.bg)
+        return 'ColorCompound(fg={fg}, bg={bg})'.format(fg=self.fg, bg=self.bg)
 
     def __call__(self, s=''):
         return s if not self.seq else f'{self.seq}{s}\033[m'
@@ -178,29 +181,32 @@ class paint:
         fg = other.fg if other.fg.seq else self.fg
         bg = other.bg if other.bg.seq else self.bg
 
-        return paint(fg=fg, bg=bg)
+        return ColorCompound(fg=fg, bg=bg)
 
     def __truediv__(self, other):
-        return paint(fg=self.fg, bg=other.fg)
+        return ColorCompound(fg=self.fg, bg=other.fg)
 
     def __invert__(self):
-        return paint(fg=self.bg, bg=self.fg)
+        return ColorCompound(fg=self.bg, bg=self.fg)
 
     def __eq__(self, other):
         return self.seq == other.seq
 
+export('paint')
+paint = ColorCompound
+
 
 export('nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange')
-nocolor = dye()
-black = dye(0)
-red = dye(1)
-green = dye(2)
-yellow = dye(3)
-blue = dye(4)
-magenta = dye(5)
-cyan = dye(6)
-white = dye(7)
-orange = dye(208)
+nocolor = Color()
+black = Color(0)
+red = Color(1)
+green = Color(2)
+yellow = Color(3)
+blue = Color(4)
+magenta = Color(5)
+cyan = Color(6)
+white = Color(7)
+orange = Color(208)
 
 
 decolor_regex = re.compile('\033' + r'\[[\d;]*m')
@@ -212,8 +218,8 @@ def decolor(s):
 
 @export
 def gradient(A, B, N=None):
-    if not isinstance(A, dye) or not isinstance(B, dye):
-        raise TypeError('Can only calculate gradient() on dye objects')
+    if not isinstance(A, Color) or not isinstance(B, Color):
+        raise TypeError('Can only calculate gradient() on Color objects')
 
     if N is not None and not isinstance(N, int):
         raise TypeError('N must be a integer')
@@ -224,33 +230,33 @@ def gradient(A, B, N=None):
     if N == 2:
         return (A, B)
 
-    if isinstance(A, dye256) and isinstance(B, dye256):
-        return gradient_dye256(A, B, N=N)
+    if isinstance(A, Color256) and isinstance(B, Color256):
+        return gradient_color256(A, B, N=N)
 
-    if isinstance(A, dyergb) and isinstance(B, dyergb):
+    if isinstance(A, ColorRGB) and isinstance(B, ColorRGB):
         return gradient_rgb(A, B, N=N)
 
     return (A, B)
 
 
-def gradient_dye256(A, B, N=None):
+def gradient_color256(A, B, N=None):
     if A.code in range(232, 256) and B.code in range(232, 256):
-        return gradient_dye256_gray(A, B, N)
+        return gradient_color256_gray(A, B, N)
 
     if A.code in range(16, 232) and B.code in range(16, 232):
-        return gradient_dye256_rgb(A, B, N)
+        return gradient_color256_rgb(A, B, N)
 
     return (A, B)
 
 
-def gradient_dye256_gray(A, B, N=None):
+def gradient_color256_gray(A, B, N=None):
     a, b = A.code, B.code
     direction = sgn(b - a)
     n = abs(b - a) + 1
-    return tuple(dye256(c) for c in distribute(interval(a, b), N or n))
+    return tuple(Color256(c) for c in distribute(interval(a, b), N or n))
 
 
-def gradient_dye256_rgb(A, B, N=None):
+def gradient_color256_rgb(A, B, N=None):
     def color_to_rgb6(p):
         c = int(p) - 16
         r = c // 36
@@ -259,7 +265,7 @@ def gradient_dye256_rgb(A, B, N=None):
         return vector(r, g, b)
 
     def rgb6_to_color(rgb6):
-        return dye256(rgb6[0] * 36 + rgb6[1] * 6 + rgb6[2] + 16)
+        return Color256(rgb6[0] * 36 + rgb6[1] * 6 + rgb6[2] + 16)
 
     rgb_a = color_to_rgb6(A)
     rgb_b = color_to_rgb6(B)
@@ -295,7 +301,7 @@ def gradient_rgb(A, B, N):
     #
     # ret = [A]
     # for t in (i / (N - 1) for i in range(1, N - 1)):
-    #     ret.append(dyergb(tuple(map(int, lerp(a, b, t)))))
+    #     ret.append(ColorRGB(tuple(map(int, lerp(a, b, t)))))
     # ret.append(B)
     # return tuple(ret)
 
@@ -317,7 +323,7 @@ def gradient_rgb(A, B, N):
     ret = [A]
     for t in (i / (N - 1) for i in range(1, N - 1)):
         c = lerp(a, b, t)
-        ret.append(dyergb(vector(colorsys.hsv_to_rgb(*c)).map(lambda x: int(x * 255))))
+        ret.append(ColorRGB(vector(colorsys.hsv_to_rgb(*c)).map(lambda x: int(x * 255))))
 
     ret.append(B)
 

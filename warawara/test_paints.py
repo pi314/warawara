@@ -3,55 +3,55 @@ from .test_utils import *
 from warawara import *
 
 
-class TestDyeFacade(TestCase):
-    def test_dye_facade(self):
+class TestColorFacade(TestCase):
+    def test_color_facade(self):
         # arg unpack
-        self.eq(dye((208,)), dye(208))
-        self.eq(dye([208]), dye(208))
-        self.eq(dye((0xC0, 0xFF, 0xEE,)), dye('#C0FFEE'))
-        self.eq(dye([0xC0, 0xFF, 0xEE]), dye('#C0FFEE'))
+        self.eq(color((208,)), color(208))
+        self.eq(color([208]), color(208))
+        self.eq(color((0xC0, 0xFF, 0xEE)), color('#C0FFEE'))
+        self.eq(color([0xC0, 0xFF, 0xEE]), color('#C0FFEE'))
 
         # copy_ctor
-        self.eq(dye(dye(208)), dye(208))
+        self.eq(color(color(208)), color(208))
 
         # subclass
-        self.is_true(issubclass(dye256, dye))
-        self.is_true(issubclass(dyergb, dye))
+        self.is_true(issubclass(Color256, Color))
+        self.is_true(issubclass(ColorRGB, Color))
 
-        # dye256
-        orange = dye(208)
-        self.is_true(isinstance(orange, dye256))
-        self.is_true(isinstance(orange, dye))
+        # Color256
+        orange = color(208)
+        self.is_true(isinstance(orange, Color256))
+        self.is_true(isinstance(orange, Color))
 
-        # dyergb
-        coffee = dye((0xC0, 0xFF, 0xEE))
-        self.is_true(isinstance(coffee, dyergb))
-        self.is_true(isinstance(coffee, dye))
+        # ColorRGB
+        coffee = color((0xC0, 0xFF, 0xEE))
+        self.is_true(isinstance(coffee, ColorRGB))
+        self.is_true(isinstance(coffee, Color))
 
-        # dyergb
-        coffee = dye('#C0FFEE')
-        self.is_true(isinstance(coffee, dyergb))
-        self.is_true(isinstance(coffee, dye))
+        # ColorRGB
+        coffee = color('#C0FFEE')
+        self.is_true(isinstance(coffee, ColorRGB))
+        self.is_true(isinstance(coffee, Color))
 
-    def test_dye_invalid_value(self):
+    def test_color_invalid_value(self):
         with self.assertRaises(TypeError):
-            dye(True)
-
-        with self.assertRaises(TypeError):
-            dye256(True)
+            Color(True)
 
         with self.assertRaises(TypeError):
-            dyergb(True)
+            Color256(True)
+
+        with self.assertRaises(TypeError):
+            ColorRGB(True)
 
 
-class TestDyeTrait(TestCase):
+class TestColorTrait(TestCase):
     def setUp(self):
-        self.orange = dye(208)
-        self.coffee = dye('#C0FFEE')
+        self.orange = color(208)
+        self.coffee = color('#C0FFEE')
 
     def test_repr(self):
-        self.is_true(repr(self.orange).startswith('dye'))
-        self.is_true(repr(self.coffee).startswith('dye'))
+        self.eq(repr(self.orange), 'Color256(208)')
+        self.eq(' '.join(repr(self.coffee).split()), 'ColorRGB(192, 255, 238)')
 
     def test_int(self):
         self.eq(int(self.orange), 208)
@@ -88,25 +88,25 @@ class TestDyeTrait(TestCase):
         self.eq(self.orange | self.coffee, self.orange)
 
 
-class TestDye256(TestCase):
-    def test_dye256(self):
-        orange = dye(208)
+class TestColor256(TestCase):
+    def test_color256(self):
+        orange = color(208)
         self.eq(orange.code, 208)
 
 
-class TestDyeRGB(TestCase):
-    def test_dyergb_empty(self):
-        self.eq(dyergb().seq, '')
+class TestColorRGB(TestCase):
+    def test_rgb_empty(self):
+        self.eq(ColorRGB().seq, '')
 
-    def test_dyergb(self):
-        orange = dyergb([160, 90, 0])
+    def test_rgb(self):
+        orange = ColorRGB([160, 90, 0])
         self.eq(orange.r, 160)
         self.eq(orange.g, 90)
         self.eq(orange.b, 0)
         self.eq(int(orange), 0xA05A00)
 
 
-class TestBuiltInDyes(TestCase):
+class TestBuiltInColors(TestCase):
     def test_nocolor(self):
         self.eq(nocolor(), '')
         self.eq(nocolor('text'), 'text')
@@ -148,7 +148,7 @@ class TestBuiltInDyes(TestCase):
 
 class TestPaint(TestCase):
     def test_repr(self):
-        self.is_true(repr(paint()).startswith('paint'))
+        self.is_true(repr(paint()).startswith('ColorCompound'))
 
     def test_or(self):
         self.eq(black | (~yellow), paint(fg=0, bg=3))
@@ -179,8 +179,8 @@ class TestGradient(TestCase):
         with self.assertRaises(TypeError):
             gradient(True, False)
 
-        A = dye()
-        B = dye()
+        A = color()
+        B = color()
 
         with self.assertRaises(TypeError):
             gradient(A, B, 1.5)
@@ -190,108 +190,108 @@ class TestGradient(TestCase):
 
     def test_trivial(self):
         # N=2 trivial case
-        A = dye(39)
-        B = dye(214)
+        A = color(39)
+        B = color(214)
         self.eq(gradient(A, B, 2), (A, B))
 
-        # dye256() and dyergb() case
-        A = dye(39)
-        B = dye('#C0FFEE')
+        # Color256() and ColorRGB() case
+        A = color(39)
+        B = color('#C0FFEE')
         self.eq(gradient(A, B), (A, B))
 
-        # dye256() rgb6 and gray case
-        A = dye(39)
-        B = dye(255)
+        # Color256() rgb6 and gray case
+        A = color(39)
+        B = color(255)
         self.eq(gradient(A, B), (A, B))
 
-    def test_dye256_gray(self):
-        A = dye(235)
-        B = dye(245)
+    def test_color256_gray(self):
+        A = color(235)
+        B = color(245)
 
         # default length
         res = gradient(A, B)
         ans = tuple(range(235, 246))
-        self.eq(res, tuple(map(dye, ans)))
+        self.eq(res, tuple(map(color, ans)))
 
         # shorter length
         res = gradient(A, B, N=5)
         ans = (235, 238, 241, 243, 245)
-        self.eq(res, tuple(map(dye, ans)))
+        self.eq(res, tuple(map(color, ans)))
 
         # longer length
         res = gradient(A, B, N=15)
         ans = (235, 235, 236, 236, 237, 237, 238, 238, 239, 240, 241, 242, 243, 244, 245)
-        self.eq(res, tuple(map(dye, ans)))
+        self.eq(res, tuple(map(color, ans)))
 
 
-    def test_dye256_rgb(self):
-        A = dye(39)
-        B = dye(214)
+    def test_color256_rgb(self):
+        A = color(39)
+        B = color(214)
 
         # default length
         res = gradient(A, B)
         ans = (39 ,74 ,109 ,144 ,179 ,214)
-        self.eq(res, tuple(map(dye, ans)))
+        self.eq(res, tuple(map(color, ans)))
 
         # shorter length
         res = gradient(A, B, N=4)
         ans = (39, 109, 179, 214)
-        self.eq(res, tuple(map(dye, ans)))
+        self.eq(res, tuple(map(color, ans)))
 
         # longer length
         res = gradient(A, B, N=15)
         ans = (39, 39, 39, 74, 74, 74, 109, 109, 109, 144, 144, 179, 179, 214, 214)
-        self.eq(res, tuple(map(dye, ans)))
+        self.eq(res, tuple(map(color, ans)))
 
-    def test_dyergb(self):
-        A = dye(242, 5, 148)
-        B = dye(146, 219, 189)
+    def test_rgb(self):
+        A = color(242, 5, 148)
+        B = color(146, 219, 189)
 
         # default length
         res = gradient(A, B)
-        ans = (dye(242, 5, 148),
-               dye(223, 30, 238),
-               dye(137, 55, 234),
-               dye(79, 80, 230),
-               dye(102, 161, 226),
-               dye(124, 217, 222),
-               dye(146, 219, 189))
+        ans = (color(242, 5, 148),
+               color(223, 30, 238),
+               color(137, 55, 234),
+               color(79, 80, 230),
+               color(102, 161, 226),
+               color(124, 217, 222),
+               color(146, 219, 189))
 
         self.eq(res, ans)
 
         # shorter length
         res = gradient(A, B, N=4)
-        ans = (dye(242, 5, 148),
-               dye(137, 55, 234),
-               dye(102, 161, 226),
-               dye(146, 219, 189))
-        self.eq(res, tuple(map(dye, ans)))
+        ans = (color(242, 5, 148),
+               color(137, 55, 234),
+               color(102, 161, 226),
+               color(146, 219, 189))
+        self.eq(res, tuple(map(color, ans)))
 
         # longer length
         res = gradient(A, B, N=15)
-        ans = (dyergb(242, 5, 148),
-               dyergb(240, 16, 196),
-               dyergb(237, 26, 238),
-               dyergb(196, 37, 237),
-               dyergb(159, 48, 235),
-               dyergb(127, 58, 233),
-               dyergb(100, 69, 232),
-               dyergb(79, 80, 230),
-               dyergb(89, 118, 228),
-               dyergb(99, 151, 227),
-               dyergb(108, 179, 225),
-               dyergb(118, 203, 223),
-               dyergb(127, 222, 221),
-               dyergb(136, 220, 203),
-               dyergb(146, 219, 189),)
+        ans = (ColorRGB(242, 5, 148),
+               ColorRGB(240, 16, 196),
+               ColorRGB(237, 26, 238),
+               ColorRGB(196, 37, 237),
+               ColorRGB(159, 48, 235),
+               ColorRGB(127, 58, 233),
+               ColorRGB(100, 69, 232),
+               ColorRGB(79, 80, 230),
+               ColorRGB(89, 118, 228),
+               ColorRGB(99, 151, 227),
+               ColorRGB(108, 179, 225),
+               ColorRGB(118, 203, 223),
+               ColorRGB(127, 222, 221),
+               ColorRGB(136, 220, 203),
+               ColorRGB(146, 219, 189),)
         self.eq(res, ans)
 
-        A = dye('#FF1100')
-        B = dye('#FF0011')
+        A = color('#FF1100')
+        B = color('#FF0011')
         res = gradient(A, B, N=3)
-        self.eq(res, (A, dye('#FF0000'), B))
+        self.eq(res, (A, color('#FF0000'), B))
 
-        A = dye('#FF0011')
-        B = dye('#FF1100')
+        A = color('#FF0011')
+        B = color('#FF1100')
         res = gradient(A, B, N=3)
-        self.eq(res, (A, dye('#FF0000'), B))
+        self.eq(res, (A, color('#FF0000'), B))
