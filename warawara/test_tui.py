@@ -313,9 +313,10 @@ class TestPromotAskUser(TestCase):
 
         self.mock_open = unittest.mock.mock_open()
         self.patch('builtins.open', self.mock_open)
+        self.assert_called_open = True
 
     def tearDown(self):
-        if self.mock_open.mock_calls:
+        if self.assert_called_open:
             self.mock_open.assert_has_calls([
                     unittest.mock.call('/dev/tty'),
                     unittest.mock.call('/dev/tty', 'w'),
@@ -328,6 +329,8 @@ class TestPromotAskUser(TestCase):
                     unittest.mock.call(),
                     unittest.mock.call(),
                 ])
+        else:
+            self.mock_open.assert_not_called()
 
     def set_input(self, *lines):
         self.input_queue = queue.Queue()
@@ -355,6 +358,8 @@ class TestPromotAskUser(TestCase):
     def test_empty(self):
         with self.assertRaises(TypeError):
             s = prompt()
+
+        self.assert_called_open = False
 
     def test_continue(self):
         self.set_input('wah')
