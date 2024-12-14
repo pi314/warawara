@@ -1,8 +1,8 @@
+import builtins
+
 from .internal_utils import exporter
 export, __all__ = exporter()
 
-
-_open = open
 
 @export
 def open(*args, **kwargs):
@@ -12,7 +12,7 @@ def open(*args, **kwargs):
     if 'errors' not in kwargs:
         kwargs['errors'] = 'backslashreplace'
 
-    f = _open(*args, **kwargs)
+    f = builtins.open(*args, **kwargs)
 
     def writeline(line=''):
         s = str(line)
