@@ -105,6 +105,42 @@ class Color256(Color):
         else:
             raise TypeError('Invalid color code: {}'.format(code))
 
+    @property
+    def rgb(self):
+        if self.code < 16:
+            base = 0xFF if (self.code > 7) else 0x80
+            is_7 = (self.code == 7)
+            is_8 = (self.code == 8)
+            R = base * ((self.code & 0x1) != 0) + (0x40 * is_7) + (0x80 * is_8)
+            G = base * ((self.code & 0x2) != 0) + (0x40 * is_7) + (0x80 * is_8)
+            B = base * ((self.code & 0x4) != 0) + (0x40 * is_7) + (0x80 * is_8)
+
+        elif self.code < 233:
+            base = self.code - 16
+            index_R = (base // 36)
+            index_G = ((base % 36) // 6)
+            index_B = (base % 6)
+            R = (55 + index_R * 40) if index_R > 0 else 0
+            G = (55 + index_G * 40) if index_G > 0 else 0
+            B = (55 + index_B * 40) if index_B > 0 else 0
+
+        else:
+            R = G = B = (self.code - 232) * 10 + 8
+
+        return (R, G, B)
+
+    @property
+    def r(self):
+        return self.rgb[0]
+
+    @property
+    def g(self):
+        return self.rgb[1]
+
+    @property
+    def b(self):
+        return self.rgb[2]
+
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, self.code)
 
