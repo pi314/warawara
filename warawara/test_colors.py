@@ -90,9 +90,45 @@ class TestColorTrait(TestCase):
 
 class TestColor256(TestCase):
     def test_color256(self):
-        orange = color(208)
-        self.eq(orange.code, 208)
-        self.eq(orange.rgb, (0xFF, 0x87, 0x00))
+        self.eq(color(0).code, 0)
+        self.eq(color(1).code, 1)
+        self.eq(color(2).code, 2)
+        self.eq(color(3).code, 3)
+        self.eq(color(4).code, 4)
+        self.eq(color(5).code, 5)
+        self.eq(color(6).code, 6)
+        self.eq(color(7).code, 7)
+        self.eq(color(8).code, 8)
+        self.eq(color(9).code, 9)
+        self.eq(color(10).code, 10)
+        self.eq(color(11).code, 11)
+        self.eq(color(12).code, 12)
+        self.eq(color(13).code, 13)
+        self.eq(color(14).code, 14)
+        self.eq(color(15).code, 15)
+
+        self.eq(color(0).rgb, (0x00, 0x00, 0x00))
+        self.eq(color(1).rgb, (0x80, 0x00, 0x00))
+        self.eq(color(2).rgb, (0x00, 0x80, 0x00))
+        self.eq(color(3).rgb, (0x80, 0x80, 0x00))
+        self.eq(color(4).rgb, (0x00, 0x00, 0x80))
+        self.eq(color(5).rgb, (0x80, 0x00, 0x80))
+        self.eq(color(6).rgb, (0x00, 0x80, 0x80))
+        self.eq(color(7).rgb, (0xC0, 0xC0, 0xC0))
+        self.eq(color(8).rgb, (0x80, 0x80, 0x80))
+        self.eq(color(9).rgb, (0xFF, 0x00, 0x00))
+        self.eq(color(10).rgb, (0x00, 0xFF, 0x00))
+        self.eq(color(11).rgb, (0xFF, 0xFF, 0x00))
+        self.eq(color(12).rgb, (0x00, 0x00, 0xFF))
+        self.eq(color(13).rgb, (0xFF, 0x00, 0xFF))
+        self.eq(color(14).rgb, (0x00, 0xFF, 0xFF))
+        self.eq(color(15).rgb, (0xFF, 0xFF, 0xFF))
+
+        self.eq(color(208).code, 208)
+        self.eq(color(208).rgb, (0xFF, 0x87, 0x00))
+
+        self.eq(color(237).code, 237)
+        self.eq(color(237).rgb, (0x3A, 0x3A, 0x3A))
 
 
 class TestColorRGB(TestCase):
