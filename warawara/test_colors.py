@@ -92,6 +92,7 @@ class TestColor256(TestCase):
     def test_color256(self):
         orange = color(208)
         self.eq(orange.code, 208)
+        self.eq(orange.rgb, (0xFF, 0x87, 0x00))
 
 
 class TestColorRGB(TestCase):
