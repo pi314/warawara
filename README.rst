@@ -61,14 +61,11 @@ Testing:
 
 ..  code:: shell
 
-    $ runtest.sh
+    $ python3 -m unittest
 
-With coverage_:
+With `pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`_:
 
 ..  code:: shell
 
-    $ pipx install coverage[toml]
-    $ coverage run
-    $ coverage html
-
-.. _coverage: https://coverage.readthedocs.io/en/latest/index.html
+    $ pipx install pytest-cov --include-deps
+    $ pytest --cov=warawara --cov-report=html
