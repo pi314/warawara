@@ -170,6 +170,7 @@ class TestBuiltInColors(TestCase):
         self.eq(str(aqua),      '\033[38;5;14m')
         self.eq(str(white),     '\033[38;5;15m')
         self.eq(str(darkorange),'\033[38;5;208m')
+        self.eq(str(murasaki),  '\033[38;5;135m')
 
     def test_invert(self):
         self.eq(~red,      paint(bg=red))
@@ -201,6 +202,7 @@ class TestBuiltInColors(TestCase):
         self.eq(aqua('text'),      '\033[38;5;14mtext\033[m')
         self.eq(white('text'),     '\033[38;5;15mtext\033[m')
         self.eq(darkorange('text'),'\033[38;5;208mtext\033[m')
+        self.eq(murasaki('text'),  '\033[38;5;135mtext\033[m')
 
 
 class TestPaint(TestCase):

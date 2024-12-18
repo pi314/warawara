@@ -286,6 +286,7 @@ named_colors = [
         (124, ('brown', 'firebrick',)),
         (130, ('sienna',)),
         (134, ('mediumorchid',)),
+        (135, ('murasaki',)),
         (136, ('darkgoldenrod',)),
         (138, ('rosybrown',)),
         (143, ('darkkhaki',)),
