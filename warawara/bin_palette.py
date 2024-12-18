@@ -1,8 +1,12 @@
 import sys
+import shutil
+import re
 
 from . import lib_colors
 
 from .lib_colors import paint
+from .lib_regex import rere
+from .lib_math import distribute
 
 
 def main():
@@ -26,8 +30,35 @@ def main():
         print()
 
     else:
+        colors = []
+        errors = []
+        minus = 0
         for arg in argv:
-            print(
-                    paint(fg=int(arg), bg=int(arg))(arg.rjust(3)) +
-                    paint(bg=int(arg))(' ' * 100)
-                    )
+            a = rere(arg)
+
+            if a.match(r'^[0-9]+$'):
+                colors.append((arg, int(arg, 10)))
+
+            elif a.match(r'^#[0-9A-Fa-f]{6}$'):
+                colors.append((arg, arg))
+
+            elif a.match(r'^[A-Za-z0-9]+$'):
+                try:
+                    colors.append((arg, getattr(lib_colors, arg)))
+                except AttributeError:
+                    errors.append(arg)
+            elif a.match(r'^-([0-9]+)$'):
+                minus = int(a.group(1), 10)
+            else:
+                errors.append(arg)
+
+        if errors:
+            for error in errors:
+                print('Invalid color:', error)
+            sys.exit(1)
+
+        cols, lines = shutil.get_terminal_size()
+
+        for text, color in distribute(colors, lines - minus):
+            print(paint(fg=color, bg=color)(text) +
+                  paint(bg=color)(' ' * (cols - len(text))))

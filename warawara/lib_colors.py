@@ -84,7 +84,7 @@ def color(*args, **kwargs):
         return ColorRGB(*args, **kwargs)
 
     # ColorRGB ctor #xxxxxx
-    elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
+    elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9A-Fa-f]{6}$', args[0]):
         return ColorRGB(*args, **kwargs)
 
     raise TypeError('Invalid arguments')
@@ -164,7 +164,7 @@ class ColorRGB(Color):
             other = args[0]
             (self.r, self.g, self.b) = (other.r, other.g, other.b)
 
-        elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9a-f]{6}$', args[0].lower()):
+        elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9A-Fa-f]{6}$', args[0]):
             rgb_str = args[0][1:]
             self.r = int(rgb_str[0:2], 16)
             self.g = int(rgb_str[2:4], 16)
