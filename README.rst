@@ -68,4 +68,8 @@ With `pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`_:
 ..  code:: shell
 
     $ pipx install pytest-cov --include-deps
+    # or
+    $ pipx install pytest
+    $ pipx runpip pytest install pytest-cov
+
     $ pytest --cov=warawara --cov-report=html
