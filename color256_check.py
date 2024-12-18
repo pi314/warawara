@@ -58,6 +58,9 @@ def main():
             elif name == 'midnightblue':
                 near = 17
 
+            elif name == 'skyblue':
+                near = 117
+
             else:
                 near = None
                 near_dist = 0x7fffffff
