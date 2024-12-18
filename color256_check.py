@@ -42,15 +42,47 @@ def main():
             if not line:
                 continue
 
-            m = re.match(r'^(\w+) +(#[0-9A-F]{6}) +(\d+),(\d+),(\d+)$', line)
-            if not m:
-                print(line)
+            error = False
+
+            try:
+                name, rgbhex, rgbnum = line.split()
+            except ValueError:
+                print('Invalid line:', line)
                 sys.exit(1)
 
-            name, rgbhex, R, G, B = m.groups()
-            R = int(R, 10)
-            G = int(G, 10)
-            B = int(B, 10)
+            if not re.match(r'^\w+$', name):
+                print('Invalid name:', name)
+                error = True
+
+            if re.match(r'^#[0-9A-F]{6}$', rgbhex.upper()):
+                rgbhex = rgbhex.upper()
+            elif re.match(r'^\?+$', rgbhex):
+                rgbhex = None
+            else:
+                print('Invalid RGB hex:', rgbhex)
+                error = True
+
+            if re.match(r'^(\d+),(\d+),(\d+)$', rgbnum):
+                R, G, B = map(lambda x: int(x, 10), rgbnum.split(','))
+            elif re.match(r'^\?+$', rgbnum):
+                rgbnum = None
+            else:
+                print('Invalid RGB value:', rgbnum)
+                error = True
+
+            if error:
+                sys.exit(1)
+
+
+            if rgbhex is None:
+                rgbhex = RGB(R, G, B)
+
+            elif rgbnum is None:
+                rgbnum = int(rgbhex.lstrip('#'), 16)
+                R = (rgbnum & 0xFF0000) >> 16
+                G = (rgbnum & 0x00FF00) >> 8
+                B = (rgbnum & 0xFF)
+
 
             if False:
                 pass
