@@ -225,17 +225,123 @@ export('paint')
 paint = ColorCompound
 
 
-export('nocolor', 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'orange')
+export('nocolor')
 nocolor = color()
-black = color(0)
-red = color(1)
-green = color(2)
-yellow = color(3)
-blue = color(4)
-magenta = color(5)
-cyan = color(6)
-white = color(7)
-orange = color(208)
+
+named_colors = [
+        (0, ('black',)),
+        (1, ('maroon',)),
+        (2, ('green',)),
+        (3, ('olive',)),
+        (4, ('navy',)),
+        (5, ('purple',)),
+        (6, ('teal',)),
+        (7, ('silver',)),
+        (8, ('gray', 'grey',)),
+        (9, ('red',)),
+        (10, ('lime',)),
+        (11, ('yellow',)),
+        (12, ('blue',)),
+        (13, ('fuchsia', 'magenta',)),
+        (14, ('aqua', 'cyan',)),
+        (15, ('aliceblue', 'azure', 'floralwhite', 'ghostwhite', 'ivory',
+              'lavenderblush', 'mintcream', 'snow', 'white',)),
+        (17, ('midnightblue',)),
+        (18, ('darkblue',)),
+        (20, ('mediumblue',)),
+        (22, ('darkgreen',)),
+        (28, ('forestgreen',)),
+        (29, ('seagreen',)),
+        (30, ('darkcyan',)),
+        (33, ('dodgerblue',)),
+        (37, ('lightseagreen',)),
+        (39, ('deepskyblue',)),
+        (44, ('darkturquoise',)),
+        (48, ('mediumspringgreen', 'springgreen',)),
+        (54, ('indigo',)),
+        (60, ('darkslateblue',)),
+        (62, ('royalblue', 'slateblue',)),
+        (64, ('olivedrab',)),
+        (66, ('slategray', 'slategrey',)),
+        (67, ('steelblue',)),
+        (69, ('cornflowerblue',)),
+        (71, ('mediumseagreen',)),
+        (73, ('cadetblue',)),
+        (77, ('limegreen',)),
+        (79, ('mediumaquamarine',)),
+        (80, ('mediumturquoise', 'turquoise',)),
+        (88, ('darkred',)),
+        (90, ('darkmagenta',)),
+        (92, ('blueviolet', 'darkviolet',)),
+        (94, ('saddlebrown',)),
+        (98, ('darkorchid', 'mediumpurple',)),
+        (99, ('mediumslateblue',)),
+        (102, ('lightslategray', 'lightslategrey',)),
+        (108, ('darkseagreen',)),
+        (113, ('yellowgreen',)),
+        (117, ('lightskyblue', 'skyblue',)),
+        (118, ('chartreuse', 'lawngreen',)),
+        (120, ('lightgreen', 'palegreen',)),
+        (122, ('aquamarine',)),
+        (124, ('brown', 'firebrick',)),
+        (130, ('sienna',)),
+        (134, ('mediumorchid',)),
+        (136, ('darkgoldenrod',)),
+        (138, ('rosybrown',)),
+        (143, ('darkkhaki',)),
+        (152, ('lightblue', 'lightsteelblue', 'powderblue',)),
+        (154, ('greenyellow',)),
+        (159, ('paleturquoise',)),
+        (161, ('crimson',)),
+        (162, ('mediumvioletred',)),
+        (166, ('chocolate','clementine',)),
+        (167, ('indianred',)),
+        (168, ('palevioletred',)),
+        (170, ('orchid',)),
+        (173, ('peru',)),
+        (174, ('darksalmon',)),
+        (178, ('goldenrod',)),
+        (180, ('burlywood', 'tan',)),
+        (182, ('plum', 'thistle',)),
+        (195, ('lightcyan',)),
+        (198, ('deeppink',)),
+        (202, ('orangered',)),
+        (203, ('tomato',)),
+        (205, ('hotpink',)),
+        (208, ('darkorange',)),
+        (209, ('coral', 'salmon',)),
+        (210, ('lightcoral',)),
+        (213, ('violet',)),
+        (214, ('orange',)),
+        (215, ('sandybrown',)),
+        (216, ('lightsalmon',)),
+        (217, ('lightpink',)),
+        (218, ('pink',)),
+        (220, ('gold',)),
+        (222, ('khaki',)),
+        (223, ('moccasin', 'navajowhite', 'palegoldenrod',
+               'peachpuff', 'wheat',)),
+        (224, ('bisque', 'mistyrose',)),
+        (230, ('antiquewhite', 'beige', 'blanchedalmond',
+               'cornsilk', 'lemonchiffon',
+               'lightgoldenrodyellow', 'lightyellow',
+               'oldlace', 'papayawhip',)),
+        (238, ('darkslategray', 'darkslategrey',)),
+        (239, ('darkolivegreen',)),
+        (242, ('dimgray', 'dimgrey',)),
+        (248, ('darkgray', 'darkgrey',)),
+        (252, ('lightgray', 'lightgrey',)),
+        (253, ('gainsboro',)),
+        (255, ('honeydew', 'lavender', 'linen', 'seashell', 'whitesmoke',)),
+]
+def _setup_named_colors():
+    for code, names in named_colors:
+        clr = color(code)
+        for name in names:
+            globals()[name] = clr
+            export(name)
+_setup_named_colors()
+del _setup_named_colors
 
 
 decolor_regex = re.compile('\033' + r'\[[\d;]*m')

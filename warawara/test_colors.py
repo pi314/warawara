@@ -152,14 +152,24 @@ class TestBuiltInColors(TestCase):
 
     def test_str(self):
         self.eq(str(black),     '\033[38;5;0m')
-        self.eq(str(red),       '\033[38;5;1m')
+        self.eq(str(maroon),    '\033[38;5;1m')
         self.eq(str(green),     '\033[38;5;2m')
-        self.eq(str(yellow),    '\033[38;5;3m')
-        self.eq(str(blue),      '\033[38;5;4m')
-        self.eq(str(magenta),   '\033[38;5;5m')
-        self.eq(str(cyan),      '\033[38;5;6m')
-        self.eq(str(white),     '\033[38;5;7m')
-        self.eq(str(orange),    '\033[38;5;208m')
+        self.eq(str(olive),     '\033[38;5;3m')
+        self.eq(str(navy),      '\033[38;5;4m')
+        self.eq(str(purple),    '\033[38;5;5m')
+        self.eq(str(teal),      '\033[38;5;6m')
+        self.eq(str(silver),    '\033[38;5;7m')
+        self.eq(str(grey),      '\033[38;5;8m')
+        self.eq(str(red),       '\033[38;5;9m')
+        self.eq(str(lime),      '\033[38;5;10m')
+        self.eq(str(yellow),    '\033[38;5;11m')
+        self.eq(str(blue),      '\033[38;5;12m')
+        self.eq(str(fuchsia),   '\033[38;5;13m')
+        self.eq(str(magenta),   '\033[38;5;13m')
+        self.eq(str(cyan),      '\033[38;5;14m')
+        self.eq(str(aqua),      '\033[38;5;14m')
+        self.eq(str(white),     '\033[38;5;15m')
+        self.eq(str(darkorange),'\033[38;5;208m')
 
     def test_invert(self):
         self.eq(~red,      paint(bg=red))
@@ -172,15 +182,25 @@ class TestBuiltInColors(TestCase):
         self.eq(~orange,   paint(bg=orange))
 
     def test_call(self):
-        self.eq(black('text'),   '\033[38;5;0mtext\033[m')
-        self.eq(red('text'),     '\033[38;5;1mtext\033[m')
-        self.eq(green('text'),   '\033[38;5;2mtext\033[m')
-        self.eq(yellow('text'),  '\033[38;5;3mtext\033[m')
-        self.eq(blue('text'),    '\033[38;5;4mtext\033[m')
-        self.eq(magenta('text'), '\033[38;5;5mtext\033[m')
-        self.eq(cyan('text'),    '\033[38;5;6mtext\033[m')
-        self.eq(white('text'),   '\033[38;5;7mtext\033[m')
-        self.eq(orange('text'),  '\033[38;5;208mtext\033[m')
+        self.eq(black('text'),     '\033[38;5;0mtext\033[m')
+        self.eq(maroon('text'),    '\033[38;5;1mtext\033[m')
+        self.eq(green('text'),     '\033[38;5;2mtext\033[m')
+        self.eq(olive('text'),     '\033[38;5;3mtext\033[m')
+        self.eq(navy('text'),      '\033[38;5;4mtext\033[m')
+        self.eq(purple('text'),    '\033[38;5;5mtext\033[m')
+        self.eq(teal('text'),      '\033[38;5;6mtext\033[m')
+        self.eq(silver('text'),    '\033[38;5;7mtext\033[m')
+        self.eq(grey('text'),      '\033[38;5;8mtext\033[m')
+        self.eq(red('text'),       '\033[38;5;9mtext\033[m')
+        self.eq(lime('text'),      '\033[38;5;10mtext\033[m')
+        self.eq(yellow('text'),    '\033[38;5;11mtext\033[m')
+        self.eq(blue('text'),      '\033[38;5;12mtext\033[m')
+        self.eq(fuchsia('text'),   '\033[38;5;13mtext\033[m')
+        self.eq(magenta('text'),   '\033[38;5;13mtext\033[m')
+        self.eq(cyan('text'),      '\033[38;5;14mtext\033[m')
+        self.eq(aqua('text'),      '\033[38;5;14mtext\033[m')
+        self.eq(white('text'),     '\033[38;5;15mtext\033[m')
+        self.eq(darkorange('text'),'\033[38;5;208mtext\033[m')
 
 
 class TestPaint(TestCase):
@@ -188,21 +208,21 @@ class TestPaint(TestCase):
         self.is_true(repr(paint()).startswith('ColorCompound'))
 
     def test_or(self):
-        self.eq(black | (~yellow), paint(fg=0, bg=3))
+        self.eq(black | (~yellow), paint(fg=0, bg=11))
 
     def test_div(self):
         ry = red / yellow
         bg = blue / green
         rybg = ry / bg
         self.eq(rybg, paint(fg=red, bg=blue))
-        self.eq(rybg('text'), '\033[38;5;1;48;5;4mtext\033[m')
+        self.eq(rybg('text'), f'\033[38;5;9;48;5;12mtext\033[m')
 
     def test_invert(self):
         ry = red / yellow
         bg = blue / green
         rybg = ry / bg
         self.eq(~rybg, paint(fg=blue, bg=red))
-        self.eq((~rybg)('text'), '\033[38;5;4;48;5;1mtext\033[m')
+        self.eq((~rybg)('text'), '\033[38;5;12;48;5;9mtext\033[m')
 
 
 class TestDecolor(TestCase):
