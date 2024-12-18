@@ -36,9 +36,12 @@ def main():
 
         data.append((R, G, B, RGB(R, G, B), []))
 
-    with open('color_css.txt') as f:
+    with wara.open('color_css.txt') as f:
         for line in f:
             line = line.strip()
+            if not line:
+                continue
+
             m = re.match(r'^(\w+) +(#[0-9A-F]{6}) +(\d+),(\d+),(\d+)$', line)
             if not m:
                 print(line)
