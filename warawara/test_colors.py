@@ -89,24 +89,11 @@ class TestColorTrait(TestCase):
 
 
 class TestColor256(TestCase):
-    def test_color256(self):
-        self.eq(color(0).code, 0)
-        self.eq(color(1).code, 1)
-        self.eq(color(2).code, 2)
-        self.eq(color(3).code, 3)
-        self.eq(color(4).code, 4)
-        self.eq(color(5).code, 5)
-        self.eq(color(6).code, 6)
-        self.eq(color(7).code, 7)
-        self.eq(color(8).code, 8)
-        self.eq(color(9).code, 9)
-        self.eq(color(10).code, 10)
-        self.eq(color(11).code, 11)
-        self.eq(color(12).code, 12)
-        self.eq(color(13).code, 13)
-        self.eq(color(14).code, 14)
-        self.eq(color(15).code, 15)
+    def test_color256_code(self):
+        for i in range(256):
+            self.eq(color(i).code, i)
 
+    def test_color256_rgb_value(self):
         self.eq(color(0).rgb, (0x00, 0x00, 0x00))
         self.eq(color(1).rgb, (0x80, 0x00, 0x00))
         self.eq(color(2).rgb, (0x00, 0x80, 0x00))
@@ -124,10 +111,11 @@ class TestColor256(TestCase):
         self.eq(color(14).rgb, (0x00, 0xFF, 0xFF))
         self.eq(color(15).rgb, (0xFF, 0xFF, 0xFF))
 
-        self.eq(color(208).code, 208)
         self.eq(color(208).rgb, (0xFF, 0x87, 0x00))
+        self.eq(color(208).r, 0xFF)
+        self.eq(color(208).g, 0x87)
+        self.eq(color(208).b, 0x00)
 
-        self.eq(color(237).code, 237)
         self.eq(color(237).rgb, (0x3A, 0x3A, 0x3A))
 
 
@@ -136,11 +124,11 @@ class TestColorRGB(TestCase):
         self.eq(ColorRGB().seq, '')
 
     def test_rgb(self):
-        orange = ColorRGB([160, 90, 0])
-        self.eq(orange.r, 160)
-        self.eq(orange.g, 90)
-        self.eq(orange.b, 0)
-        self.eq(int(orange), 0xA05A00)
+        some_color = ColorRGB([160, 90, 0])
+        self.eq(some_color.r, 160)
+        self.eq(some_color.g, 90)
+        self.eq(some_color.b, 0)
+        self.eq(int(some_color), 0xA05A00)
 
 
 class TestBuiltInColors(TestCase):
