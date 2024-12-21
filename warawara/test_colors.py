@@ -332,13 +332,12 @@ class TestGradient(TestCase):
 
         # default length
         res = gradient(A, B)
-        ans = (color(242, 5, 148),
-               color(223, 30, 238),
-               color(137, 55, 234),
-               color(79, 80, 230),
-               color(102, 161, 226),
-               color(124, 217, 222),
-               color(146, 219, 189))
+        ans = (ColorRGB(242, 5, 148),
+               ColorRGB(204, 35, 237),
+               ColorRGB(110, 64, 232),
+               ColorRGB(93, 132, 228),
+               ColorRGB(120, 208, 223),
+               ColorRGB(146, 219, 189))
 
         self.eq(res, ans)
 

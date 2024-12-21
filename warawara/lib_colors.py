@@ -454,9 +454,6 @@ def gradient_rgb(A, B, N):
     # ret.append(B)
     # return tuple(ret)
 
-    if N is None:
-        N = 7
-
     # Calculate gradient in HSV
     import colorsys
     a = vector(colorsys.rgb_to_hsv(A.r / 255, A.g / 255, A.b / 255))
@@ -468,6 +465,13 @@ def gradient_rgb(A, B, N):
             b[0] += 1
         else:
             a[0] += 1
+
+    if N is None:
+        import math
+        dist_hue = math.ceil(abs(a[0] - b[0]) * 12)
+        dist_sat = math.floor(abs(a[1] - b[1]) * 6)
+        dist_val = math.floor(abs(a[2] - b[2]) * 6)
+        N = max(dist_hue, dist_sat, dist_val)
 
     ret = [A]
     for t in (i / (N - 1) for i in range(1, N - 1)):
