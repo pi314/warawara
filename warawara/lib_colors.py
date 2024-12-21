@@ -105,8 +105,7 @@ class Color256(Color):
         else:
             raise TypeError('Invalid color code: {}'.format(code))
 
-    @property
-    def rgb(self):
+    def to_rgb(self):
         if self.code < 16:
             base = 0xFF if (self.code > 7) else 0x80
             is_7 = (self.code == 7)
@@ -127,19 +126,7 @@ class Color256(Color):
         else:
             R = G = B = (self.code - 232) * 10 + 8
 
-        return (R, G, B)
-
-    @property
-    def r(self):
-        return self.rgb[0]
-
-    @property
-    def g(self):
-        return self.rgb[1]
-
-    @property
-    def b(self):
-        return self.rgb[2]
+        return ColorRGB(R, G, B)
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, self.code)
@@ -150,14 +137,18 @@ class Color256(Color):
 
 @export
 class ColorRGB(Color):
-    def __init__(self, *args):
+    def __init__(self, *args, overflow=False):
         args = unwrap_one(args)
 
+        type_check = (lambda x: 0 <= x < 256
+                      if not overflow
+                      else lambda x: isinstance(x, (int, float)))
+
+        self.r = None
+        self.g = None
+        self.b = None
+
         if not args:
-            self.r = 0
-            self.g = 0
-            self.b = 0
-            self.seq = ''
             return
 
         elif len(args) == 1 and isinstance(args[0], self.__class__):
@@ -170,19 +161,41 @@ class ColorRGB(Color):
             self.g = int(rgb_str[2:4], 16)
             self.b = int(rgb_str[4:6], 16)
 
-        elif len(args) == 3 and all(is_uint8(i) for i in args):
+        elif len(args) == 3 and all(type_check(i) for i in args):
             (self.r, self.g, self.b) = args
 
         else:
             raise TypeError('Invalid RGB value: {}'.format(args))
 
-        self.seq = '2;{};{};{}'.format(self.r, self.g, self.b)
+    @property
+    def rgb(self):
+        return (self.r, self.g, self.b)
+
+    @property
+    def seq(self):
+        if None in self.rgb:
+            return ''
+
+        return '2;{};{};{}'.format(
+                min(int(self.r), 255),
+                min(int(self.g), 255),
+                min(int(self.b), 255))
+
+    def __add__(self, other):
+        rgb = vector(self.rgb) + vector(other.rgb)
+        return ColorRGB(*rgb, overflow=True)
+
+    def __mul__(self, num):
+        return ColorRGB(vector(self.rgb) * num, overflow=True)
+
+    def __floordiv__(self, num):
+        return ColorRGB(vector(self.rgb) // num, overflow=True)
 
     def __repr__(self):
         return 'ColorRGB({}, {}, {})'.format(self.r, self.g, self.b)
 
     def __int__(self):
-        return (self.r << 16) | (self.g << 8) | (self.b)
+        return (min(int(self.r), 255) << 16) | (min(int(self.g), 255) << 8) | (min(int(self.b), 255))
 
 
 @export
@@ -377,22 +390,22 @@ def gradient(A, B, N=None):
 
 def gradient_color256(A, B, N=None):
     if A.code in range(232, 256) and B.code in range(232, 256):
-        return gradient_color256_gray(A, B, N)
+        return gradient_color256_grayscale_range(A, B, N)
 
     if A.code in range(16, 232) and B.code in range(16, 232):
-        return gradient_color256_rgb(A, B, N)
+        return gradient_color256_rgb_range(A, B, N)
 
     return (A, B)
 
 
-def gradient_color256_gray(A, B, N=None):
+def gradient_color256_grayscale_range(A, B, N=None):
     a, b = A.code, B.code
     direction = sgn(b - a)
     n = abs(b - a) + 1
     return tuple(Color256(c) for c in distribute(interval(a, b), N or n))
 
 
-def gradient_color256_rgb(A, B, N=None):
+def gradient_color256_rgb_range(A, B, N=None):
     def color_to_rgb6(p):
         c = int(p) - 16
         r = c // 36

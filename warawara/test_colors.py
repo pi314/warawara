@@ -93,30 +93,25 @@ class TestColor256(TestCase):
         for i in range(256):
             self.eq(color(i).code, i)
 
-    def test_color256_rgb_value(self):
-        self.eq(color(0).rgb, (0x00, 0x00, 0x00))
-        self.eq(color(1).rgb, (0x80, 0x00, 0x00))
-        self.eq(color(2).rgb, (0x00, 0x80, 0x00))
-        self.eq(color(3).rgb, (0x80, 0x80, 0x00))
-        self.eq(color(4).rgb, (0x00, 0x00, 0x80))
-        self.eq(color(5).rgb, (0x80, 0x00, 0x80))
-        self.eq(color(6).rgb, (0x00, 0x80, 0x80))
-        self.eq(color(7).rgb, (0xC0, 0xC0, 0xC0))
-        self.eq(color(8).rgb, (0x80, 0x80, 0x80))
-        self.eq(color(9).rgb, (0xFF, 0x00, 0x00))
-        self.eq(color(10).rgb, (0x00, 0xFF, 0x00))
-        self.eq(color(11).rgb, (0xFF, 0xFF, 0x00))
-        self.eq(color(12).rgb, (0x00, 0x00, 0xFF))
-        self.eq(color(13).rgb, (0xFF, 0x00, 0xFF))
-        self.eq(color(14).rgb, (0x00, 0xFF, 0xFF))
-        self.eq(color(15).rgb, (0xFF, 0xFF, 0xFF))
-
-        self.eq(color(208).rgb, (0xFF, 0x87, 0x00))
-        self.eq(color(208).r, 0xFF)
-        self.eq(color(208).g, 0x87)
-        self.eq(color(208).b, 0x00)
-
-        self.eq(color(237).rgb, (0x3A, 0x3A, 0x3A))
+    def test_color256_to_rgb(self):
+        self.eq(color(0).to_rgb(), ColorRGB(0x00, 0x00, 0x00))
+        self.eq(color(1).to_rgb(), ColorRGB(0x80, 0x00, 0x00))
+        self.eq(color(2).to_rgb(), ColorRGB(0x00, 0x80, 0x00))
+        self.eq(color(3).to_rgb(), ColorRGB(0x80, 0x80, 0x00))
+        self.eq(color(4).to_rgb(), ColorRGB(0x00, 0x00, 0x80))
+        self.eq(color(5).to_rgb(), ColorRGB(0x80, 0x00, 0x80))
+        self.eq(color(6).to_rgb(), ColorRGB(0x00, 0x80, 0x80))
+        self.eq(color(7).to_rgb(), ColorRGB(0xC0, 0xC0, 0xC0))
+        self.eq(color(8).to_rgb(), ColorRGB(0x80, 0x80, 0x80))
+        self.eq(color(9).to_rgb(), ColorRGB(0xFF, 0x00, 0x00))
+        self.eq(color(10).to_rgb(), ColorRGB(0x00, 0xFF, 0x00))
+        self.eq(color(11).to_rgb(), ColorRGB(0xFF, 0xFF, 0x00))
+        self.eq(color(12).to_rgb(), ColorRGB(0x00, 0x00, 0xFF))
+        self.eq(color(13).to_rgb(), ColorRGB(0xFF, 0x00, 0xFF))
+        self.eq(color(14).to_rgb(), ColorRGB(0x00, 0xFF, 0xFF))
+        self.eq(color(15).to_rgb(), ColorRGB(0xFF, 0xFF, 0xFF))
+        self.eq(color(208).to_rgb(), ColorRGB(0xFF, 0x87, 0x00))
+        self.eq(color(237).to_rgb(), ColorRGB(0x3A, 0x3A, 0x3A))
 
 
 class TestColorRGB(TestCase):
@@ -124,11 +119,52 @@ class TestColorRGB(TestCase):
         self.eq(ColorRGB().seq, '')
 
     def test_rgb(self):
-        some_color = ColorRGB([160, 90, 0])
+        some_color = ColorRGB(160, 90, 0)
         self.eq(some_color.r, 160)
         self.eq(some_color.g, 90)
         self.eq(some_color.b, 0)
         self.eq(int(some_color), 0xA05A00)
+
+    def test_value_check(self):
+        with self.assertRaises(TypeError):
+            ColorRGB(300, 300, 300)
+
+    def test_rgb_mul(self):
+        some_color = ColorRGB(160, 90, 0) * 2
+        self.eq(some_color.r, 320)
+        self.eq(some_color.g, 180)
+        self.eq(some_color.b, 0)
+
+        some_color = ColorRGB(160, 90, 0) * 0.8
+        self.eq(str(some_color), '\033[38;2;128;72;0m')
+
+    def test_rgb_div(self):
+        some_color = ColorRGB(160, 90, 0) // 2
+        self.eq(some_color, ColorRGB(80, 45, 0))
+
+    def test_rgb_overflow(self):
+        some_color = ColorRGB(160, 90, 0) * 2
+        self.eq(str(some_color), '\033[38;2;255;180;0m')
+        self.eq(int(some_color), 0xFFB400)
+
+    def test_rgb_average(self):
+        d_red = ColorRGB(255, 0, 0) * 2
+        self.eq(d_red.r, 255 * 2)
+        self.eq(d_red.g, 0)
+        self.eq(d_red.b, 0)
+
+        d_green = ColorRGB(0, 255, 0) * 2
+        self.eq(d_green.r, 0)
+        self.eq(d_green.g, 255 * 2)
+        self.eq(d_green.b, 0)
+
+        d_yellow = d_red + d_green
+        self.eq(d_yellow.r, 255 * 2)
+        self.eq(d_yellow.g, 255 * 2)
+        self.eq(d_yellow.b, 0)
+
+        yellow = d_yellow // 2
+        self.eq(yellow, ColorRGB(255, 255, 0))
 
 
 class TestBuiltInColors(TestCase):
