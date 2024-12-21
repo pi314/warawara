@@ -84,6 +84,16 @@ class vector:
     def __rmul__(self, other):
         return self * other
 
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i / other for i in self)
+        raise TypeError('Cannot operate on vector(len={}) and {}'.format(len(self), other))
+
+    def __floordiv__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i // other for i in self)
+        raise TypeError('Cannot operate on vector(len={}) and {}'.format(len(self), other))
+
     def map(self, func):
         return vector(func(i) for i in self)
 

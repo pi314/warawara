@@ -36,6 +36,15 @@ class TestMath(TestCase):
         self.eq(2 * v1, (2, 4, 6))
         self.eq(v1 * (4, 5, 6), (4, 10, 18))
 
+        self.eq(v1 / 2, (0.5, 1.0, 1.5))
+        self.eq(v1 // 2, (0, 1, 1))
+
+        with self.assertRaises(TypeError):
+            v1 / v2
+
+        with self.assertRaises(TypeError):
+            v1 // v2
+
         self.eq(v1.map(lambda x: x * 10), (10, 20, 30))
 
         with self.assertRaises(ValueError):
