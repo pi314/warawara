@@ -5,11 +5,6 @@ export, __all__ = exporter()
 
 
 @export
-def is_int(o):
-    return isinstance(o, int)
-
-
-@export
 def is_uint8(i):
     return isinstance(i, int) and not isinstance(i, bool) and 0 <= i < 256
 
@@ -89,6 +84,16 @@ class vector:
     def __rmul__(self, other):
         return self * other
 
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i / other for i in self)
+        raise TypeError('Cannot operate on vector(len={}) and {}'.format(len(self), other))
+
+    def __floordiv__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i // other for i in self)
+        raise TypeError('Cannot operate on vector(len={}) and {}'.format(len(self), other))
+
     def map(self, func):
         return vector(func(i) for i in self)
 
@@ -141,6 +146,8 @@ def distribute(samples, N):
 
 # class matrix:
 #     def __init__(self, *args):
+#         def is_int(o):
+#             return isinstance(o, int)
 #         if len(args) == 2 and is_int(args[0]) and is_int(args[1]):
 #             self.rows = args[0]
 #             self.cols = args[1]

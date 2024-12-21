@@ -4,10 +4,6 @@ from warawara import *
 
 
 class TestMath(TestCase):
-    def test_is_int(self):
-        self.is_true(is_int(3))
-        self.is_false(is_int('banana'))
-
     def test_sgn(self):
         self.eq(sgn(2024), 1)
         self.eq(sgn(0), 0)
@@ -39,6 +35,15 @@ class TestMath(TestCase):
         self.eq(v1 * 2, (2, 4, 6))
         self.eq(2 * v1, (2, 4, 6))
         self.eq(v1 * (4, 5, 6), (4, 10, 18))
+
+        self.eq(v1 / 2, (0.5, 1.0, 1.5))
+        self.eq(v1 // 2, (0, 1, 1))
+
+        with self.assertRaises(TypeError):
+            v1 / v2
+
+        with self.assertRaises(TypeError):
+            v1 // v2
 
         self.eq(v1.map(lambda x: x * 10), (10, 20, 30))
 
