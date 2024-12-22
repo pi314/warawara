@@ -4,32 +4,60 @@ from .internal_utils import exporter
 export, __all__ = exporter()
 
 
-@export
-def open(*args, **kwargs):
-    if 'encoding' not in kwargs:
-        kwargs['encoding'] = 'utf-8'
+class LineFileWrapper:
+    def __init__(self, path, mode, rstrip, newline, **kwargs):
+        self.path = path
+        self.mode = mode
+        self.rstrip = rstrip
+        self.newline = newline
+        self.kwargs = kwargs
 
-    if 'errors' not in kwargs:
-        kwargs['errors'] = 'backslashreplace'
+        self.file = builtins.open(self.path, mode=self.mode, **self.kwargs)
 
-    f = builtins.open(*args, **kwargs)
+    def __enter__(self):
+        return self
 
-    def writeline(line=''):
-        s = str(line)
-        f.write(s + ('' if s.endswith('\n') else '\n'))
+    def __exit__(self, *args, **kwargs):
+        cleanup = getattr(self.file, '__exit__')
+        if cleanup:
+            return cleanup(*args, **kwargs)
 
-    def writelines(lines=[]):
+        else: # pragma: no cover
+            cleanup = getattr(self.file, 'close')
+            if cleanup:
+                cleanup()
+
+    def __getattr__(self, attr):
+        return getattr(self.file, attr)
+
+    def writeline(self, *args):
+        self.file.write(' '.join(str(arg) for arg in args) + self.newline)
+
+    def writelines(self, lines):
         for line in lines:
-            writeline(line)
+            self.writeline(line)
 
-    def readlines():
-        return [line.rstrip('\n') for line in f]
+    def readline(self):
+        return self.file.readline().rstrip(self.rstrip)
 
-    f.writeline = writeline
-    f.writelines = writelines
-    f.readlines = readlines
+    def readlines(self):
+        return [line for line in self]
 
-    return f
+    def __iter__(self):
+        for line in self.file:
+            yield line.rstrip(self.rstrip)
+
+
+@export
+def open(file, mode=None, rstrip='\r\n', newline='\n', **kwargs):
+    # Skip for binary mode
+    if 'b' in mode:
+        return builtins.open(file, mode=mode, **kwargs)
+
+    kwargs['encoding'] = kwargs.get('encoding', 'utf-8')
+    kwargs['errors'] = kwargs.get('errors', 'backslashreplace')
+
+    return LineFileWrapper(file, mode, rstrip=rstrip, newline=newline, **kwargs)
 
 
 @export
@@ -42,9 +70,9 @@ def fsorted(iterable, key=None):
             return x
         return tuple(int_or_not(x) for x in re.split(r'([0-9]+)', name))
 
-    if key is None:
-        sort_key = filename_as_key
-    else:
-        sort_key = lambda x: filename_as_key(key(x))
+    sort_key = (filename_as_key
+                if key is None
+                else lambda x: filename_as_key(key(x))
+                )
 
     return sorted(iterable, key=sort_key)
