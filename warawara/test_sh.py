@@ -1,67 +1,72 @@
 import os
 import shutil
 
-from os.path import exists, isdir
+from pathlib import Path
 
 from .test_utils import *
 
-import warawara as wrwr
+import warawara as wara
 
 
 class TestSh(TestCase):
     def setUp(self):
-        if exists('tmp') and isdir('tmp'):
-            shutil.rmtree('tmp')
+        self.patch('os.chdir', self.mock_chdir)
+        self.patch('os.getcwd', self.mock_getcwd)
 
-        os.mkdir('tmp')
-        os.mkdir('tmp/a')
-        os.mkdir('tmp/a/b')
+        self.cwd = Path.cwd()
 
-    def tearDown(self):
-        shutil.rmtree('tmp')
+    def mock_getcwd(self):
+        return str(self.cwd)
+
+    def mock_chdir(self, path):
+        path = Path(path)
+        if path.is_absolute():
+            self.cwd = path
+        else:
+            self.cwd = self.cwd / path
 
     def test_pushd_popd_dirs(self):
-        cwd1 = wrwr.cwd()
+        cwd1 = wara.cwd()
 
-        with wrwr.pushd('tmp'):
-            self.eq(wrwr.cwd(), cwd1 / 'tmp')
+        with wara.pushd('tmp'):
+            self.eq(wara.cwd(), cwd1 / 'tmp')
 
-            wrwr.pushd('a')
-            self.eq(wrwr.cwd(), cwd1 / 'tmp/a')
-            self.eq(wrwr.dirs(),
+            wara.pushd('a')
+            self.eq(wara.cwd(), cwd1 / 'tmp/a')
+            self.eq(wara.dirs(),
                     [
                         cwd1,
                         cwd1 / 'tmp',
                         cwd1 / 'tmp' / 'a',
                     ])
 
-            wrwr.cwd(cwd1 / 'tmp' / 'a' / 'b')
-            self.eq(wrwr.cwd(), cwd1 / 'tmp' / 'a' / 'b')
-            wrwr.popd()
+            wara.cwd(cwd1 / 'tmp' / 'a' / 'b')
+            self.eq(wara.cwd(), cwd1 / 'tmp' / 'a' / 'b')
+            wara.popd()
 
-            self.eq(wrwr.cwd(), cwd1 / 'tmp')
-            self.eq(wrwr.dirs(),
+            self.eq(wara.cwd(), cwd1 / 'tmp')
+            self.eq(wara.dirs(),
                     [
                         cwd1,
                         cwd1 / 'tmp',
                     ])
 
-        self.eq(wrwr.cwd(), cwd1)
-        self.eq(wrwr.dirs(),
+        self.eq(wara.cwd(), cwd1)
+        self.eq(wara.dirs(),
                 [
                     cwd1,
                 ])
 
-        wrwr.popd()
+        wara.popd()
 
     def test_shrinkuser(self):
-        HOME = wrwr.home()
-        self.eq(wrwr.shrinkuser(HOME), '~')
-        self.eq(wrwr.shrinkuser(str(HOME) + '/'), '~/')
+        HOME = wara.home()
+        self.eq(wara.shrinkuser(HOME), '~')
+        self.eq(wara.shrinkuser(str(HOME) + '/'), '~/')
 
-        self.eq(wrwr.shrinkuser(HOME / 'bana'), '~/bana')
-        self.eq(wrwr.shrinkuser(HOME / 'bana/'), '~/bana')
-        self.eq(wrwr.shrinkuser(str(HOME) + '/bana/'), '~/bana/')
+        self.eq(wara.shrinkuser(HOME / 'bana'), '~/bana')
+        self.eq(wara.shrinkuser(HOME / 'bana/'), '~/bana')
+        self.eq(wara.shrinkuser(str(HOME) + '/bana/'), '~/bana/')
 
-        self.eq(wrwr.shrinkuser('bana/na/'), 'bana/na/')
-        self.eq(wrwr.shrinkuser('bana/na'), 'bana/na')
+        self.eq(wara.shrinkuser('bana/na/'), 'bana/na/')
+        self.eq(wara.shrinkuser('bana/na'), 'bana/na')
