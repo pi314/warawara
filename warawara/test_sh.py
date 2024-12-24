@@ -10,10 +10,9 @@ import warawara as wara
 
 class TestSh(TestCase):
     def setUp(self):
+        self.cwd = Path.cwd()
         self.patch('os.chdir', self.mock_chdir)
         self.patch('os.getcwd', self.mock_getcwd)
-
-        self.cwd = Path.cwd()
 
     def mock_getcwd(self):
         return str(self.cwd)
