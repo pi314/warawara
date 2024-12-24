@@ -22,15 +22,11 @@ class rere:
         self.cache = re.fullmatch(pattern, self.text, flags=flags)
         return self.cache
 
-    def split(self, pattern, maxsplit=0, flags=0):
-        return re.split(pattern, self.text, maxsplit=maxsplit, flags=flags)
-
-    def findall(self, pattern, flags=0):
-        return re.findall(pattern, self.text, flags=flags)
-
     def __getattr__(self, attr):
         if hasattr(re, attr):
-            result = getattr(re, attr)
+            re_attr = getattr(re, attr)
+            return lambda *args, **kwargs: re_attr(*args, self.text, **kwargs)
+
         return getattr(self.cache, attr)
 
     def sub(self, pattern, repl):
