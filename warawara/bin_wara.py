@@ -11,7 +11,7 @@ def main():
     sys.argv = sys.argv[1:]
 
     if not sys.argv:
-        for f in os.listdir(os.path.dirname(__file__)):
+        for f in sorted(os.listdir(os.path.dirname(__file__))):
             if f.startswith('bin_') and f.endswith('.py'):
                 m = os.path.splitext(f[4:])[0]
                 print(m)
