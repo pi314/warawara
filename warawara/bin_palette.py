@@ -47,7 +47,7 @@ def main():
             try:
                 tiles[-1].append((arg, getattr(lib_colors, arg)))
             except AttributeError:
-                errors[-1].append(arg)
+                errors.append(arg)
 
         elif a.match(r'^-([0-9]+)$'):
             minus = int(a.group(1), 10)
