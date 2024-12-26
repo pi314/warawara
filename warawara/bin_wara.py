@@ -17,19 +17,29 @@ def main():
             break
 
     if arg_idx is None and len(sys.argv) > 2:
-        print(r'''
-╭───────────────────────────────────────────────────────────────────╮
-│ The RecursionErrors you requested are currently not available.    │
-│ We are currently re-stocking the RecursionErrors, and we will     │
-│ deliver them to your terminal once they are ready to use.         │
-│ We apologize for the inconvenience, and hope you have a nice day. │
-╰─────────┬─────────────────────────────────────────────────────────╯
-          ╰ ^__^
-            (oo)\_______
-            (__)\       )\/\
-                ||----w |
-                ||     ||
-'''.strip(), file=sys.stderr)
+        print(
+r'''
+        ╭────────────────────────────────╮
+        │       ╭──────────────────────╮ │
+        │       │   ╭────────────────╮ │ │
+        │       │   │ RecursionError │ │ │
+        │       │   ╰──────┬─────────╯ │ │
+        │       │     ,__, ╯           │ │
+        │       │   __(oo)             │ │
+        │       │ /(  (__)             │ │
+        │       │  ||-||               │ │
+        │       ╰─────┬────────────────╯ │
+        │        ,__, ╯                  │
+        │    ____(oo)                    │
+        │  /(    (__)                    │
+        │ ' ||--||                       │
+        ╰────────┬───────────────────────╯
+            (__) ╯
+    _______/(oo)
+  /(       /(__)
+ * | w----||
+   ||     ||
+''', file=sys.stderr)
         sys.exit(1)
 
     sys.argv = sys.argv[(arg_idx or 0):]
