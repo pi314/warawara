@@ -122,13 +122,13 @@ def main():
                         help='Tiles to fill the whole screen; Ignores every other optional arguments')
 
     parser.add_argument('targets', nargs='*', help='''Names / indexs / RGB hex values to query.
-                        "all" and "named" macros could be used''')
+                        "all" and "named" macros could be used in "list" mode''')
 
     parser.set_defaults(rgb_fmt=[])
 
     args = parser.parse_intermixed_args()
 
-    if args.tile:
+    if args.tile or '/' in args.targets:
         main_tile(args)
     else:
         main_list(args)
@@ -309,7 +309,6 @@ def main_tile(args):
 
     tiles = [[]]
     errors = []
-    minus = 0
     for arg in args.targets:
         a = rere(arg)
 
@@ -325,9 +324,6 @@ def main_tile(args):
             except AttributeError:
                 errors.append(arg)
 
-        elif a.match(r'^-([0-9]+)$'):
-            minus = int(a.group(1), 10)
-
         elif arg == '/':
             tiles.append([])
 
@@ -340,7 +336,6 @@ def main_tile(args):
         sys.exit(1)
 
     cols, lines = shutil.get_terminal_size()
-    lines -= minus
 
     for idx in distribute(range(len(max(tiles, key=len))), lines):
         colors = list(filter(None, [(c[idx] if idx < len(c) else None) for c in tiles]))
@@ -354,3 +349,8 @@ def main_tile(args):
             line += paint(fg=c, bg=c)(text) + (~c)(' ' * (widths[idx] - len(text)))
 
         print(line)
+
+    try:
+        input()
+    except EOFError:
+        pass
