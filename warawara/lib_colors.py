@@ -87,35 +87,39 @@ def color(*args, **kwargs):
     elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9A-Fa-f]{6}$', args[0]):
         return ColorRGB(*args, **kwargs)
 
-    raise TypeError('Invalid arguments')
+    raise TypeError('Invalid arguments: ' + ' '.join(args))
 
 
 @export
 class Color256(Color):
-    def __init__(self, code=None):
-        if isinstance(code, self.__class__):
-            code = code.code
+    def __init__(self, index=None):
+        if isinstance(index, self.__class__):
+            index = index.index
 
-        self.code = code
+        self.index = index
 
-        if code is None:
+        if index is None:
             self.seq = ''
-        elif is_uint8(code):
-            self.seq = '5;{}'.format(self.code)
+        elif is_uint8(index):
+            self.seq = '5;{}'.format(self.index)
         else:
-            raise TypeError('Invalid color code: {}'.format(code))
+            raise TypeError('Invalid color index: {}'.format(index))
+
+    @property
+    def code(self):
+        return self.index
 
     def to_rgb(self):
-        if self.code < 16:
-            base = 0xFF if (self.code > 7) else 0x80
-            is_7 = (self.code == 7)
-            is_8 = (self.code == 8)
-            R = base * ((self.code & 0x1) != 0) + (0x40 * is_7) + (0x80 * is_8)
-            G = base * ((self.code & 0x2) != 0) + (0x40 * is_7) + (0x80 * is_8)
-            B = base * ((self.code & 0x4) != 0) + (0x40 * is_7) + (0x80 * is_8)
+        if self.index < 16:
+            base = 0xFF if (self.index > 7) else 0x80
+            is_7 = (self.index == 7)
+            is_8 = (self.index == 8)
+            R = base * ((self.index & 0x1) != 0) + (0x40 * is_7) + (0x80 * is_8)
+            G = base * ((self.index & 0x2) != 0) + (0x40 * is_7) + (0x80 * is_8)
+            B = base * ((self.index & 0x4) != 0) + (0x40 * is_7) + (0x80 * is_8)
 
-        elif self.code < 233:
-            base = self.code - 16
+        elif self.index < 232:
+            base = self.index - 16
             index_R = (base // 36)
             index_G = ((base % 36) // 6)
             index_B = (base % 6)
@@ -124,15 +128,15 @@ class Color256(Color):
             B = (55 + index_B * 40) if index_B > 0 else 0
 
         else:
-            R = G = B = (self.code - 232) * 10 + 8
+            R = G = B = (self.index - 232) * 10 + 8
 
         return ColorRGB(R, G, B)
 
     def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self.code)
+        return '{}({})'.format(self.__class__.__name__, self.index)
 
     def __int__(self):
-        return self.code
+        return self.index
 
 
 @export
@@ -196,6 +200,16 @@ class ColorRGB(Color):
 
     def __int__(self):
         return (min(int(self.r), 255) << 16) | (min(int(self.g), 255) << 8) | (min(int(self.b), 255))
+
+    def __format__(self, spec):
+        if spec in ('#x', '#X'):
+            r = min(int(self.r), 255)
+            g = min(int(self.g), 255)
+            b = min(int(self.b), 255)
+            x = spec[1]
+            return '#{r:0>2{x}}{g:0>2{x}}{b:0>2{x}}'.format(r=r, g=g, b=b, x=x)
+
+        return format(int(self), spec)
 
 
 @export
@@ -348,9 +362,11 @@ named_colors = [
         (253, ('gainsboro',)),
         (255, ('honeydew', 'lavender', 'linen', 'seashell', 'whitesmoke',)),
 ]
+export('names')
+names = tuple(name for index, names in named_colors for name in names)
 def _setup_named_colors():
-    for code, names in named_colors:
-        clr = color(code)
+    for index, names in named_colors:
+        clr = color(index)
         for name in names:
             globals()[name] = clr
             export(name)
@@ -389,17 +405,17 @@ def gradient(A, B, N=None):
 
 
 def gradient_color256(A, B, N=None):
-    if A.code in range(232, 256) and B.code in range(232, 256):
+    if A.index in range(232, 256) and B.index in range(232, 256):
         return gradient_color256_grayscale_range(A, B, N)
 
-    if A.code in range(16, 232) and B.code in range(16, 232):
+    if A.index in range(16, 232) and B.index in range(16, 232):
         return gradient_color256_rgb_range(A, B, N)
 
     return (A, B)
 
 
 def gradient_color256_grayscale_range(A, B, N=None):
-    a, b = A.code, B.code
+    a, b = A.index, B.index
     direction = sgn(b - a)
     n = abs(b - a) + 1
     return tuple(Color256(c) for c in distribute(interval(a, b), N or n))

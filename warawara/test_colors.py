@@ -111,6 +111,7 @@ class TestColor256(TestCase):
         self.eq(color(14).to_rgb(), ColorRGB(0x00, 0xFF, 0xFF))
         self.eq(color(15).to_rgb(), ColorRGB(0xFF, 0xFF, 0xFF))
         self.eq(color(208).to_rgb(), ColorRGB(0xFF, 0x87, 0x00))
+        self.eq(color(232).to_rgb(), ColorRGB(0x08, 0x08, 0x08))
         self.eq(color(237).to_rgb(), ColorRGB(0x3A, 0x3A, 0x3A))
 
 
