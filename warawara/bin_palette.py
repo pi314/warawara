@@ -81,7 +81,6 @@ def main():
 
     if not argv:
         main_256cube()
-        return
 
     parser = argparse.ArgumentParser(description='rainbow', prog=prog, allow_abbrev=False)
 
@@ -129,6 +128,13 @@ def main():
 
     args = parser.parse_intermixed_args()
 
+    if args.tile:
+        main_tile(args)
+    else:
+        main_list(args)
+
+
+def main_list(args):
     if args.merge is None:
         if 'all' in args.targets or 'named' in args.targets:
             args.merge = True
@@ -248,99 +254,103 @@ def main():
         print('No colors to query')
         sys.exit(1)
 
-    if not args.tile:
-        unmentioned_names = set(lib_colors.names)
-        for _, names in inventory:
-            unmentioned_names -= set(names)
+    unmentioned_names = set(lib_colors.names)
+    for _, names in inventory:
+        unmentioned_names -= set(names)
 
-        aliases = [[] for i in range(256)]
-        if args.aliases:
-            for name in unmentioned_names:
-                c = getattr(lib_colors, name).index
-                aliases[c].append(name)
+    aliases = [[] for i in range(256)]
+    if args.aliases:
+        for name in unmentioned_names:
+            c = getattr(lib_colors, name).index
+            aliases[c].append(name)
 
-        for this_color, names in inventory:
-            line = []
-            rgb = this_color.to_rgb() if isinstance(this_color, lib_colors.Color256) else this_color
+    for this_color, names in inventory:
+        line = []
+        rgb = this_color.to_rgb() if isinstance(this_color, lib_colors.Color256) else this_color
 
+        if isinstance(this_color, lib_colors.Color256):
+            line.append('{:>3}'.format(this_color.index))
+        else:
+            line.append('(#)')
+
+        for rgb_fmt in args.rgb_fmt:
+            if rgb_fmt == 'rgb':
+                line.append('(' + ','.join(map(lambda x: str(x).rjust(3), rgb.rgb)) + ')')
+
+            elif rgb_fmt == 'hex':
+                line.append('{:#X}'.format(rgb))
+
+        if args.rgb_fmt:
+            line.append(paint(fg=this_color, bg=this_color)('warawara'))
+        else:
             if isinstance(this_color, lib_colors.Color256):
-                line.append('{:>3}'.format(this_color.index))
+                line.append(paint(fg=this_color, bg=this_color)('{:#X}'.format(rgb)))
             else:
-                line.append('(#)')
+                line.append(paint(fg=this_color, bg=this_color)('{:#X}'.format(this_color)))
 
-            for rgb_fmt in args.rgb_fmt:
-                if rgb_fmt == 'rgb':
-                    line.append('(' + ','.join(map(lambda x: str(x).rjust(3), rgb.rgb)) + ')')
+        line.append(', '.join(names))
 
-                elif rgb_fmt == 'hex':
-                    line.append('{:#X}'.format(rgb))
+        if isinstance(this_color, lib_colors.Color256):
+            aliases[this_color.index] = [name
+                                         for name in aliases[this_color.index]
+                                         if name not in names]
+            if aliases[this_color.index]:
+                a = ('(' + ', '.join(aliases[this_color.index]) + ')')
+                line[-1] = line[-1] + (' ' if line[-1] else '') + a
+                aliases[this_color.index] = []
 
-            if args.rgb_fmt:
-                line.append(paint(fg=this_color, bg=this_color)('warawara'))
-            else:
-                if isinstance(this_color, lib_colors.Color256):
-                    line.append(paint(fg=this_color, bg=this_color)('{:#X}'.format(rgb)))
-                else:
-                    line.append(paint(fg=this_color, bg=this_color)('{:#X}'.format(this_color)))
+        print(' '.join(line))
 
-            line.append(', '.join(names))
 
-            if isinstance(this_color, lib_colors.Color256):
-                aliases[this_color.index] = [name
-                                             for name in aliases[this_color.index]
-                                             if name not in names]
-                if aliases[this_color.index]:
-                    a = ('(' + ', '.join(aliases[this_color.index]) + ')')
-                    line[-1] = line[-1] + (' ' if line[-1] else '') + a
-                    aliases[this_color.index] = []
+def main_tile(args):
+    if not args.targets:
+        print('No colors to tile')
+        sys.exit(1)
 
-            print(' '.join(line))
+    tiles = [[]]
+    errors = []
+    minus = 0
+    for arg in args.targets:
+        a = rere(arg)
 
-    if args.tile:
-        tiles = [[]]
-        errors = []
-        minus = 0
-        for arg in args.targets:
-            a = rere(arg)
+        if a.match(r'^[0-9]+$'):
+            tiles[-1].append((arg, color(int(arg, 10))))
 
-            if a.match(r'^[0-9]+$'):
-                tiles[-1].append((arg, color(int(arg, 10))))
+        elif a.match(r'^#[0-9A-Fa-f]{6}$'):
+            tiles[-1].append((arg, color(arg)))
 
-            elif a.match(r'^#[0-9A-Fa-f]{6}$'):
-                tiles[-1].append((arg, color(arg)))
-
-            elif a.match(r'^[A-Za-z0-9]+$'):
-                try:
-                    tiles[-1].append((arg, getattr(lib_colors, arg)))
-                except AttributeError:
-                    errors.append(arg)
-
-            elif a.match(r'^-([0-9]+)$'):
-                minus = int(a.group(1), 10)
-
-            elif arg == '/':
-                tiles.append([])
-
-            else:
+        elif a.match(r'^[A-Za-z0-9]+$'):
+            try:
+                tiles[-1].append((arg, getattr(lib_colors, arg)))
+            except AttributeError:
                 errors.append(arg)
 
-        if errors:
-            for error in errors:
-                print('Invalid color:', error)
-            sys.exit(1)
+        elif a.match(r'^-([0-9]+)$'):
+            minus = int(a.group(1), 10)
 
-        cols, lines = shutil.get_terminal_size()
-        lines -= minus
+        elif arg == '/':
+            tiles.append([])
 
-        for idx in distribute(range(len(max(tiles, key=len))), lines):
-            colors = list(filter(None, [(c[idx] if idx < len(c) else None) for c in tiles]))
-            widths = []
-            quo, rem = divmod(cols, len(colors))
-            widths = [quo + (i < rem) for i, elem in enumerate(colors)]
+        else:
+            errors.append(arg)
 
-            line = ''
-            for idx, textcolor in enumerate(colors):
-                text, c = textcolor
-                line += paint(fg=c, bg=c)(text) + (~c)(' ' * (widths[idx] - len(text)))
+    if errors:
+        for error in errors:
+            print('Invalid color:', error)
+        sys.exit(1)
 
-            print(line)
+    cols, lines = shutil.get_terminal_size()
+    lines -= minus
+
+    for idx in distribute(range(len(max(tiles, key=len))), lines):
+        colors = list(filter(None, [(c[idx] if idx < len(c) else None) for c in tiles]))
+        widths = []
+        quo, rem = divmod(cols, len(colors))
+        widths = [quo + (i < rem) for i, elem in enumerate(colors)]
+
+        line = ''
+        for idx, textcolor in enumerate(colors):
+            text, c = textcolor
+            line += paint(fg=c, bg=c)(text) + (~c)(' ' * (widths[idx] - len(text)))
+
+        print(line)
