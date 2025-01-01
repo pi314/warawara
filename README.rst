@@ -8,29 +8,29 @@ It's functionalities will not depend on any third-party packages in a foreseeabl
 
 Examples:
 
-..  code::python3
+.. code:: python
 
-    # color strings
-    import warawara
-    warawara.orange('TEXT')   # \e[38;5;208mTEXT\e[m
+  # color strings
+  import warawara
+   warawara.orange('TEXT')   # \e[38;5;208mTEXT\e[m
 
-    # Invoke external commands and receive the result
-    p = warawara.run(['seq', '5'])
-    p.stdout.lines  # ['1', '2', '3', '4', '5']
+  # Invoke external commands and receive the result
+  p = warawara.run(['seq', '5'])
+  p.stdout.lines  # ['1', '2', '3', '4', '5']
 
-    # Invoke external commands and receive the result in a non-blocking manner
-    p1 = warawara.command(['seq', '5'])
+  # Invoke external commands and receive the result in a non-blocking manner
+  p1 = warawara.command(['seq', '5'])
 
-    def func(streams, *args):
-        for line in streams[0]:
-            streams[1].writeline('wara: {}'.format(line))
+  def func(streams, *args):
+      for line in streams[0]:
+          streams[1].writeline('wara: {}'.format(line))
 
-    p2 = warawara.command(func, stdin=True)
+  p2 = warawara.command(func, stdin=True)
 
-    warawara.pipe(p1.stdout, p2.stdin)
-    p1.run()
-    p2.run()
-    p2.stdout.lines   # ['wara: 1', 'wara: 2', 'wara: 3', 'wara: 4', 'wara: 5']
+  warawara.pipe(p1.stdout, p2.stdin)
+  p1.run()
+  p2.run()
+  p2.stdout.lines   # ['wara: 1', 'wara: 2', 'wara: 3', 'wara: 4', 'wara: 5']
 
 
 From my own perspective, Python's subprocess interface is not friendly enough
@@ -40,18 +40,18 @@ for simple uses.
 Installation
 -----------------------------------------------------------------------------
 
-..  code::shell
+.. code:: shell
 
-    $ pip3 install warawara
+  $ pip3 install warawara
 
 
 Or just copy the whole folder to your machine, and add the path to ``sys.path``:
 
-..  code::python3
+.. code:: python3
 
-    import sys
-    sys.path.insert(0, '/Users/cychih/bin/.repo/warawara')
-    import warawara
+  import sys
+  sys.path.insert(0, '/Users/cychih/bin/.repo/warawara')
+  import warawara
 
 
 Test
@@ -59,17 +59,17 @@ Test
 
 Testing:
 
-..  code:: shell
+.. code:: shell
 
-    $ python3 -m unittest
+  $ python3 -m unittest
 
 With `pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`_:
 
-..  code:: shell
+.. code:: shell
 
-    $ pipx install pytest-cov --include-deps
-    # or
-    $ pipx install pytest
-    $ pipx runpip pytest install pytest-cov
+  $ pipx install pytest-cov --include-deps
+  # or
+  $ pipx install pytest
+  $ pipx runpip pytest install pytest-cov
 
-    $ pytest --cov=warawara --cov-report=html
+  $ pytest --cov=warawara --cov-report=html
