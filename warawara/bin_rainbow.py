@@ -144,7 +144,7 @@ def main_list(args):
             args.merge = False
 
     if args.grep and not args.targets:
-        targets = ['all']
+        args.targets = ['all']
 
     errors = []
 
