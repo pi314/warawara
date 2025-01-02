@@ -1,6 +1,7 @@
 import sys
 import shutil
 import argparse
+import textwrap
 
 from os.path import basename
 
@@ -11,6 +12,18 @@ from .lib_colors import color
 from .lib_regex import rere
 from .lib_math import distribute
 from .lib_math import is_uint8
+
+
+errors = []
+def add_error(errmsg):
+    errors.append(errmsg)
+
+
+def check_errors():
+    if errors:
+        for error in errors:
+            print(error)
+        sys.exit(1)
 
 
 def high_contrast_fg(c):
@@ -82,16 +95,40 @@ def main():
     if not argv:
         main_256cube()
 
-    parser = argparse.ArgumentParser(description='rainbow', prog=prog, allow_abbrev=False)
+    colorful = ''.join(
+            map(
+                lambda x: lib_colors.color(x[0])(x[1]),
+                zip(
+                    ['#FF0000', '#FFC000', '#FFFF00',
+                     '#C0FF00', '#00FF00', '#00FFC0',
+                     '#00FFFF', '#00C0FF', '#3333FF', '#C000FF', '#FF00FF'],
+                    'coooolorful'
+                    )
+                )
+            )
+    parser = argparse.ArgumentParser(prog=prog,
+                                     description=('Query pre-defined colors from warawara, ' +
+                                                  'or produce ' + colorful + ' strips/tiles to fill the screen.'),
+                                     epilog=textwrap.dedent('''\
+                                             Example usages:
+                                             $ {prog}
+                                             $ {prog} all
+                                             $ {prog} named --grep orange --hex
+                                             $ {prog} FFD700 --rgb
+                                     ''').format(prog=prog),
+                                     allow_abbrev=False, add_help=False,
+                                     formatter_class=argparse.RawTextHelpFormatter)
+
+    parser.add_argument('-h', '--help', action='help', help='Show this help message and exit')
 
     parser.add_argument('--grep',
                         action='append',
-                        help='''List all colors defined by warawara that contains the specified sub-string.
-                        Can be specified multiple times for multiple keywords''')
+                        help='''Filter out colors that does not contain the specified sub-string
+This argument can be specified multiple times for multiple keywords''')
 
     parser.add_argument('-a', '--aliases',
                         action='store_true',
-                        help='Show aliases of the specified color')
+                        help='Show aliases of specified colors')
 
     parser.add_argument('--hex', dest='rgb_fmt',
                         action='append_const', const='hex',
@@ -104,7 +141,7 @@ def main():
     parser.add_argument('--sort',
                         nargs='?', choices=['index', 'name', 'rgb', 'hue', 'no'], const='index',
                         default='no',
-                        help='Sort the output')
+                        help='Sort the output by the specified attribute')
 
     class YesNoToBoolOption(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
@@ -115,14 +152,16 @@ def main():
 
     parser.add_argument('-M', '--no-merge',
                         action='store_false', dest='merge',
-                        help='Merge colors that have same index')
+                        help='Dont merge colors that have same index')
 
     parser.add_argument('-t', '--tile',
                         action='store_true',
-                        help='Tiles to fill the whole screen; Ignores every other optional arguments')
+                        help='''Tiles to fill the whole screen
+Ignores every other optional arguments
+Ignores "all" and "named" macros''')
 
-    parser.add_argument('targets', nargs='*', help='''Names / indexs / RGB hex values to query.
-                        "all" and "named" macros could be used in "list" mode''')
+    parser.add_argument('targets', nargs='*', help='''Names / indexs / RGB hex values to query
+"all" and "named" macros could be used in "list" mode''')
 
     parser.set_defaults(rgb_fmt=[])
 
@@ -146,45 +185,39 @@ def main_list(args):
     if args.grep and not args.targets:
         args.targets = ['all']
 
-    errors = []
-
     expanded = []
-    if args.targets:
-        for arg in args.targets:
-            if arg in ('all', 'named'):
-                local_expansion = []
-                if arg == 'all':
-                    for i in range(256):
-                        local_expansion.append((parse_target(str(i)), []))
+    for arg in args.targets:
+        if arg in ('all', 'named'):
+            local_expansion = []
+            if arg == 'all':
+                for i in range(256):
+                    local_expansion.append((parse_target(str(i)), []))
 
-                    for name in lib_colors.names:
-                        c = parse_target(name)
-                        local_expansion[c.index][1].append(name)
+                for name in lib_colors.names:
+                    c = parse_target(name)
+                    local_expansion[c.index][1].append(name)
 
-                elif arg == 'named':
-                    for name in lib_colors.names:
-                        local_expansion.append((parse_target(name), [name]))
+            elif arg == 'named':
+                for name in lib_colors.names:
+                    local_expansion.append((parse_target(name), [name]))
 
-                for entry in local_expansion:
-                    if not entry[1]:
-                        expanded.append((entry[0], None))
-                    else:
-                        for name in entry[1]:
-                            expanded.append((entry[0], name))
+            for entry in local_expansion:
+                if not entry[1]:
+                    expanded.append((entry[0], None))
+                else:
+                    for name in entry[1]:
+                        expanded.append((entry[0], name))
 
-                del local_expansion
-                continue
+            del local_expansion
+            continue
 
-            t = parse_target(arg)
-            if t:
-                expanded.append((t, arg))
-            else:
-                errors.append(arg)
+        t = parse_target(arg)
+        if t:
+            expanded.append((t, arg))
+        else:
+            add_error('Invalid color name "{}"'.format(arg))
 
-        if errors:
-            for error in errors:
-                print('Invalid color name "{}"'.format(error))
-            sys.exit(1)
+    check_errors()
 
     # Grep
     if args.grep:
@@ -308,7 +341,6 @@ def main_tile(args):
         sys.exit(1)
 
     tiles = [[]]
-    errors = []
     for arg in args.targets:
         a = rere(arg)
 
@@ -322,18 +354,15 @@ def main_tile(args):
             try:
                 tiles[-1].append((arg, getattr(lib_colors, arg)))
             except AttributeError:
-                errors.append(arg)
+                add_error('Invalid color name "{}"'.format(arg))
 
         elif arg == '/':
             tiles.append([])
 
         else:
-            errors.append(arg)
+            add_error('Invalid color "{}"'.format(arg))
 
-    if errors:
-        for error in errors:
-            print('Invalid color:', error)
-        sys.exit(1)
+    check_errors()
 
     cols, lines = shutil.get_terminal_size()
 
