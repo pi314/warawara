@@ -30,7 +30,7 @@ class Color(abc.ABC):
         raise NotImplementedError
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and int(self) == int(other)
+        return isinstance(other, self.__class__) and self.seq == other.seq
 
     def __call__(self, *args):
         return self.fg(*args)
@@ -71,7 +71,7 @@ def color(*args, **kwargs):
     if not args:
         return Color256(None)
 
-    # copy ctor
+    # Copy ctor
     elif len(args) == 1 and issubclass(type(args[0]), Color):
         return type(args[0])(*args, **kwargs)
 
@@ -83,7 +83,7 @@ def color(*args, **kwargs):
     elif len(args) == 3 and all(is_uint8(i) for i in args):
         return ColorRGB(*args, **kwargs)
 
-    # ColorRGB ctor #xxxxxx
+    # ColorRGB ctor #RRGGBB
     elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'#[0-9A-Fa-f]{6}', args[0]):
         return ColorRGB(*args, **kwargs)
 
@@ -212,7 +212,88 @@ class ColorRGB(Color):
             x = spec[1]
             return '#{r:0>2{x}}{g:0>2{x}}{b:0>2{x}}'.format(r=r, g=g, b=b, x=x)
 
-        return format(int(self), spec)
+        return format(self.rgb, spec)
+
+    def to_hsv(self, overflow=False):
+        import colorsys
+        hsv = colorsys.rgb_to_hsv(self.r / 255, self.g / 255, self.b / 255)
+        return ColorHSV(hsv[0] * 359, hsv[1] * 100, hsv[2] * 100, overflow=overflow)
+
+
+@export
+class ColorHSV(Color):
+    def __init__(self, *args, overflow=False):
+        args = unwrap_one(args)
+
+        self.h = None
+        self.s = None
+        self.v = None
+
+        h = None
+        s = None
+        v = None
+
+        if not args:
+            return
+
+        # Copy ctor
+        elif len(args) == 1 and isinstance(args[0], self.__class__):
+            other = args[0]
+            (h, s, v) = (other.h, other.s, other.v)
+
+        # @H,S,V format
+        elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'@[0-9]+,[0-9]+,[0-9]+', args[0]):
+            (h, s, v) = list(map(lambda x: int(x, 10), args[0][1:].split(',')))
+
+        # (num, num, num) format
+        elif len(args) == 3:
+            (h, s, v) = args
+
+        if (all(isinstance(x, (int, float)) for x in (h, s, v)) and
+            overflow or
+            ((0 <= s <= 100) and
+             (0 <= v <= 100))):
+            (self.h, self.s, self.v) = (h % 360, s, v)
+            self._rgb = self.to_rgb(overflow)
+
+        else:
+            raise TypeError('Invalid HSV value: {}'.format(args))
+
+    def __repr__(self):
+        return 'ColorHSV({:}deg, {:}%, {:}%)'.format(int(self.h), int(self.s), int(self.v))
+
+    @property
+    def hsv(self):
+        return (self.h, self.s, self.v)
+
+    @property
+    def seq(self):
+        if None in self.hsv:
+            return ''
+        return self._rgb.seq
+
+    def __add__(self, other):
+        hsv = vector(self.hsv) + vector(other.hsv)
+        return ColorHSV(*hsv, overflow=True)
+
+    def __mul__(self, num):
+        return ColorHSV(vector(self.hsv) * num, overflow=True)
+
+    def __floordiv__(self, num):
+        return ColorHSV(vector(self.hsv) // num, overflow=True)
+
+    def __int__(self):
+        return (min(int(self.h), 359) * 1000000) + (min(int(self.s), 100) * 1000) + (min(int(self.v), 100))
+
+    def __format__(self, spec):
+        return '(@{}, {}%, {}%)'.format(int(self.h), int(self.s), int(self.v))
+
+    def to_rgb(self, overflow=False):
+        import colorsys
+        return ColorRGB(vector(colorsys.hsv_to_rgb(
+            min(self.h, 359) / 359,
+            min(self.s, 100) / 100,
+            min(self.v, 100) / 100)) * 255, overflow=overflow)
 
 
 @export

@@ -64,6 +64,9 @@ def parse_target(arg):
     if m.fullmatch(r'#?[0-9a-fA-Z]{6}'):
         return color('#' + arg)
 
+    if m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
+        return lib_colors.ColorHSV(arg)
+
     if m.fullmatch(r'[0-9]+'):
         return color(int(arg))
 
@@ -245,12 +248,14 @@ def main_list(args):
     elif args.sort == 'rgb':
         expanded.sort(key=lambda x: (x[0] if isinstance(x[0], lib_colors.Color256) else x[0]).to_rgb().rgb)
     elif args.sort == 'hue':
-        import colorsys
-        expanded.sort(key=lambda x: colorsys.rgb_to_hsv(
-            *map(
-                lambda v: v / 255,
-                (x[0] if isinstance(x[0], lib_colors.Color256) else x[0]).to_rgb().rgb)
-            ))
+        def to_hsv(x):
+            if isinstance(x, lib_colors.ColorHSV):
+                return x
+            if isinstance(x, lib_colors.ColorRGB):
+                return x.to_hsv()
+            if isinstance(x, lib_colors.Color256):
+                return x.to_rgb().to_hsv()
+        expanded.sort(key=lambda x: to_hsv(x[0]).h)
 
     inventory = []
     def stage(color, name):
@@ -304,12 +309,17 @@ def main_list(args):
 
     for this_color, names in inventory:
         line = []
-        rgb = this_color.to_rgb() if isinstance(this_color, lib_colors.Color256) else this_color
+        rgb = this_color if isinstance(this_color, lib_colors.ColorRGB) else this_color.to_rgb()
+        hsv = rgb.to_hsv()
 
         if isinstance(this_color, lib_colors.Color256):
             line.append('{:>3}'.format(this_color.index))
-        else:
+        elif isinstance(this_color, lib_colors.ColorRGB):
             line.append('(#)')
+        elif isinstance(this_color, lib_colors.ColorHSV):
+            line.append('(@)')
+        else:
+            line.append('(?)')
 
         for val_fmt in args.val_fmt:
             if val_fmt == 'rgb':
@@ -319,10 +329,7 @@ def main_list(args):
                 line.append('{:#X}'.format(rgb))
 
             elif val_fmt == 'hsv':
-                import colorsys
-                hsv = colorsys.rgb_to_hsv(*(vector(rgb.rgb) / 255))
-                hsv = (int(hsv[0] * 360), int(hsv[1] * 100), int(hsv[2] * 100))
-                line.append('(' + ','.join(map(lambda x: str(x).rjust(3), hsv)) + ')')
+                line.append('(@{:>3}, {:>3}%, {:>3}%)'.format(int(hsv.h), int(hsv.s), int(hsv.v)))
 
         if args.val_fmt:
             line.append(paint(fg=this_color, bg=this_color)('warawara'))
