@@ -126,7 +126,7 @@ class TestColorRGB(TestCase):
         self.eq(some_color.b, 0)
         self.eq(int(some_color), 0xA05A00)
 
-    def test_value_check(self):
+    def test_value_range_check(self):
         with self.assertRaises(TypeError):
             ColorRGB(300, 300, 300)
 

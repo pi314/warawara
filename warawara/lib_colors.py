@@ -84,7 +84,7 @@ def color(*args, **kwargs):
         return ColorRGB(*args, **kwargs)
 
     # ColorRGB ctor #xxxxxx
-    elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9A-Fa-f]{6}$', args[0]):
+    elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'#[0-9A-Fa-f]{6}', args[0]):
         return ColorRGB(*args, **kwargs)
 
     raise TypeError('Invalid arguments: ' + ' '.join(args))
@@ -155,21 +155,27 @@ class ColorRGB(Color):
         if not args:
             return
 
+        # Copy ctor
         elif len(args) == 1 and isinstance(args[0], self.__class__):
             other = args[0]
             (self.r, self.g, self.b) = (other.r, other.g, other.b)
 
-        elif len(args) == 1 and isinstance(args[0], str) and re.match(r'^#[0-9A-Fa-f]{6}$', args[0]):
+        # #RRGGBB format
+        elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'#[0-9A-Fa-f]{6}', args[0]):
             rgb_str = args[0][1:]
             self.r = int(rgb_str[0:2], 16)
             self.g = int(rgb_str[2:4], 16)
             self.b = int(rgb_str[4:6], 16)
 
+        # (num, num, num) format
         elif len(args) == 3 and all(type_check(i) for i in args):
             (self.r, self.g, self.b) = args
 
         else:
             raise TypeError('Invalid RGB value: {}'.format(args))
+
+    def __repr__(self):
+        return 'ColorRGB({}, {}, {})'.format(self.r, self.g, self.b)
 
     @property
     def rgb(self):
@@ -194,9 +200,6 @@ class ColorRGB(Color):
 
     def __floordiv__(self, num):
         return ColorRGB(vector(self.rgb) // num, overflow=True)
-
-    def __repr__(self):
-        return 'ColorRGB({}, {}, {})'.format(self.r, self.g, self.b)
 
     def __int__(self):
         return (min(int(self.r), 255) << 16) | (min(int(self.g), 255) << 8) | (min(int(self.b), 255))
