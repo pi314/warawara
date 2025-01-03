@@ -87,6 +87,10 @@ def color(*args, **kwargs):
     elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'#[0-9A-Fa-f]{6}', args[0]):
         return ColorRGB(*args, **kwargs)
 
+    # ColorHSV @H,S,V format
+    elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'@[0-9]+,[0-9]+,[0-9]+', args[0]):
+        return ColorHSV(*args, **kwargs)
+
     raise TypeError('Invalid arguments: ' + ' '.join(args))
 
 

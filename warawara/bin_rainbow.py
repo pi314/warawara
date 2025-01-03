@@ -165,10 +165,14 @@ This argument can be specified multiple times for multiple keywords''')
     parser.add_argument('-t', '--tile',
                         action='store_true',
                         help='''Tiles to fill the whole screen
-Ignores every other optional arguments
+Ignores every other optional arguments except for --pad
 Ignores "all" and "named" macros''')
 
-    parser.add_argument('targets', nargs='*', help='''Names / indexs / RGB hex values to query
+    parser.add_argument('-p', '--pad',
+                        type=int,
+                        help='Specify screen padding height when tiling')
+
+    parser.add_argument('targets', nargs='*', help='''Names / indexs / RGB hex values / HSV values to query
 "all" and "named" macros could be used in "list" mode''')
 
     parser.set_defaults(val_fmt=[])
@@ -334,10 +338,7 @@ def main_list(args):
         if args.val_fmt:
             line.append(paint(fg=this_color, bg=this_color)('warawara'))
         else:
-            if isinstance(this_color, lib_colors.Color256):
-                line.append(paint(fg=this_color, bg=this_color)('{:#X}'.format(rgb)))
-            else:
-                line.append(paint(fg=this_color, bg=this_color)('{:#X}'.format(this_color)))
+            line.append(paint(fg=this_color, bg=this_color)('{:#X}'.format(rgb)))
 
         line.append(', '.join(names))
 
@@ -360,44 +361,46 @@ def main_tile(args):
 
     tiles = [[]]
     for arg in args.targets:
-        a = rere(arg)
+        for token in arg.split('/'):
+            m = rere(token)
 
-        if a.match(r'^[0-9]+$'):
-            tiles[-1].append((arg, color(int(arg, 10))))
+            if m.fullmatch(r'[0-9]+'):
+                tiles[-1].append((token, color(int(token, 10))))
 
-        elif a.match(r'^#[0-9A-Fa-f]{6}$'):
-            tiles[-1].append((arg, color(arg)))
+            elif m.fullmatch(r'#?[0-9A-Fa-f]{6}'):
+                tiles[-1].append((token, color(token)))
 
-        elif a.match(r'^[A-Za-z0-9]+$'):
-            try:
-                tiles[-1].append((arg, getattr(lib_colors, arg)))
-            except AttributeError:
-                add_error('Invalid color name "{}"'.format(arg))
+            if m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
+                tiles[-1].append((token, lib_colors.ColorHSV(token)))
 
-        elif arg == '/':
-            tiles.append([])
+            elif m.fullmatch(r'[A-Za-z0-9]+'):
+                try:
+                    tiles[-1].append((token, getattr(lib_colors, token)))
+                except AttributeError:
+                    add_error('Invalid color name "{}"'.format(token))
 
-        else:
-            add_error('Invalid color "{}"'.format(arg))
+            else:
+                add_error('Invalid color "{}"'.format(token))
+
+        tiles.append([])
 
     check_errors()
+    if not tiles[-1]:
+        tiles.pop()
 
     cols, lines = shutil.get_terminal_size()
+    lines -= args.pad
+    if lines < 0:
+        lines = len(tiles)
 
-    for idx in distribute(range(len(max(tiles, key=len))), lines):
-        colors = list(filter(None, [(c[idx] if idx < len(c) else None) for c in tiles]))
+    for idx in distribute(range(len(tiles)), lines):
+        colors = tiles[idx]
         widths = []
         quo, rem = divmod(cols, len(colors))
         widths = [quo + (i < rem) for i, elem in enumerate(colors)]
-
         line = ''
         for idx, textcolor in enumerate(colors):
             text, c = textcolor
             line += paint(fg=c, bg=c)(text) + (~c)(' ' * (widths[idx] - len(text)))
 
         print(line)
-
-    try:
-        input()
-    except EOFError:
-        pass

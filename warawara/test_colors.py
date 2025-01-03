@@ -33,6 +33,11 @@ class TestColorFacade(TestCase):
         self.is_true(isinstance(coffee, ColorRGB))
         self.is_true(isinstance(coffee, Color))
 
+        # ColorHSV
+        lime = color('@120,100,100')
+        self.is_true(isinstance(lime, ColorHSV))
+        self.is_true(isinstance(lime, Color))
+
     def test_color_invalid_value(self):
         with self.assertRaises(TypeError):
             color(True)
