@@ -12,6 +12,7 @@ from .lib_colors import color
 from .lib_regex import rere
 from .lib_math import distribute
 from .lib_math import is_uint8
+from .lib_math import vector
 
 
 errors = []
@@ -130,13 +131,17 @@ This argument can be specified multiple times for multiple keywords''')
                         action='store_true',
                         help='Show aliases of specified colors')
 
-    parser.add_argument('--hex', dest='rgb_fmt',
+    parser.add_argument('--hex', dest='val_fmt',
                         action='append_const', const='hex',
                         help='Show RGB value in hex number')
 
-    parser.add_argument('--rgb', dest='rgb_fmt',
+    parser.add_argument('--rgb', dest='val_fmt',
                         action='append_const', const='rgb',
                         help='Show RGB value in 3-tuple')
+
+    parser.add_argument('--hsv', dest='val_fmt',
+                        action='append_const', const='hsv',
+                        help='Show HSV value in 3-tuple')
 
     parser.add_argument('--sort',
                         nargs='?', choices=['index', 'name', 'rgb', 'hue', 'no'], const='index',
@@ -163,11 +168,11 @@ Ignores "all" and "named" macros''')
     parser.add_argument('targets', nargs='*', help='''Names / indexs / RGB hex values to query
 "all" and "named" macros could be used in "list" mode''')
 
-    parser.set_defaults(rgb_fmt=[])
+    parser.set_defaults(val_fmt=[])
 
     args = parser.parse_intermixed_args()
 
-    if args.tile or '/' in args.targets:
+    if args.tile:
         main_tile(args)
     else:
         main_list(args)
@@ -306,14 +311,20 @@ def main_list(args):
         else:
             line.append('(#)')
 
-        for rgb_fmt in args.rgb_fmt:
-            if rgb_fmt == 'rgb':
+        for val_fmt in args.val_fmt:
+            if val_fmt == 'rgb':
                 line.append('(' + ','.join(map(lambda x: str(x).rjust(3), rgb.rgb)) + ')')
 
-            elif rgb_fmt == 'hex':
+            elif val_fmt == 'hex':
                 line.append('{:#X}'.format(rgb))
 
-        if args.rgb_fmt:
+            elif val_fmt == 'hsv':
+                import colorsys
+                hsv = colorsys.rgb_to_hsv(*(vector(rgb.rgb) / 255))
+                hsv = (int(hsv[0] * 360), int(hsv[1] * 100), int(hsv[2] * 100))
+                line.append('(' + ','.join(map(lambda x: str(x).rjust(3), hsv)) + ')')
+
+        if args.val_fmt:
             line.append(paint(fg=this_color, bg=this_color)('warawara'))
         else:
             if isinstance(this_color, lib_colors.Color256):
