@@ -12,7 +12,7 @@ Examples:
 
   # color strings
   import warawara
-   warawara.orange('TEXT')   # \e[38;5;208mTEXT\e[m
+  warawara.orange('TEXT')   # \e[38;5;208mTEXT\e[m
 
   # Invoke external commands and receive the result
   p = warawara.run(['seq', '5'])
