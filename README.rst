@@ -12,13 +12,14 @@ Examples:
 
   # color strings
   import warawara
-  warawara.orange('TEXT')   # \e[38;5;208mTEXT\e[m
+  warawara.orange('TEXT')   # \033[38;5;214mTEXT\033[m
 
-  # Invoke external commands and receive the result
+  # Invoke external command and retrieve the result.
   p = warawara.run(['seq', '5'])
   p.stdout.lines  # ['1', '2', '3', '4', '5']
 
-  # Invoke external commands and receive the result in a non-blocking manner
+  # Invoke external command and retrieve the result in a non-blocking manner.
+  # Functions could be used as command, so they could be mixed in pipe line.
   p1 = warawara.command(['seq', '5'])
 
   def func(streams, *args):
@@ -50,7 +51,7 @@ Or just copy the whole folder to your machine, and add the path to ``sys.path``:
 .. code:: python3
 
   import sys
-  sys.path.insert(0, '/Users/cychih/bin/.repo/warawara')
+  sys.path.insert(0, '/some/path/to/place/warawara')
   import warawara
 
 
