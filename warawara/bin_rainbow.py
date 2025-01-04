@@ -389,7 +389,7 @@ def main_tile(args):
         tiles.pop()
 
     cols, lines = shutil.get_terminal_size()
-    lines -= args.pad
+    lines -= args.pad or 0
     if lines < 0:
         lines = len(tiles)
 
