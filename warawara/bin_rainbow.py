@@ -412,22 +412,26 @@ def main_tile(args):
             text = text[:widths[idx]]
             line += paint(fg=c, bg=c)(text) + (~c)(' ' * (widths[idx] - len(text)))
 
-        print(line, end='\n' if not is_last else '')
+        if args.lines:
+            print(line)
+        else:
+            print(line, end='\n' if not is_last else '')
 
     sys.stdout.flush()
 
-    import termios, tty
-    import os
-    import select
+    if not args.lines:
+        import termios, tty
+        import os
+        import select
 
-    fd = sys.stdin.fileno()
-    orig_term_attr = termios.tcgetattr(fd)
-    when = termios.TCSADRAIN
+        fd = sys.stdin.fileno()
+        orig_term_attr = termios.tcgetattr(fd)
+        when = termios.TCSADRAIN
 
-    try:
-        tty.setraw(fd, when=when)
-        select.select([fd], [], [], None)[0]
+        try:
+            tty.setraw(fd, when=when)
+            select.select([fd], [], [], None)[0]
 
-    finally:
-        print('\r\n')
-        termios.tcsetattr(fd, when, orig_term_attr)
+        finally:
+            print('\r\n')
+            termios.tcsetattr(fd, when, orig_term_attr)
