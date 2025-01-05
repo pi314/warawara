@@ -257,6 +257,9 @@ class TestColorHSV(TestCase):
         self.eq('{}'.format(lime), str(ColorRGB(0, 255, 0)))
         self.eq('{:#}'.format(lime), '(@120, 100%, 100%)')
 
+        with self.assertRaises(TypeError):
+            '{:d}'.format(lime)
+
 
 class TestBuiltInColors(TestCase):
     def test_nocolor(self):
@@ -473,3 +476,25 @@ class TestGradient(TestCase):
         B = color('#FF1100')
         res = gradient(A, B, N=3)
         self.eq(res, (A, color('#FF0000'), B))
+
+    def test_hsv(self):
+        A = ColorHSV(0, 100, 100)
+        B = ColorHSV(300, 50, 100)
+
+        # default length
+        res = gradient(A, B)
+        ans = (ColorHSV(0, 100, 100),
+               ColorHSV(33, 94, 100),
+               ColorHSV(66, 88, 100),
+               ColorHSV(100, 83, 100),
+               ColorHSV(133, 77, 100),
+               ColorHSV(166, 72, 100),
+               ColorHSV(200, 66, 100),
+               ColorHSV(233, 61, 100),
+               ColorHSV(266, 55, 100),
+               ColorHSV(300, 50, 100),)
+
+        import math
+        for a, b in zip(res, ans):
+            # Check if the colors are close enough
+            self.le(abs(sum(a.hsv) - sum(b.hsv)), 2)
