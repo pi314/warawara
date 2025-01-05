@@ -209,6 +209,9 @@ class ColorRGB(Color):
         return (min(int(self.r), 255) << 16) | (min(int(self.g), 255) << 8) | (min(int(self.b), 255))
 
     def __format__(self, spec):
+        if not spec:
+            return str(self)
+
         if spec in ('#x', '#X'):
             r = min(int(self.r), 255)
             g = min(int(self.g), 255)
@@ -290,12 +293,16 @@ class ColorHSV(Color):
         return (min(int(self.h), 359) * 1000000) + (min(int(self.s), 100) * 1000) + (min(int(self.v), 100))
 
     def __format__(self, spec):
-        return '(@{}, {}%, {}%)'.format(int(self.h), int(self.s), int(self.v))
+        if not spec:
+            return str(self)
+        if spec == '#':
+            return '(@{}, {}%, {}%)'.format(int(self.h), int(self.s), int(self.v))
+        return format(self.hsv, spec)
 
     def to_rgb(self, overflow=False):
         import colorsys
         return ColorRGB(vector(colorsys.hsv_to_rgb(
-            min(self.h, 359) / 359,
+            min(self.h, 359) / 360,
             min(self.s, 100) / 100,
             min(self.v, 100) / 100)) * 255, overflow=overflow)
 
