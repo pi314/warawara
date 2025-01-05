@@ -75,6 +75,8 @@ class TestColorTrait(TestCase):
     def test_str(self):
         self.eq(str(self.orange), '\033[38;5;208m')
         self.eq(str(self.coffee), '\033[38;2;192;255;238m')
+        self.eq('{}'.format(self.orange), str(self.orange))
+        self.eq('{}'.format(self.coffee), str(self.coffee))
 
     def test_invert(self):
         self.eq(str(~self.orange), '\033[48;5;208m')
@@ -180,7 +182,7 @@ class TestColorRGB(TestCase):
         red = ColorRGB(255, 0, 0)
         self.eq('{:#x}'.format(red), '#ff0000')
         self.eq('{:#X}'.format(red), '#FF0000')
-        self.eq('{}'.format(red), '(255, 0, 0)')
+        self.eq('{}'.format(red), str(red))
 
 
 class TestColorHSV(TestCase):
@@ -235,7 +237,7 @@ class TestColorHSV(TestCase):
 
     def test_hsv_overflow(self):
         some_color = ColorHSV(160, 90, 100) * 2
-        self.eq(str(some_color), '\033[38;2;255;0;166m')
+        self.eq(str(some_color), '\033[38;2;255;0;170m')
         self.eq(int(some_color), 320100100)
 
     def test_hsv_average(self):
@@ -252,7 +254,8 @@ class TestColorHSV(TestCase):
 
     def test_hsv_format(self):
         lime = ColorHSV(120, 100, 100)
-        self.eq('{}'.format(lime), '(@120, 100%, 100%)')
+        self.eq('{}'.format(lime), str(ColorRGB(0, 255, 0)))
+        self.eq('{:#}'.format(lime), '(@120, 100%, 100%)')
 
 
 class TestBuiltInColors(TestCase):
