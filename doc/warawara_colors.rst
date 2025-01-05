@@ -32,7 +32,7 @@ If the argument does not have correct format, ``TypeError`` is raised.
 
 ``Color256``
 -----------------------------------------------------------------------------
-Represents a VT100 256 color.
+Represents a xterm 256 color.
 
 The actual color displayed in your terminal might look different
 depends on your palette settings.
@@ -42,7 +42,9 @@ depends on your palette settings.
    c = color(214) # orange
    assert c.index == 214
    assert int(c) == 214
-   assert c('text') == '\033[38;5;214mtext\033[m'
+   assert str(c) == '\033[38;5;214m'
+   assert c('text') == str(c) + 'text' + '\033[m'
+   assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
 
 A Color256 object could be casted into a ColorRGB object:
 
@@ -62,7 +64,9 @@ Represents a RGB color.
    assert c.g == 175
    assert c.b == 0
    assert c.rgb = (255, 175, 0)
-   assert c('text') == '\033[38;2;255;175;0mtext\033[m'
+   assert str(c) == '\033[38;2;255;175;0m'
+   assert c('text') == str(c) + 'text' + '\033[m'
+   assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
 
 ColorRGB objects could be mixed to produce new colors:
 
@@ -91,7 +95,9 @@ Represents a HSV color.
    assert c.h == 41
    assert c.s == 100
    assert c.v == 100
-   assert c('text') == '\033[38;2;255;175;0mtext\033[m'
+   assert str(c) == '\033[38;2;255;174;0m'
+   assert c('text') == str(c) + 'text' + '\033[m'
+   assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
 
 
 ``decolor()``
@@ -107,17 +113,34 @@ Removes color sequence from input string.
 
 ``gradient()``
 -----------------------------------------------------------------------------
-Produces a series of colors from ``A`` to ``B`` of length ``N``.
+Produces a series of colors from ``A`` to ``B`` of length ``N >= 2``.
 
 .. code:: python
 
    g = gradient(A, B, N) # [A, ..., B]
 
-``A`` and ``B`` must be in the same Color type,
-the return value is also in the same Color type.
+If ``A`` and ``B`` are different Color types, ``(A, B)`` is returned.
 
-For Color256 colors, the gradient is calculated on VT100 256 color cube.
-Grayscale range (``range(232,256)``) and RGB range (``range(16, 232)``) are separated.
+For Color256 colors, the gradient is calculated on xterm 256 color cube.
+RGB range (``range(16, 232)``) and Grayscale range (``range(232,256)``)
+are defined as not compatible to each other.
+
+
+``names``
+-----------------------------------------------------------------------------
+Predefined named colors.
+
+
+``nocolor``
+-----------------------------------------------------------------------------
+A special color name that has the following properties:
+
+.. code:: python
+
+   assert nocolor == color()
+   assert str(nocolor) == '\033[m'
+   assert '{}'.format(nocolor) == '\033[m'
+   assert nocolor('anything') == 'anything'
 
 
 ``Color``
