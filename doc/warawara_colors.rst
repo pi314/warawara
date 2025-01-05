@@ -30,6 +30,13 @@ An object of the following types would be returned based on input arguments:
 If the argument does not have correct format, ``TypeError`` is raised.
 
 
+``Color``
+-----------------------------------------------------------------------------
+An abstract base class that is inherited by other Color types.
+
+Intend to be used for type checking, like ``isinstance(obj, Color)``.
+
+
 ``Color256``
 -----------------------------------------------------------------------------
 Represents a xterm 256 color.
@@ -100,56 +107,6 @@ Represents a HSV color.
    assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
 
 
-``decolor()``
------------------------------------------------------------------------------
-Removes color sequence from input string.
-
-.. code:: python
-
-   s = 'some string'
-   cs = color(214)('some string') # '\e[38;5;214msome string\e[m'
-   decolor(s) # 'some string'
-
-
-``gradient()``
------------------------------------------------------------------------------
-Produces a series of colors from ``A`` to ``B`` of length ``N >= 2``.
-
-.. code:: python
-
-   g = gradient(A, B, N) # [A, ..., B]
-
-If ``A`` and ``B`` are different Color types, ``(A, B)`` is returned.
-
-For Color256 colors, the gradient is calculated on xterm 256 color cube.
-RGB range (``range(16, 232)``) and Grayscale range (``range(232,256)``)
-are defined as not compatible to each other.
-
-
-``names``
------------------------------------------------------------------------------
-Predefined named colors.
-
-
-``nocolor``
------------------------------------------------------------------------------
-A special color name that has the following properties:
-
-.. code:: python
-
-   assert nocolor == color()
-   assert str(nocolor) == '\033[m'
-   assert '{}'.format(nocolor) == '\033[m'
-   assert nocolor('anything') == 'anything'
-
-
-``Color``
------------------------------------------------------------------------------
-An abstract base class that is inherited by other Color types.
-
-Intend to be used for type checking, like ``isinstance(obj, Color)``.
-
-
 ``ColorCompound``
 -----------------------------------------------------------------------------
 Binds two Color object together, one for foreground and one for background.
@@ -177,3 +134,199 @@ and the later color overrides the former:
    ryig = ry | ig
    assert ryig == red / green
    assert ryig('text') == '\033[38;5;9;48;5;12mtext\033[m'
+
+
+``decolor()``
+-----------------------------------------------------------------------------
+Removes color sequence from input string.
+
+.. code:: python
+
+   s = 'some string'
+   cs = color(214)('some string') # '\e[38;5;214msome string\e[m'
+   decolor(s) # 'some string'
+
+
+``names``
+-----------------------------------------------------------------------------
+A list of named colors, that are pre-defined by warawara and could be accessed
+with ``warawara.<color name>``.
+
+The list was taken from `W3C CSS Color Module Level 3, 4.3. Extended color keywords`__,
+with a few extensions.
+
+Note that all these colors are mapped to the nearest xterm 256 color.
+Their RGB value are likely not the consistent with W3C's definition.
+
+.. _w3c_color_list: https://www.w3.org/TR/css-color-3/#svg-color
+__ w3c_color_list_
+
+* ``aliceblue``
+* ``antiquewhite``
+* ``aqua``
+* ``aquamarine``
+* ``azure``
+* ``beige``
+* ``bisque``
+* ``black``
+* ``blanchedalmond``
+* ``blue``
+* ``blueviolet``
+* ``brown``
+* ``burlywood``
+* ``cadetblue``
+* ``chartreuse``
+* ``chocolate``
+* ``clementine``
+* ``coral``
+* ``cornflowerblue``
+* ``cornsilk``
+* ``crimson``
+* ``cyan``
+* ``darkblue``
+* ``darkcyan``
+* ``darkgoldenrod``
+* ``darkgray`` / ``darkgrey``
+* ``darkgreen``
+* ``darkkhaki``
+* ``darkmagenta``
+* ``darkolivegreen``
+* ``darkorange``
+* ``darkorchid``
+* ``darkred``
+* ``darksalmon``
+* ``darkseagreen``
+* ``darkslateblue``
+* ``darkslategray`` / ``darkslategrey``
+* ``darkturquoise``
+* ``darkviolet``
+* ``deeppink``
+* ``deepskyblue``
+* ``dimgray`` / ``dimgrey``
+* ``dodgerblue``
+* ``firebrick``
+* ``floralwhite``
+* ``forestgreen``
+* ``fuchsia``
+* ``gainsboro``
+* ``ghostwhite``
+* ``gold``
+* ``goldenrod``
+* ``gray`` / ``grey``
+* ``green``
+* ``greenyellow``
+* ``honeydew``
+* ``hotpink``
+* ``indianred``
+* ``indigo``
+* ``ivory``
+* ``khaki``
+* ``lavender``
+* ``lavenderblush``
+* ``lawngreen``
+* ``lemonchiffon``
+* ``lightblue``
+* ``lightcoral``
+* ``lightcyan``
+* ``lightgoldenrodyellow``
+* ``lightgray`` / ``lightgrey``
+* ``lightgreen``
+* ``lightpink``
+* ``lightsalmon``
+* ``lightseagreen``
+* ``lightskyblue``
+* ``lightslategray`` / ``lightslategrey``
+* ``lightsteelblue``
+* ``lightyellow``
+* ``lime``
+* ``limegreen``
+* ``linen``
+* ``magenta``
+* ``maroon``
+* ``mediumaquamarine``
+* ``mediumblue``
+* ``mediumorchid``
+* ``mediumpurple``
+* ``mediumseagreen``
+* ``mediumslateblue``
+* ``mediumspringgreen``
+* ``mediumturquoise``
+* ``mediumvioletred``
+* ``midnightblue``
+* ``mintcream``
+* ``mistyrose``
+* ``moccasin``
+* ``murasaki``
+* ``navajowhite``
+* ``navy``
+* ``oldlace``
+* ``olive``
+* ``olivedrab``
+* ``orange``
+* ``orangered``
+* ``orchid``
+* ``palegoldenrod``
+* ``palegreen``
+* ``paleturquoise``
+* ``palevioletred``
+* ``papayawhip``
+* ``peachpuff``
+* ``peru``
+* ``pink``
+* ``plum``
+* ``powderblue``
+* ``purple``
+* ``red``
+* ``rosybrown``
+* ``royalblue``
+* ``saddlebrown``
+* ``salmon``
+* ``sandybrown``
+* ``seagreen``
+* ``seashell``
+* ``sienna``
+* ``silver``
+* ``skyblue``
+* ``slateblue``
+* ``slategray`` / ``slategrey``
+* ``snow``
+* ``springgreen``
+* ``steelblue``
+* ``tan``
+* ``teal``
+* ``thistle``
+* ``tomato``
+* ``turquoise``
+* ``violet``
+* ``wheat``
+* ``white``
+* ``whitesmoke``
+* ``yellow``
+* ``yellowgreen``
+
+
+``nocolor``
+-----------------------------------------------------------------------------
+A special color name that has the following properties:
+
+.. code:: python
+
+   assert nocolor == color()
+   assert str(nocolor) == '\033[m'
+   assert '{}'.format(nocolor) == '\033[m'
+   assert nocolor('anything') == 'anything'
+
+
+``gradient()``
+-----------------------------------------------------------------------------
+Produces a series of colors from ``A`` to ``B`` of length ``N >= 2``.
+
+.. code:: python
+
+   g = gradient(A, B, N) # [A, ..., B]
+
+If ``A`` and ``B`` are different Color types, ``(A, B)`` is returned.
+
+For Color256 colors, the gradient is calculated on xterm 256 color cube.
+RGB range (``range(16, 232)``) and Grayscale range (``range(232,256)``)
+are defined as not compatible to each other.

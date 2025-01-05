@@ -60,8 +60,8 @@ def parse_target(arg):
 
     m = rere(arg)
 
-    if m.fullmatch(r'#?[0-9a-fA-Z]{6}'):
-        return color('#' + arg)
+    if m.fullmatch(r'#?([0-9a-fA-Z]{6})'):
+        return color('#' + m.group(1))
 
     if m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
         return lib_colors.ColorHSV(arg)
@@ -256,7 +256,7 @@ def main_list(args):
     elif args.sort == 'name':
         expanded.sort(key=lambda x: ((isinstance(x[0], lib_colors.ColorRGB)), x[1]))
     elif args.sort == 'rgb':
-        expanded.sort(key=lambda x: (x[0] if isinstance(x[0], lib_colors.Color256) else x[0]).to_rgb().rgb)
+        expanded.sort(key=lambda x: (x[0].to_rgb() if isinstance(x[0], lib_colors.Color256) else x[0]).rgb)
     elif args.sort == 'hue':
         def to_hsv(x):
             if isinstance(x, lib_colors.ColorHSV):

@@ -418,7 +418,7 @@ named_colors = [
         (159, ('paleturquoise',)),
         (161, ('crimson',)),
         (162, ('mediumvioletred',)),
-        (166, ('chocolate','clementine',)),
+        (166, ('chocolate', 'clementine',)),
         (167, ('indianred',)),
         (168, ('palevioletred',)),
         (170, ('orchid',)),
