@@ -7,16 +7,16 @@ Installation
 
 .. code:: shell
 
-  $ pip3 install warawara
+   $ pip3 install warawara
 
 
 Or just copy the whole folder to your machine, and add the path to ``sys.path``:
 
-.. code:: python3
+.. code:: python
 
-  import sys
-  sys.path.insert(0, '/some/path/to/place/warawara')
-  import warawara
+   import sys
+   sys.path.insert(0, '/some/path/to/place/warawara')
+   import warawara
 
 
 Test
@@ -26,18 +26,18 @@ Testing:
 
 .. code:: shell
 
-  $ python3 -m unittest
+   $ python3 -m unittest
 
 With `pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`_:
 
 .. code:: shell
 
-  $ pipx install pytest-cov --include-deps
-  # or
-  $ pipx install pytest
-  $ pipx runpip pytest install pytest-cov
+   $ pipx install pytest-cov --include-deps
+   # or
+   $ pipx install pytest
+   $ pipx runpip pytest install pytest-cov
 
-  $ pytest --cov=warawara --cov-report=html
+   $ pytest --cov=warawara --cov-report=html
 
 
 "Attributes"
