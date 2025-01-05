@@ -11,8 +11,7 @@ from .lib_colors import paint
 from .lib_colors import color
 from .lib_regex import rere
 from .lib_math import distribute
-from .lib_math import is_uint8
-from .lib_math import vector
+from .lib_itertools import lookahead
 
 
 errors = []
@@ -119,6 +118,7 @@ def main():
                                              $ {prog} all
                                              $ {prog} named --grep orange --hex
                                              $ {prog} FFD700 --rgb
+                                             $ {prog} --tile --lines=2 --cols=8 salmon white
                                      ''').format(prog=prog),
                                      allow_abbrev=False, add_help=False,
                                      formatter_class=argparse.RawTextHelpFormatter)
@@ -165,12 +165,16 @@ This argument can be specified multiple times for multiple keywords''')
     parser.add_argument('-t', '--tile',
                         action='store_true',
                         help='''Tiles to fill the whole screen
-Ignores every other optional arguments except for --pad
+Ignores every other optional arguments except for --height and --width
 Ignores "all" and "named" macros''')
 
-    parser.add_argument('-p', '--pad',
+    parser.add_argument('--cols', '--columns',
                         type=int,
-                        help='Specify screen padding height when tiling')
+                        help='Specify terminal columns')
+
+    parser.add_argument('--lines',
+                        type=int,
+                        help='Specify terminal height')
 
     parser.add_argument('targets', nargs='*', help='''Names / indexs / RGB hex values / HSV values to query
 "all" and "named" macros could be used in "list" mode''')
@@ -178,6 +182,8 @@ Ignores "all" and "named" macros''')
     parser.set_defaults(val_fmt=[])
 
     args = parser.parse_intermixed_args()
+    # print(args)
+    # exit()
 
     if args.tile:
         main_tile(args)
@@ -389,11 +395,13 @@ def main_tile(args):
         tiles.pop()
 
     cols, lines = shutil.get_terminal_size()
-    lines -= args.pad or 0
+    cols = args.cols or cols
+    lines = args.lines or lines
+
     if lines < 0:
         lines = len(tiles)
 
-    for idx in distribute(range(len(tiles)), lines):
+    for idx, is_last in lookahead(distribute(range(len(tiles)), lines)):
         colors = tiles[idx]
         widths = []
         quo, rem = divmod(cols, len(colors))
@@ -401,6 +409,25 @@ def main_tile(args):
         line = ''
         for idx, textcolor in enumerate(colors):
             text, c = textcolor
+            text = text[:widths[idx]]
             line += paint(fg=c, bg=c)(text) + (~c)(' ' * (widths[idx] - len(text)))
 
-        print(line)
+        print(line, end='\n' if not is_last else '')
+
+    sys.stdout.flush()
+
+    import termios, tty
+    import os
+    import select
+
+    fd = sys.stdin.fileno()
+    orig_term_attr = termios.tcgetattr(fd)
+    when = termios.TCSADRAIN
+
+    try:
+        tty.setraw(fd, when=when)
+        select.select([fd], [], [], None)[0]
+
+    finally:
+        print('\r\n')
+        termios.tcsetattr(fd, when, orig_term_attr)
