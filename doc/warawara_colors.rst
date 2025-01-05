@@ -27,7 +27,7 @@ An object of the following types would be returned based on input arguments:
 * `ColorRGB`_
 * `ColorHSV`_
 
-If the argument does not have correct format, ``TypeError`` is returned.
+If the argument does not have correct format, ``TypeError`` is raised.
 
 
 ``Color256``
