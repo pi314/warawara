@@ -53,5 +53,12 @@ For example, ``warawara.subproc`` contains functions about sub-processes,
 
 Documents and descriptions of the categories are as following:
 
-* ``warawara.rst`` (this document)
-* `warawara_colors.rst <warawara_colors.rst>`_
+* `warawara <warawara.rst>`_
+* `warawara.colors <warawara_colors.rst>`_
+* ``warawara.fs`` (WIP)
+* ``warawara.itertools`` (WIP)
+* ``warawara.math`` (WIP)
+* ``warawara.regex`` (WIP)
+* ``warawara.sh`` (WIP)
+* ``warawara.subproc`` (WIP)
+* ``warawara.tui`` (WIP)
