@@ -336,8 +336,9 @@ class ColorCompound:
     def __eq__(self, other):
         return self.seq == other.seq
 
-export('paint')
-paint = ColorCompound
+@export
+def paint(fg=None, bg=None):
+    return ColorCompound(fg=fg, bg=bg)
 
 
 export('nocolor')

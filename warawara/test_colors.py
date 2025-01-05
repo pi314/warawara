@@ -79,8 +79,8 @@ class TestColorTrait(TestCase):
     def test_invert(self):
         self.eq(str(~self.orange), '\033[48;5;208m')
         self.eq(str(~self.coffee), '\033[48;2;192;255;238m')
-        self.is_true(isinstance(~self.orange, paint))
-        self.is_true(isinstance(~self.coffee, paint))
+        self.is_true(isinstance(~self.orange, ColorCompound))
+        self.is_true(isinstance(~self.coffee, ColorCompound))
 
     def test_div(self):
         self.eq(self.orange / self.coffee, paint(fg=self.orange, bg=self.coffee))
@@ -324,12 +324,17 @@ class TestPaint(TestCase):
     def test_or(self):
         self.eq(black | (~yellow), paint(fg=0, bg=11))
 
+        ry = red / yellow
+        ig = ~green
+        ryig = ry | ig
+        self.eq(ryig, paint(fg=red, bg=green))
+
     def test_div(self):
         ry = red / yellow
         bg = blue / green
         rybg = ry / bg
         self.eq(rybg, paint(fg=red, bg=blue))
-        self.eq(rybg('text'), f'\033[38;5;9;48;5;12mtext\033[m')
+        self.eq(rybg('text'), '\033[38;5;9;48;5;12mtext\033[m')
 
     def test_invert(self):
         ry = red / yellow
