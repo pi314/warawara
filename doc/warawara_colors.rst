@@ -144,7 +144,7 @@ Removes color sequence from input string.
 
    s = 'some string'
    cs = color(214)('some string') # '\e[38;5;214msome string\e[m'
-   decolor(s) # 'some string'
+   assert decolor(cs) == s
 
 
 ``names``
