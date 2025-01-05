@@ -497,6 +497,9 @@ def gradient(A, B, N=None):
     if isinstance(A, ColorRGB) and isinstance(B, ColorRGB):
         return gradient_rgb(A, B, N=N)
 
+    if isinstance(A, ColorHSV) and isinstance(B, ColorHSV):
+        return gradient_hsv(A, B, N=N)
+
     return (A, B)
 
 
@@ -589,6 +592,28 @@ def gradient_rgb(A, B, N):
     for t in (i / (N - 1) for i in range(1, N - 1)):
         c = lerp(a, b, t)
         ret.append(ColorRGB(vector(colorsys.hsv_to_rgb(*c)).map(lambda x: int(x * 255))))
+
+    ret.append(B)
+
+    return tuple(ret)
+
+
+def gradient_hsv(A, B, N):
+    # Calculate gradient in HSV
+    a = vector(A.hsv)
+    b = vector(B.hsv)
+
+    if N is None:
+        import math
+        dist_hue = math.ceil(abs(a[0] - b[0]) / 30)
+        dist_sat = math.floor(abs(a[1] - b[1]) / 10)
+        dist_val = math.floor(abs(a[2] - b[2]) / 10)
+        N = max(dist_hue, dist_sat, dist_val)
+
+    ret = [A]
+    for t in (i / (N - 1) for i in range(1, N - 1)):
+        c = lerp(a, b, t)
+        ret.append(ColorHSV(*c))
 
     ret.append(B)
 
