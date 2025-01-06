@@ -11,6 +11,7 @@ from .lib_colors import paint
 from .lib_colors import color
 from .lib_regex import rere
 from .lib_math import distribute
+from .lib_math import is_uint8
 from .lib_itertools import lookahead
 
 
@@ -55,22 +56,53 @@ def high_contrast_fg(c):
 
 
 def parse_target(arg):
-    if isinstance(arg, int) and 0 <= arg < 256:
+    if is_uint8(arg):
         return color(arg)
+
+    if not isinstance(arg, str):
+        return
+
+    if arg in lib_colors.names:
+        return getattr(lib_colors, arg)
 
     m = rere(arg)
 
+    # #RRGGBB format
     if m.fullmatch(r'#?([0-9a-fA-Z]{6})'):
         return color('#' + m.group(1))
 
+    # @HHH,SSS,VVV format
     if m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
         return lib_colors.ColorHSV(arg)
 
+    # int
     if m.fullmatch(r'[0-9]+'):
-        return color(int(arg))
+        try:
+            i = int(arg, 10)
+            if is_uint8(i):
+                return color(i)
+        except:
+            return
 
-    if isinstance(arg, str) and hasattr(lib_colors, arg):
-        return getattr(lib_colors, arg)
+
+def spell_suggestions(word):
+    import difflib
+    return difflib.get_close_matches(word, lib_colors.names, cutoff=0)
+
+
+def spell_suggestion_err_msg(word):
+    err_msg = 'Unknown color name "{}"'.format(word)
+    suggestions = spell_suggestions(word)[:3]
+    if suggestions:
+        err_msg += ', do you mean '
+        if len(suggestions) == 1:
+            err_msg += '"{}"'.format(suggestions[0])
+        elif len(suggestions) == 2:
+            err_msg += '"{}", or "{}"'.format(suggestions[0], suggestions[1])
+        elif len(suggestions) == 3:
+            err_msg += '"{}", "{}", or "{}"'.format(*suggestions)
+        err_msg += '?'
+    add_error(err_msg)
 
 
 def main_256cube():
@@ -233,7 +265,7 @@ def main_list(args):
         if t:
             expanded.append((t, arg))
         else:
-            add_error('Invalid color name "{}"'.format(arg))
+            spell_suggestion_err_msg(arg)
 
     check_errors()
 
@@ -368,25 +400,16 @@ def main_tile(args):
     tiles = [[]]
     for arg in args.targets:
         for token in arg.split('/'):
-            m = rere(token)
+            if token in ('all', 'named'):
+                add_error('"{}" cannot be used in tile mode'.format(token))
+                continue
 
-            if m.fullmatch(r'[0-9]+'):
-                tiles[-1].append((token, color(int(token, 10))))
-
-            elif m.fullmatch(r'#?[0-9A-Fa-f]{6}'):
-                tiles[-1].append((token, color(token)))
-
-            if m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
-                tiles[-1].append((token, lib_colors.ColorHSV(token)))
-
-            elif m.fullmatch(r'[A-Za-z0-9]+'):
-                try:
-                    tiles[-1].append((token, getattr(lib_colors, token)))
-                except AttributeError:
-                    add_error('Invalid color name "{}"'.format(token))
+            t = parse_target(token)
+            if t:
+                tiles[-1].append((token, t))
 
             else:
-                add_error('Invalid color "{}"'.format(token))
+                spell_suggestion_err_msg(token)
 
         tiles.append([])
 
@@ -435,3 +458,8 @@ def main_tile(args):
         finally:
             print('\r\n')
             termios.tcsetattr(fd, when, orig_term_attr)
+
+
+#TODO: gradient
+###### proposal1 [A,B,N]
+###### proposal2 --gradient=N
