@@ -478,7 +478,7 @@ def decolor(s):
 
 
 @export
-def gradient(A, B, N=None):
+def gradient(A, B, N=None, reverse=False, clockwise=None):
     if not isinstance(A, Color) or not isinstance(B, Color):
         raise TypeError('Can only calculate gradient() on Color objects')
 
@@ -488,19 +488,26 @@ def gradient(A, B, N=None):
     if N is not None and N < 2:
         raise ValueError('N={} is too small'.format(N))
 
+    ret = None
     if N == 2:
-        return (A, B)
+        ret = (A, B)
 
-    if isinstance(A, Color256) and isinstance(B, Color256):
-        return gradient_color256(A, B, N=N)
+    elif isinstance(A, Color256) and isinstance(B, Color256):
+        ret = gradient_color256(A, B, N=N)
 
-    if isinstance(A, ColorRGB) and isinstance(B, ColorRGB):
-        return gradient_rgb(A, B, N=N)
+    elif isinstance(A, ColorRGB) and isinstance(B, ColorRGB):
+        ret = gradient_rgb(A, B, N=N)
 
-    if isinstance(A, ColorHSV) and isinstance(B, ColorHSV):
-        return gradient_hsv(A, B, N=N)
+    elif isinstance(A, ColorHSV) and isinstance(B, ColorHSV):
+        ret = gradient_hsv(A, B, N=N, clockwise=clockwise)
 
-    return (A, B)
+    else:
+        ret = (A, B)
+
+    if reverse:
+        return ret[::-1]
+    else:
+        return ret
 
 
 def gradient_color256(A, B, N=None):
@@ -598,14 +605,15 @@ def gradient_rgb(A, B, N):
     return tuple(ret)
 
 
-def gradient_hsv(A, B, N):
+def gradient_hsv(A, B, N, clockwise):
     # Calculate gradient in HSV
     a = vector(A.hsv)
     b = vector(B.hsv)
 
-    # Only provide clockwise gradient
-    if a[0] > b[0]:
-        b[0] += 360
+    if clockwise == True:
+        b[0] += 360 if (a[0] > b[0]) else 0
+    elif clockwise == False:
+        a[0] += 360 if (a[0] < b[0]) else 0
 
     if N is None:
         import math

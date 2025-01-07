@@ -330,3 +330,9 @@ If ``A`` and ``B`` are different Color types, ``(A, B)`` is returned.
 For Color256 colors, the gradient is calculated on xterm 256 color cube.
 RGB range (``range(16, 232)``) and Grayscale range (``range(232,256)``)
 are defined as not compatible to each other.
+
+Keyword argument ``reverse=True`` / ``reverse=False`` could be provided to reverse the result.
+
+For ColorHSV colors, keyword argument ``clockwise=True`` / ``clockwise=False``
+could be provided to force the gradient sequence to be clockwise or counter-clockwise.
+If not specified, shortest path is attempted.

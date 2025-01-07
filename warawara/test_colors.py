@@ -481,8 +481,8 @@ class TestGradient(TestCase):
         A = ColorHSV(0, 100, 100)
         B = ColorHSV(300, 50, 100)
 
-        # default length
-        res = gradient(A, B)
+        # clockwise
+        res = gradient(A, B, clockwise=True)
         ans = (ColorHSV(0, 100, 100),
                ColorHSV(33, 94, 100),
                ColorHSV(66, 88, 100),
@@ -498,14 +498,30 @@ class TestGradient(TestCase):
             # Check if the colors are close enough
             self.le(abs(sum(a.hsv) - sum(b.hsv)), 2)
 
-        # reverse
-        res = gradient(B, A)
-        ans = (ColorHSV(300, 50, 100),
-               ColorHSV(315, 62, 100),
-               ColorHSV(330, 75, 100),
+        # counter-clockwise
+        res = gradient(A, B, clockwise=False)
+        ans = (ColorHSV(0, 100, 100),
                ColorHSV(345, 87, 100),
-               ColorHSV(0, 100, 100),)
+               ColorHSV(330, 75, 100),
+               ColorHSV(315, 62, 100),
+               ColorHSV(300, 50, 100),)
 
         for a, b in zip(res, ans):
+            # Check if the colors are close enough
+            self.le(abs(sum(a.hsv) - sum(b.hsv)), 2)
+
+        # reverse
+        res = gradient(A, B, clockwise=True)
+        rev = gradient(A, B, clockwise=True, reverse=True)
+
+        for a, b in zip(res, rev[::-1]):
+            # Check if the colors are close enough
+            self.le(abs(sum(a.hsv) - sum(b.hsv)), 2)
+
+        # reverse
+        res = gradient(A, B, clockwise=False)
+        rev = gradient(A, B, clockwise=False, reverse=True)
+
+        for a, b in zip(res, rev[::-1]):
             # Check if the colors are close enough
             self.le(abs(sum(a.hsv) - sum(b.hsv)), 2)
