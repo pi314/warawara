@@ -494,7 +494,18 @@ class TestGradient(TestCase):
                ColorHSV(266, 55, 100),
                ColorHSV(300, 50, 100),)
 
-        import math
+        for a, b in zip(res, ans):
+            # Check if the colors are close enough
+            self.le(abs(sum(a.hsv) - sum(b.hsv)), 2)
+
+        # reverse
+        res = gradient(B, A)
+        ans = (ColorHSV(300, 50, 100),
+               ColorHSV(315, 62, 100),
+               ColorHSV(330, 75, 100),
+               ColorHSV(345, 87, 100),
+               ColorHSV(0, 100, 100),)
+
         for a, b in zip(res, ans):
             # Check if the colors are close enough
             self.le(abs(sum(a.hsv) - sum(b.hsv)), 2)

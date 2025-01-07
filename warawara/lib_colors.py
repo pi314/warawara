@@ -603,6 +603,10 @@ def gradient_hsv(A, B, N):
     a = vector(A.hsv)
     b = vector(B.hsv)
 
+    # Only provide clockwise gradient
+    if a[0] > b[0]:
+        b[0] += 360
+
     if N is None:
         import math
         dist_hue = math.ceil(abs(a[0] - b[0]) / 30)
