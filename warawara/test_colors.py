@@ -229,7 +229,7 @@ class TestColorHSV(TestCase):
         self.eq(str(some_color), '\033[38;2;255;0;0m')
 
         some_color = ColorHSV(0, 100, 100) * 0.8
-        self.eq(str(some_color), '\033[38;2;204;40;40m')
+        self.eq(str(some_color), '\033[38;2;204;41;41m')
 
     def test_hsv_div(self):
         some_color = ColorHSV(160, 90, 0) // 2

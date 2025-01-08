@@ -191,9 +191,9 @@ class ColorRGB(Color):
             return ''
 
         return '2;{};{};{}'.format(
-                min(int(self.r), 255),
-                min(int(self.g), 255),
-                min(int(self.b), 255))
+                min(round(self.r), 255),
+                min(round(self.g), 255),
+                min(round(self.b), 255))
 
     def __add__(self, other):
         rgb = vector(self.rgb) + vector(other.rgb)
@@ -206,16 +206,16 @@ class ColorRGB(Color):
         return ColorRGB(vector(self.rgb) // num, overflow=True)
 
     def __int__(self):
-        return (min(int(self.r), 255) << 16) | (min(int(self.g), 255) << 8) | (min(int(self.b), 255))
+        return (min(round(self.r), 255) << 16) | (min(round(self.g), 255) << 8) | (min(round(self.b), 255))
 
     def __format__(self, spec):
         if not spec:
             return str(self)
 
         if spec in ('#x', '#X'):
-            r = min(int(self.r), 255)
-            g = min(int(self.g), 255)
-            b = min(int(self.b), 255)
+            r = min(round(self.r), 255)
+            g = min(round(self.g), 255)
+            b = min(round(self.b), 255)
             x = spec[1]
             return '#{r:0>2{x}}{g:0>2{x}}{b:0>2{x}}'.format(r=r, g=g, b=b, x=x)
 
@@ -224,7 +224,7 @@ class ColorRGB(Color):
     def to_hsv(self, overflow=False):
         import colorsys
         hsv = colorsys.rgb_to_hsv(self.r / 255, self.g / 255, self.b / 255)
-        return ColorHSV(hsv[0] * 359, hsv[1] * 100, hsv[2] * 100, overflow=overflow)
+        return ColorHSV(hsv[0] * 360, hsv[1] * 100, hsv[2] * 100, overflow=overflow)
 
 
 @export
@@ -267,7 +267,7 @@ class ColorHSV(Color):
             raise TypeError('Invalid HSV value: {}'.format(args))
 
     def __repr__(self):
-        return 'ColorHSV({:}deg, {:}%, {:}%)'.format(int(self.h), int(self.s), int(self.v))
+        return 'ColorHSV({:}deg, {:}%, {:}%)'.format(round(self.h), round(self.s), round(self.v))
 
     @property
     def hsv(self):
