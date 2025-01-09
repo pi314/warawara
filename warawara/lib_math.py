@@ -24,6 +24,15 @@ def lerp(a, b, t):
 
 
 @export
+def clamp(min, x, max):
+    if min > max:
+        raise ValueError('min value should not larger than max value')
+
+    import builtins
+    return builtins.max(min, builtins.min(x, max))
+
+
+@export
 class vector:
     def __init__(self, *args):
         args = unwrap_one(args)
