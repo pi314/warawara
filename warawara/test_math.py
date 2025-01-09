@@ -76,6 +76,12 @@ class TestMath(TestCase):
         with self.assertRaises(ValueError):
             v1 * (1, 2, 3, 4)
 
+        lerp = wara.lerp
+        self.eq(lerp(v1, v2, 0), v1)
+        self.eq(lerp(v1, v2, 0.5), (2.5, 3.5, 4.5))
+        self.eq(lerp(v1, v2, 1), v2)
+        self.eq(lerp(v1, v2, 2), (7, 8, 9))
+
     def test_interval(self):
         interval = wara.interval
         self.eq(list(interval(1, 3)), [1, 2, 3])
