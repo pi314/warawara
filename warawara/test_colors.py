@@ -127,10 +127,18 @@ class TestColorRGB(TestCase):
         self.eq(ColorRGB().seq, '')
 
     def test_rgb(self):
-        some_color = ColorRGB(160, 90, 0)
-        self.eq(some_color.r, 160)
+        some_color = ColorRGB(160.2, 90, 0)
+
+        self.eq(some_color.r, 160.2)
         self.eq(some_color.g, 90)
         self.eq(some_color.b, 0)
+        self.eq(some_color.rgb, (160.2, 90, 0))
+
+        self.eq(some_color.R, 160)
+        self.eq(some_color.G, 90)
+        self.eq(some_color.B, 0)
+        self.eq(some_color.RGB, (160, 90, 0))
+
         self.eq(int(some_color), 0xA05A00)
 
     def test_value_range_check(self):
@@ -142,6 +150,10 @@ class TestColorRGB(TestCase):
         self.eq(some_color.r, 320)
         self.eq(some_color.g, 180)
         self.eq(some_color.b, 0)
+
+        self.eq(some_color.R, 255)
+        self.eq(some_color.G, 180)
+        self.eq(some_color.B, 0)
 
         some_color = ColorRGB(160, 90, 0) * 0.8
         self.eq(str(some_color), '\033[38;2;128;72;0m')
@@ -182,7 +194,8 @@ class TestColorRGB(TestCase):
         red = ColorRGB(255, 0, 0)
         self.eq('{:#x}'.format(red), '#ff0000')
         self.eq('{:#X}'.format(red), '#FF0000')
-        self.eq('{}'.format(red), str(red))
+        with self.assertRaises(TypeError):
+            self.eq('{:d}'.format(red), str(red))
 
 
 class TestColorHSV(TestCase):
@@ -432,50 +445,46 @@ class TestGradient(TestCase):
         # default length
         res = gradient(A, B)
         ans = (ColorRGB(242, 5, 148),
-               ColorRGB(204, 35, 237),
-               ColorRGB(110, 64, 232),
-               ColorRGB(93, 132, 228),
-               ColorRGB(120, 208, 223),
+               ColorRGB(218, 58, 158),
+               ColorRGB(194, 112, 168),
+               ColorRGB(170, 166, 179),
                ColorRGB(146, 219, 189))
-
-        self.eq(res, ans)
+        for i in range(len(res)):
+            self.eq(res[i], ans[i])
 
         # shorter length
         res = gradient(A, B, N=4)
-        ans = (color(242, 5, 148),
-               color(137, 55, 234),
-               color(102, 161, 226),
-               color(146, 219, 189))
-        self.eq(res, tuple(map(color, ans)))
+        ans = (ColorRGB(242, 5, 148),
+               ColorRGB(210, 76, 162),
+               ColorRGB(178, 148, 175),
+               ColorRGB(146, 219, 189))
+        for i in range(len(res)):
+            self.eq(res[i], ans[i])
 
         # longer length
         res = gradient(A, B, N=15)
         ans = (ColorRGB(242, 5, 148),
-               ColorRGB(240, 16, 196),
-               ColorRGB(237, 26, 238),
-               ColorRGB(196, 37, 237),
-               ColorRGB(159, 48, 235),
-               ColorRGB(127, 58, 233),
-               ColorRGB(100, 69, 232),
-               ColorRGB(79, 80, 230),
-               ColorRGB(89, 118, 228),
-               ColorRGB(99, 151, 227),
-               ColorRGB(108, 179, 225),
-               ColorRGB(118, 203, 223),
-               ColorRGB(127, 222, 221),
-               ColorRGB(136, 220, 203),
-               ColorRGB(146, 219, 189),)
-        self.eq(res, ans)
+               ColorRGB(235, 20, 151),
+               ColorRGB(228, 36, 154),
+               ColorRGB(221, 51, 157),
+               ColorRGB(215, 66, 160),
+               ColorRGB(208, 81, 163),
+               ColorRGB(201, 97, 166),
+               ColorRGB(194, 112, 168),
+               ColorRGB(187, 127, 171),
+               ColorRGB(180, 143, 174),
+               ColorRGB(173, 158, 177),
+               ColorRGB(167, 173, 180),
+               ColorRGB(160, 188, 183),
+               ColorRGB(153, 204, 186),
+               ColorRGB(146, 219, 189))
+        for i in range(len(res)):
+            self.eq(res[i], ans[i])
 
         A = color('#FF1100')
         B = color('#FF0011')
         res = gradient(A, B, N=3)
-        self.eq(res, (A, color('#FF0000'), B))
-
-        A = color('#FF0011')
-        B = color('#FF1100')
-        res = gradient(A, B, N=3)
-        self.eq(res, (A, color('#FF0000'), B))
+        self.eq(res, (A, color('#FF0808'), B))
 
     def test_hsv(self):
         A = ColorHSV(0, 100, 100)
@@ -483,6 +492,7 @@ class TestGradient(TestCase):
 
         # clockwise
         res = gradient(A, B, clockwise=True)
+        res2 = gradient(A, B)
         ans = (ColorHSV(0, 100, 100),
                ColorHSV(33, 94, 100),
                ColorHSV(66, 88, 100),
@@ -492,6 +502,20 @@ class TestGradient(TestCase):
                ColorHSV(200, 66, 100),
                ColorHSV(233, 61, 100),
                ColorHSV(266, 55, 100),
+               ColorHSV(300, 50, 100),)
+
+        self.eq(len(res), len(ans))
+        for a, b, c in zip(res, res2, ans):
+            # Check if the colors are close enough
+            self.le(abs(sum(a.hsv) - sum(b.hsv)), 2)
+            self.le(abs(sum(a.hsv) - sum(c.hsv)), 2)
+
+        res = gradient(A, B, clockwise=True, N=5)
+        res2 = gradient(A, B)
+        ans = (ColorHSV(0, 100, 100),
+               ColorHSV(75, 88, 100),
+               ColorHSV(150, 75, 100),
+               ColorHSV(225, 62, 100),
                ColorHSV(300, 50, 100),)
 
         for a, b in zip(res, ans):
@@ -506,6 +530,7 @@ class TestGradient(TestCase):
                ColorHSV(315, 62, 100),
                ColorHSV(300, 50, 100),)
 
+        self.eq(len(res), len(ans))
         for a, b in zip(res, ans):
             # Check if the colors are close enough
             self.le(abs(sum(a.hsv) - sum(b.hsv)), 2)

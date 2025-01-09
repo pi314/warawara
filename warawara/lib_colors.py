@@ -8,6 +8,7 @@ from .lib_math import lerp
 from .lib_math import interval
 from .lib_math import distribute
 from .lib_math import is_uint8
+from .lib_math import clamp
 
 from .lib_itertools import unwrap_one
 
@@ -182,6 +183,22 @@ class ColorRGB(Color):
         return 'ColorRGB({}, {}, {})'.format(self.r, self.g, self.b)
 
     @property
+    def R(self):
+        return 0 if self.r is None else clamp(0, round(self.r), 255)
+
+    @property
+    def G(self):
+        return 0 if self.g is None else clamp(0, round(self.g), 255)
+
+    @property
+    def B(self):
+        return 0 if self.b is None else clamp(0, round(self.b), 255)
+
+    @property
+    def RGB(self):
+        return (self.R, self.G, self.B)
+
+    @property
     def rgb(self):
         return (self.r, self.g, self.b)
 
@@ -189,11 +206,7 @@ class ColorRGB(Color):
     def seq(self):
         if None in self.rgb:
             return ''
-
-        return '2;{};{};{}'.format(
-                min(round(self.r), 255),
-                min(round(self.g), 255),
-                min(round(self.b), 255))
+        return '2;{};{};{}'.format(self.R, self.G, self.B)
 
     def __add__(self, other):
         rgb = vector(self.rgb) + vector(other.rgb)
@@ -206,24 +219,21 @@ class ColorRGB(Color):
         return ColorRGB(vector(self.rgb) // num, overflow=True)
 
     def __int__(self):
-        return (min(round(self.r), 255) << 16) | (min(round(self.g), 255) << 8) | (min(round(self.b), 255))
+        return (self.R << 16) | (self.G << 8) | (self.B)
 
     def __format__(self, spec):
         if not spec:
             return str(self)
 
-        if spec in ('#x', '#X'):
-            r = min(round(self.r), 255)
-            g = min(round(self.g), 255)
-            b = min(round(self.b), 255)
-            x = spec[1]
-            return '#{r:0>2{x}}{g:0>2{x}}{b:0>2{x}}'.format(r=r, g=g, b=b, x=x)
+        if spec in ('#', '#x', '#X'):
+            x = (spec + 'X')[1]
+            return '#{r:0>2{x}}{g:0>2{x}}{b:0>2{x}}'.format(r=self.R, g=self.G, b=self.B, x=x)
 
-        return format(self.rgb, spec)
+        return format(self.RGB, spec)
 
     def to_hsv(self, overflow=False):
         import colorsys
-        hsv = colorsys.rgb_to_hsv(self.r / 255, self.g / 255, self.b / 255)
+        hsv = colorsys.rgb_to_hsv(self.R / 255, self.G / 255, self.B / 255)
         return ColorHSV(hsv[0] * 360, hsv[1] * 100, hsv[2] * 100, overflow=overflow)
 
 
@@ -267,7 +277,23 @@ class ColorHSV(Color):
             raise TypeError('Invalid HSV value: {}'.format(args))
 
     def __repr__(self):
-        return 'ColorHSV({:}deg, {:}%, {:}%)'.format(round(self.h), round(self.s), round(self.v))
+        return 'ColorHSV({:}deg, {:}%, {:}%)'.format(*self.HSV)
+
+    @property
+    def H(self):
+        return 0 if self.h is None else ((round(self.h) + 360) % 360)
+
+    @property
+    def S(self):
+        return 0 if self.s is None else clamp(0, round(self.s), 100)
+
+    @property
+    def V(self):
+        return 0 if self.v is None else clamp(0, round(self.v), 100)
+
+    @property
+    def HSV(self):
+        return (self.H, self.S, self.V)
 
     @property
     def hsv(self):
@@ -290,21 +316,21 @@ class ColorHSV(Color):
         return ColorHSV(vector(self.hsv) // num, overflow=True)
 
     def __int__(self):
-        return (min(int(self.h), 359) * 1000000) + (min(int(self.s), 100) * 1000) + (min(int(self.v), 100))
+        return (self.H * 1000000) + (self.S * 1000) + (self.V)
 
     def __format__(self, spec):
         if not spec:
             return str(self)
         if spec == '#':
-            return '(@{}, {}%, {}%)'.format(int(self.h), int(self.s), int(self.v))
+            return '(@{}, {}%, {}%)'.format(self.H, self.S, self.V)
         return format(self.hsv, spec)
 
     def to_rgb(self, overflow=False):
         import colorsys
         return ColorRGB(vector(colorsys.hsv_to_rgb(
-            min(self.h, 359) / 360,
-            min(self.s, 100) / 100,
-            min(self.v, 100) / 100)) * 255, overflow=overflow)
+            self.H / 360,
+            self.S / 100,
+            self.V / 100)) * 255, overflow=overflow)
 
 
 @export
@@ -567,41 +593,19 @@ def gradient_color256_rgb_range(A, B, N=None):
 
 def gradient_rgb(A, B, N):
     # Calculate gradient in RGB
-    # a = (A.r, A.g, A.b)
-    # b = (B.r, B.g, B.b)
-    #
-    # ret = [A]
-    # for t in (i / (N - 1) for i in range(1, N - 1)):
-    #     ret.append(ColorRGB(tuple(map(int, lerp(a, b, t)))))
-    # ret.append(B)
-    # return tuple(ret)
-
-    # Calculate gradient in HSV
-    import colorsys
-    a = vector(colorsys.rgb_to_hsv(A.r / 255, A.g / 255, A.b / 255))
-    b = vector(colorsys.rgb_to_hsv(B.r / 255, B.g / 255, B.b / 255))
-
-    # Choose shorter hue gradient path
-    if abs(b[0] - a[0]) > 0.5:
-        if b[0] < a[0]:
-            b[0] += 1
-        else:
-            a[0] += 1
-
+    a = vector(A.rgb)
+    b = vector(B.rgb)
     if N is None:
         import math
-        dist_hue = math.ceil(abs(a[0] - b[0]) * 12)
-        dist_sat = math.floor(abs(a[1] - b[1]) * 6)
-        dist_val = math.floor(abs(a[2] - b[2]) * 6)
-        N = max(dist_hue, dist_sat, dist_val)
+        dist_r = math.ceil(abs(a[0] - b[0]) // 40)
+        dist_g = math.ceil(abs(a[1] - b[1]) // 40)
+        dist_b = math.ceil(abs(a[2] - b[2]) // 40)
+        N = max(dist_r, dist_g, dist_b)
 
     ret = [A]
     for t in (i / (N - 1) for i in range(1, N - 1)):
-        c = lerp(a, b, t)
-        ret.append(ColorRGB(vector(colorsys.hsv_to_rgb(*c)).map(lambda x: int(x * 255))))
-
+        ret.append(ColorRGB(tuple(lerp(a, b, t))))
     ret.append(B)
-
     return tuple(ret)
 
 
