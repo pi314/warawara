@@ -16,11 +16,11 @@ from .lib_itertools import lookahead
 
 
 errors = []
-def add_error(errmsg):
+def pend_error(errmsg):
     errors.append(errmsg)
 
 
-def check_errors():
+def judge_errors():
     if errors:
         for error in errors:
             print(error)
@@ -102,7 +102,7 @@ def spell_suggestion_err_msg(word):
         elif len(suggestions) == 3:
             err_msg += '"{}", "{}", or "{}"'.format(*suggestions)
         err_msg += '?'
-    add_error(err_msg)
+    pend_error(err_msg)
 
 
 def main_256cube():
@@ -244,16 +244,15 @@ Ignores "all" and "named" macros''')
 def main_list(args):
     if args.gradient:
         if not args.targets:
-            print('No colors to gradient')
-            sys.exit(1)
+            pend_error('No colors to gradient')
 
         if len(args.targets) == 1:
-            print('Need destination color')
-            sys.exit(1)
+            pend_error('Need destination color')
 
         if len(args.targets) > 3:
-            print('Too many arguments')
-            sys.exit(1)
+            pend_error('Too many arguments')
+
+        judge_errors()
 
         arg_src = args.targets[0]
         arg_dst = args.targets[1]
@@ -274,9 +273,9 @@ def main_list(args):
         try:
             n = int(arg_n, 10) if arg_n else None
         except:
-            add_error('Invalid number: {}'.format(arg_n))
+            pend_error('Invalid number: {}'.format(arg_n))
 
-        check_errors()
+        judge_errors()
 
         def color_text(this_color):
             if isinstance(this_color, lib_colors.Color256):
@@ -334,7 +333,7 @@ def main_list(args):
             else:
                 spell_suggestion_err_msg(arg)
 
-        check_errors()
+        judge_errors()
 
     # Grep
     if args.grep:
@@ -458,25 +457,28 @@ def main_list(args):
 
 def main_tile(args):
     if not args.targets:
-        print('No colors to tile')
-        sys.exit(1)
+        pend_error('No colors to tile')
+
+    judge_errors()
 
     tiles = [[]]
     for arg in args.targets:
         for token in arg.split('/'):
             if token in ('all', 'named'):
-                add_error('"{}" cannot be used in tile mode'.format(token))
+                pend_error('"{}" cannot be used in tile mode'.format(token))
                 continue
 
             t = parse_target(token)
-            if t:
-                tiles[-1].append((token, t))
-            else:
+            if not t:
                 spell_suggestion_err_msg(token)
+                continue
+
+            tiles[-1].append((token, t))
 
         tiles.append([])
 
-    check_errors()
+    judge_errors()
+
     if not tiles[-1]:
         tiles.pop()
 
