@@ -105,6 +105,25 @@ def spell_suggestion_err_msg(word):
     pend_error(err_msg)
 
 
+def expand_macro_all():
+    ret = []
+    for i in range(256):
+        ret.append((parse_target(str(i)), []))
+
+    for name in lib_colors.names:
+        c = parse_target(name)
+        ret[c.index][1].append(name)
+
+    return ret
+
+
+def expand_macro_named():
+    ret = []
+    for name in lib_colors.names:
+        ret.append((parse_target(name), [name]))
+    return ret
+
+
 def main_256cube():
     # Print color cube palette
     print('Format: ESC[30;48;5;{}m')
@@ -243,6 +262,7 @@ Ignores "all" and "named" macros''')
 
 def main_list(args):
     if args.gradient:
+        # argument handling for gradient
         if not args.targets:
             pend_error('No colors to gradient')
 
@@ -290,6 +310,7 @@ def main_list(args):
         expanded = [(g, color_text(g)) for g in lib_colors.gradient(src, dst, n, reverse=args.reverse, clockwise=args.clockwise)]
 
     else:
+        # argument handling for not gradient
         if args.merge is None:
             if 'all' in args.targets or 'named' in args.targets:
                 args.merge = True
@@ -304,27 +325,17 @@ def main_list(args):
         expanded = []
         for arg in args.targets:
             if arg in ('all', 'named'):
-                local_expansion = []
                 if arg == 'all':
-                    for i in range(256):
-                        local_expansion.append((parse_target(str(i)), []))
-
-                    for name in lib_colors.names:
-                        c = parse_target(name)
-                        local_expansion[c.index][1].append(name)
-
+                    expansion = expand_macro_all()
                 elif arg == 'named':
-                    for name in lib_colors.names:
-                        local_expansion.append((parse_target(name), [name]))
+                    expansion = expand_macro_named()
 
-                for entry in local_expansion:
+                for entry in expansion:
                     if not entry[1]:
                         expanded.append((entry[0], None))
                     else:
                         for name in entry[1]:
                             expanded.append((entry[0], name))
-
-                del local_expansion
                 continue
 
             t = parse_target(arg)
