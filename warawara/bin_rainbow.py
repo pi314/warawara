@@ -16,14 +16,14 @@ from .lib_itertools import lookahead
 
 
 errors = []
-def pend_error(errmsg):
+def pend_error(*errmsg):
     errors.append(errmsg)
 
 
 def judge_errors():
     if errors:
         for error in errors:
-            print(error)
+            print(*error)
         sys.exit(1)
 
 
@@ -56,33 +56,54 @@ def high_contrast_fg(c):
 
 
 def parse_target(arg):
-    if is_uint8(arg):
-        return color(arg)
-
     if not isinstance(arg, str):
         return
 
-    if arg in lib_colors.names:
-        return getattr(lib_colors, arg)
+    to = []
 
-    m = rere(arg)
+    while True:
+        m = rere(arg)
+
+        if m.fullmatch(r'^(.+)\.(rgb|RGB|hsv|HSV)$'):
+            to.append(m.group(2))
+            arg = m.group(1)
+            continue
+
+        break
+
+    if arg in lib_colors.names:
+        ret = getattr(lib_colors, arg)
 
     # #RRGGBB format
-    if m.fullmatch(r'#?([0-9a-fA-Z]{6})'):
-        return color('#' + m.group(1))
+    elif m.fullmatch(r'#?([0-9a-fA-Z]{6})'):
+        ret = color('#' + m.group(1))
 
     # @HHH,SSS,VVV format
-    if m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
-        return lib_colors.ColorHSV(arg)
+    elif m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
+        ret = lib_colors.ColorHSV(arg)
 
     # int
-    if m.fullmatch(r'[0-9]+'):
+    elif m.fullmatch(r'[0-9]+'):
         try:
             i = int(arg, 10)
             if is_uint8(i):
-                return color(i)
+                ret = color(i)
         except:
-            return
+            ret = None
+
+    tr_path = arg
+    for t in to[::-1]:
+        try:
+            if t.lower() == 'rgb':
+                ret = ret.to_rgb()
+                tr_path += '.rgb'
+            elif t.lower() == 'hsv':
+                ret = ret.to_hsv()
+                tr_path += '.hsv'
+        except AttributeError:
+            pend_error('Error: Cannot transform color', tr_path, 'to', t)
+
+    return ret
 
 
 def spell_suggestions(word):
