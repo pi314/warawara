@@ -15,28 +15,28 @@ class TestColorFacade(TestCase):
         self.eq(color(color(208)), color(208))
 
         # subclass
-        self.is_true(issubclass(Color256, Color))
-        self.is_true(issubclass(ColorRGB, Color))
+        self.true(issubclass(Color256, Color))
+        self.true(issubclass(ColorRGB, Color))
 
         # Color256
         orange = color(208)
-        self.is_true(isinstance(orange, Color256))
-        self.is_true(isinstance(orange, Color))
+        self.true(isinstance(orange, Color256))
+        self.true(isinstance(orange, Color))
 
         # ColorRGB
         coffee = color((0xC0, 0xFF, 0xEE))
-        self.is_true(isinstance(coffee, ColorRGB))
-        self.is_true(isinstance(coffee, Color))
+        self.true(isinstance(coffee, ColorRGB))
+        self.true(isinstance(coffee, Color))
 
         # ColorRGB
         coffee = color('#C0FFEE')
-        self.is_true(isinstance(coffee, ColorRGB))
-        self.is_true(isinstance(coffee, Color))
+        self.true(isinstance(coffee, ColorRGB))
+        self.true(isinstance(coffee, Color))
 
         # ColorHSV
         lime = color('@120,100,100')
-        self.is_true(isinstance(lime, ColorHSV))
-        self.is_true(isinstance(lime, Color))
+        self.true(isinstance(lime, ColorHSV))
+        self.true(isinstance(lime, Color))
 
     def test_color_invalid_value(self):
         with self.assertRaises(TypeError):
@@ -90,9 +90,9 @@ class TestColorTraits(TestCase):
         self.eq(str(~self.orange), '\033[48;5;214m')
         self.eq(str(~self.coffee), '\033[48;2;192;255;238m')
         self.eq(str(~self.purple), '\033[48;2;128;0;128m')
-        self.is_true(isinstance(~self.orange, ColorCompound))
-        self.is_true(isinstance(~self.coffee, ColorCompound))
-        self.is_true(isinstance(~self.purple, ColorCompound))
+        self.true(isinstance(~self.orange, ColorCompound))
+        self.true(isinstance(~self.coffee, ColorCompound))
+        self.true(isinstance(~self.purple, ColorCompound))
 
     def test_div(self):
         colors_under_test = (self.orange, self.coffee, self.purple)
@@ -229,7 +229,7 @@ class TestColorRGB(TestCase):
 
     def test_rgb_to_rgb(self):
         red = ColorRGB(255, 0, 0)
-        self.is_true(red.to_rgb() is red)
+        self.true(red.to_rgb() is red)
 
     def test_rgb_to_hsv(self):
         red = ColorRGB(255, 0, 0)
@@ -264,7 +264,7 @@ class TestColorHSV(TestCase):
 
     def test_to_hsv(self):
         red = ColorHSV('@0,100,100')
-        self.is_true(red.to_hsv() is red)
+        self.true(red.to_hsv() is red)
 
     def test_hsv(self):
         some_color = ColorHSV(60, 90, 0)
@@ -387,7 +387,7 @@ class TestBuiltInColors(TestCase):
 
 class TestPaint(TestCase):
     def test_repr(self):
-        self.is_true(repr(paint()).startswith('ColorCompound'))
+        self.true(repr(paint()).startswith('ColorCompound'))
 
     def test_or(self):
         self.eq(black | (~yellow), paint(fg=0, bg=11))

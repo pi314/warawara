@@ -28,6 +28,8 @@ class TestCase(unittest.TestCase):
         self.le = self.assertLessEqual
         self.is_true = self.assertTrue
         self.is_false = self.assertFalse
+        self.true = self.is_true
+        self.false = self.is_false
 
     def checkpoint(self):
         return Checkpoint(self)
