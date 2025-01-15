@@ -28,6 +28,24 @@ def unwrap_one(obj):
 
 
 @export
+def unwrap(obj=None):
+    try:
+        while True:
+            if isinstance(obj, str):
+                return obj
+
+            if len(obj) == 1:
+                obj = obj[0]
+                continue
+
+            return obj
+    except TypeError:
+        pass
+
+    return obj
+
+
+@export
 def flatten(tree):
     if not iterable(tree) or isinstance(tree, str):
         return tree
