@@ -10,8 +10,6 @@ from .lib_math import distribute
 from .lib_math import is_uint8
 from .lib_math import clamp
 
-from .lib_itertools import unwrap_one
-
 from .internal_utils import exporter
 export, __all__ = exporter()
 
@@ -66,33 +64,35 @@ class Color(abc.ABC):
 
 @export
 def color(*args, **kwargs):
-    args = unwrap_one(args)
+    nargs = len(args)
+    arg1 = args[0] if len(args) == 1 else None
 
     # empty
     if not args:
         return Color256(None)
 
+    if nargs != 1:
+        # ColorRGB ctor
+        if len(args) == 3 and all(is_uint8(i) for i in args):
+            return ColorRGB(*args, **kwargs)
+
     # Copy ctor
-    elif len(args) == 1 and issubclass(type(args[0]), Color):
-        return type(args[0])(*args, **kwargs)
+    elif issubclass(type(arg1), Color):
+        return type(arg1)(*args, **kwargs)
 
     # Color256 ctor
-    elif len(args) == 1 and (args[0] is None or is_uint8(args[0])):
+    elif arg1 is None or is_uint8(arg1):
         return Color256(*args, **kwargs)
 
-    # ColorRGB ctor
-    elif len(args) == 3 and all(is_uint8(i) for i in args):
-        return ColorRGB(*args, **kwargs)
-
     # ColorRGB ctor #RRGGBB
-    elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'#[0-9A-Fa-f]{6}', args[0]):
+    elif isinstance(arg1, str) and re.fullmatch(r'#[0-9A-Fa-f]{6}', arg1):
         return ColorRGB(*args, **kwargs)
 
     # ColorHSV @H,S,V format
-    elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'@[0-9]+,[0-9]+,[0-9]+', args[0]):
+    elif isinstance(arg1, str) and re.fullmatch(r'@[0-9]+,[0-9]+,[0-9]+', arg1):
         return ColorHSV(*args, **kwargs)
 
-    raise TypeError('Invalid arguments: ' + ' '.join(args))
+    raise TypeError('Invalid arguments: {}'.format(args))
 
 
 @export
@@ -152,7 +152,8 @@ class Color256(Color):
 @export
 class ColorRGB(Color):
     def __init__(self, *args, overflow=False):
-        args = unwrap_one(args)
+        nargs = len(args)
+        arg1 = args[0] if len(args) else None
 
         type_check = (lambda x: 0 <= x < 256
                       if not overflow
@@ -165,23 +166,23 @@ class ColorRGB(Color):
         if not args:
             return
 
+        elif nargs != 1:
+            # (num, num, num) format
+            if len(args) == 3 and all(type_check(i) for i in args):
+                (self.r, self.g, self.b) = args
+
         # Copy ctor
-        elif len(args) == 1 and isinstance(args[0], self.__class__):
-            other = args[0]
-            (self.r, self.g, self.b) = (other.r, other.g, other.b)
+        elif isinstance(arg1, self.__class__):
+            (self.r, self.g, self.b) = arg1.rgb
 
         # #RRGGBB format
-        elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'#[0-9A-Fa-f]{6}', args[0]):
-            rgb_str = args[0][1:]
+        elif isinstance(arg1, str) and re.fullmatch(r'#[0-9A-Fa-f]{6}', arg1):
+            rgb_str = arg1[1:]
             self.r = int(rgb_str[0:2], 16)
             self.g = int(rgb_str[2:4], 16)
             self.b = int(rgb_str[4:6], 16)
 
-        # (num, num, num) format
-        elif len(args) == 3 and all(type_check(i) for i in args):
-            (self.r, self.g, self.b) = args
-
-        else:
+        if None in self.rgb:
             raise TypeError('Invalid RGB value: {}'.format(args))
 
     def __repr__(self):
@@ -218,10 +219,10 @@ class ColorRGB(Color):
         return ColorRGB(*rgb, overflow=True)
 
     def __mul__(self, num):
-        return ColorRGB(vector(self.rgb) * num, overflow=True)
+        return ColorRGB(*vector(self.rgb) * num, overflow=True)
 
     def __floordiv__(self, num):
-        return ColorRGB(vector(self.rgb) // num, overflow=True)
+        return ColorRGB(*vector(self.rgb) // num, overflow=True)
 
     def __int__(self):
         return (self.R << 16) | (self.G << 8) | (self.B)
@@ -248,7 +249,7 @@ class ColorRGB(Color):
 @export
 class ColorHSV(Color):
     def __init__(self, *args, overflow=False):
-        args = unwrap_one(args)
+        arg1 = args[0] if len(args) else None
 
         self.h = None
         self.s = None
@@ -262,22 +263,23 @@ class ColorHSV(Color):
             return
 
         # Copy ctor
-        elif len(args) == 1 and isinstance(args[0], self.__class__):
-            other = args[0]
+        elif len(args) == 1 and isinstance(arg1, self.__class__):
+            other = arg1
             (h, s, v) = (other.h, other.s, other.v)
 
         # @H,S,V format
-        elif len(args) == 1 and isinstance(args[0], str) and re.fullmatch(r'@[0-9]+,[0-9]+,[0-9]+', args[0]):
-            (h, s, v) = list(map(lambda x: int(x, 10), args[0][1:].split(',')))
+        elif len(args) == 1 and isinstance(arg1, str) and re.fullmatch(r'@[0-9]+,[0-9]+,[0-9]+', arg1):
+            (h, s, v) = list(map(lambda x: int(x, 10), arg1[1:].split(',')))
 
         # (num, num, num) format
         elif len(args) == 3:
             (h, s, v) = args
 
+        # Value range check
         if (all(isinstance(x, (int, float)) for x in (h, s, v)) and
             overflow or
-            ((0 <= s <= 100) and
-             (0 <= v <= 100))):
+            ((s is not None and 0 <= s <= 100) and
+             (v is not None and 0 <= v <= 100))):
             (self.h, self.s, self.v) = (h % 360, s, v)
             self._rgb = self.to_rgb(overflow)
 
@@ -318,10 +320,10 @@ class ColorHSV(Color):
         return ColorHSV(*hsv, overflow=True)
 
     def __mul__(self, num):
-        return ColorHSV(vector(self.hsv) * num, overflow=True)
+        return ColorHSV(*vector(self.hsv) * num, overflow=True)
 
     def __floordiv__(self, num):
-        return ColorHSV(vector(self.hsv) // num, overflow=True)
+        return ColorHSV(*vector(self.hsv) // num, overflow=True)
 
     def __int__(self):
         return (self.H * 1000000) + (self.S * 1000) + (self.V)
@@ -335,7 +337,7 @@ class ColorHSV(Color):
 
     def to_rgb(self, overflow=False):
         import colorsys
-        return ColorRGB(vector(colorsys.hsv_to_rgb(
+        return ColorRGB(*vector(colorsys.hsv_to_rgb(
             self.H / 360,
             self.S / 100,
             self.V / 100)) * 255, overflow=overflow)
@@ -615,7 +617,7 @@ def gradient_rgb(A, B, N):
 
     ret = [A]
     for t in (i / (N - 1) for i in range(1, N - 1)):
-        ret.append(ColorRGB(tuple(lerp(a, b, t))))
+        ret.append(ColorRGB(*tuple(lerp(a, b, t))))
     ret.append(B)
     return tuple(ret)
 

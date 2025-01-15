@@ -5,11 +5,21 @@ from warawara import *
 
 class TestColorFacade(TestCase):
     def test_color_facade(self):
-        # arg unpack
-        self.eq(color((208,)), color(208))
-        self.eq(color([208]), color(208))
-        self.eq(color((0xC0, 0xFF, 0xEE)), color('#C0FFEE'))
-        self.eq(color([0xC0, 0xFF, 0xEE]), color('#C0FFEE'))
+        # no argument unpack
+        with self.assertRaises(TypeError):
+            color((208,))
+
+        with self.assertRaises(TypeError):
+            color([208])
+
+        with self.assertRaises(TypeError):
+            color((0xC0, 0xFF, 0xEE))
+
+        with self.assertRaises(TypeError):
+            color([0xC0, 0xFF, 0xEE])
+
+        with self.assertRaises(TypeError):
+            color(0xC0, 0xFF)
 
         # copy_ctor
         self.eq(color(color(208)), color(208))
@@ -24,7 +34,7 @@ class TestColorFacade(TestCase):
         self.true(isinstance(orange, Color))
 
         # ColorRGB
-        coffee = color((0xC0, 0xFF, 0xEE))
+        coffee = color(0xC0, 0xFF, 0xEE)
         self.true(isinstance(coffee, ColorRGB))
         self.true(isinstance(coffee, Color))
 
