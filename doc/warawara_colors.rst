@@ -36,6 +36,8 @@ An abstract base class that is inherited by other Color types.
 
 Intend to be used for type checking, like ``isinstance(obj, Color)``.
 
+Two ``Color`` objects are defined equal if their escape sequence are equal.
+
 
 ``Color256``
 -----------------------------------------------------------------------------
@@ -53,11 +55,12 @@ depends on your palette settings.
    assert c('text') == str(c) + 'text' + '\033[m'
    assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
 
-A Color256 object could be casted into a ColorRGB object:
+A Color256 object could be casted into a ColorRGB object or a ColorHSV object:
 
 .. code:: python
 
    assert c.to_rgb() == ColorRGB(255, 175, 0)
+   assert c.to_hsv() == ColorHSV(41, 100, 100)
 
 
 ``ColorRGB``
@@ -70,7 +73,8 @@ Represents a RGB color.
    assert c.r == 255
    assert c.g == 175
    assert c.b == 0
-   assert c.rgb = (255, 175, 0)
+   assert c.rgb = (c.r, c.g, r.v)
+   assert int(c) == 0xFFAF00
    assert str(c) == '\033[38;2;255;175;0m'
    assert c('text') == str(c) + 'text' + '\033[m'
    assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
@@ -85,11 +89,22 @@ ColorRGB objects could be mixed to produce new colors:
    assert (red + green) // 2 == ColorRGB('#7F7F00')
    assert ((red * 2) + green) // 2 == ColorRGB('#FF7F00')
 
-A Color256 object could be casted into a ColorHSV object:
+A ColorRGB object could be casted into a ColorHSV object:
 
 .. code:: python
 
+   assert ColorRGB(255, 0, 0).to_rgb() == ColorRGB(255, 0, 0)
    assert ColorRGB(255, 0, 0).to_hsv() == ColorHSV(0, 100, 100)
+
+Two sets of RGB values are provided, lowercase ``rgb`` for real values,
+and uppercase ``RGB`` for regulated values that are
+``round()`` and ``clamp()`` to ``range(0, 256)``.
+
+.. code:: python
+
+   c = ColorRGB(255, 174.5, 0) # nearly orange
+   assert c.rgb == (255, 174.5, 0) # lowercase = real values
+   assert c.RGB == (255, 174, 0)   # uppercase = regulated values
 
 
 ``ColorHSV``
@@ -102,9 +117,30 @@ Represents a HSV color.
    assert c.h == 41
    assert c.s == 100
    assert c.v == 100
+   assert c.hsv == (c.h, c.s, c.v)
+   assert int(c) == 41100100
    assert str(c) == '\033[38;2;255;174;0m'
    assert c('text') == str(c) + 'text' + '\033[m'
    assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
+
+A ColorHSV object could be casted into a ColorRGB object:
+
+.. code:: python
+
+   assert ColorHSV(41, 100, 100).to_rgb() == ColorRGB(255, 174, 0)
+   assert ColorHSV(41, 100, 100).to_hsv() == ColorHSV(41, 100, 100)
+
+Two sets of HSV values are provided, lowercase ``hsv`` for real values,
+and uppercase ``HSV`` for regulated values that are
+``round()`` and ``clamp()`` to proper range.
+
+.. code:: python
+
+   c = ColorHSV(21.5, 100, 100) # similar to clementine
+   cc = c * 2 # an impossible color
+   assert cc.hsv == (43, 200, 200)  # lowercase = real values
+   assert cc.HSV == (43, 100, 100)  # uppercase = regulated values
+
 
 
 ``ColorCompound``
@@ -138,7 +174,7 @@ and the later color overrides the former:
 
 ``decolor()``
 -----------------------------------------------------------------------------
-Removes color sequence from input string.
+Removes color sequences from input string.
 
 .. code:: python
 
@@ -331,8 +367,8 @@ For Color256 colors, the gradient is calculated on xterm 256 color cube.
 RGB range (``range(16, 232)``) and Grayscale range (``range(232,256)``)
 are defined as not compatible to each other.
 
-Keyword argument ``reverse=True`` / ``reverse=False`` could be provided to reverse the result.
+Keyword argument ``reverse=True`` could be specified to reverse the result.
 
 For ColorHSV colors, keyword argument ``clockwise=True`` / ``clockwise=False``
-could be provided to force the gradient sequence to be clockwise or counter-clockwise.
-If not specified, shortest path is attempted.
+could be specified to force the gradient sequence to be clockwise or counter-clockwise.
+If not specified, a shorter gradient sequence is preferred.
