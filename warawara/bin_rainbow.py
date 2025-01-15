@@ -16,14 +16,14 @@ from .lib_itertools import lookahead
 
 
 errors = []
-def add_error(errmsg):
+def pend_error(*errmsg):
     errors.append(errmsg)
 
 
-def check_errors():
+def judge_errors():
     if errors:
         for error in errors:
-            print(error)
+            print(*error)
         sys.exit(1)
 
 
@@ -56,33 +56,54 @@ def high_contrast_fg(c):
 
 
 def parse_target(arg):
-    if is_uint8(arg):
-        return color(arg)
-
     if not isinstance(arg, str):
         return
 
-    if arg in lib_colors.names:
-        return getattr(lib_colors, arg)
+    to = []
 
-    m = rere(arg)
+    while True:
+        m = rere(arg)
+
+        if m.fullmatch(r'^(.+)\.(rgb|RGB|hsv|HSV)$'):
+            to.append(m.group(2))
+            arg = m.group(1)
+            continue
+
+        break
+
+    if arg in lib_colors.names:
+        ret = getattr(lib_colors, arg)
 
     # #RRGGBB format
-    if m.fullmatch(r'#?([0-9a-fA-Z]{6})'):
-        return color('#' + m.group(1))
+    elif m.fullmatch(r'#?([0-9a-fA-Z]{6})'):
+        ret = color('#' + m.group(1))
 
     # @HHH,SSS,VVV format
-    if m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
-        return lib_colors.ColorHSV(arg)
+    elif m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
+        ret = lib_colors.ColorHSV(arg)
 
     # int
-    if m.fullmatch(r'[0-9]+'):
+    elif m.fullmatch(r'[0-9]+'):
         try:
             i = int(arg, 10)
             if is_uint8(i):
-                return color(i)
+                ret = color(i)
         except:
-            return
+            ret = None
+
+    tr_path = arg
+    for t in to[::-1]:
+        try:
+            if t.lower() == 'rgb':
+                ret = ret.to_rgb()
+                tr_path += '.rgb'
+            elif t.lower() == 'hsv':
+                ret = ret.to_hsv()
+                tr_path += '.hsv'
+        except AttributeError:
+            pend_error('Error: Cannot transform color', tr_path, 'to', t)
+
+    return ret
 
 
 def spell_suggestions(word):
@@ -94,7 +115,7 @@ def spell_suggestion_err_msg(word):
     err_msg = 'Unknown color name "{}"'.format(word)
     suggestions = spell_suggestions(word)[:3]
     if suggestions:
-        err_msg += ', do you mean '
+        err_msg += ', did you mean '
         if len(suggestions) == 1:
             err_msg += '"{}"'.format(suggestions[0])
         elif len(suggestions) == 2:
@@ -102,7 +123,26 @@ def spell_suggestion_err_msg(word):
         elif len(suggestions) == 3:
             err_msg += '"{}", "{}", or "{}"'.format(*suggestions)
         err_msg += '?'
-    add_error(err_msg)
+    pend_error(err_msg)
+
+
+def expand_macro_all():
+    ret = []
+    for i in range(256):
+        ret.append((parse_target(str(i)), []))
+
+    for name in lib_colors.names:
+        c = parse_target(name)
+        ret[c.index][1].append(name)
+
+    return ret
+
+
+def expand_macro_named():
+    ret = []
+    for name in lib_colors.names:
+        ret.append((parse_target(name), [name]))
+    return ret
 
 
 def main_256cube():
@@ -141,19 +181,21 @@ def main():
                     )
                 )
             )
-    parser = argparse.ArgumentParser(prog=prog,
-                                     description=('Query pre-defined colors from warawara, ' +
-                                                  'or produce ' + colorful + ' strips/tiles to fill the screen.'),
-                                     epilog=textwrap.dedent('''\
-                                             Example usages:
-                                             $ {prog}
-                                             $ {prog} all
-                                             $ {prog} named --grep orange --hex
-                                             $ {prog} FFD700 --rgb
-                                             $ {prog} --tile --lines=2 --cols=8 salmon white
-                                     ''').format(prog=prog),
-                                     allow_abbrev=False, add_help=False,
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+            prog=prog,
+            description=('Query pre-defined colors from warawara, ' +
+                         'or produce ' + colorful + ' strips/tiles to fill the screen.'),
+            epilog=textwrap.dedent('''
+                    Example usages:
+                    $ {prog}
+                    $ {prog} all
+                    $ {prog} named --grep orange --hex
+                    $ {prog} FFD700 --rgb
+                    $ {prog} --tile --lines=2 --cols=8 salmon white
+                    $ {prog} --gradient 00AFFF FFAF00
+                    '''.strip('\n')).format(prog=prog),
+            allow_abbrev=False, add_help=False,
+            formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument('-h', '--help', action='help', help='Show this help message and exit')
 
@@ -183,6 +225,10 @@ This argument can be specified multiple times for multiple keywords''')
                         default='no',
                         help='Sort the output by the specified attribute')
 
+    parser.add_argument('-r', '--reverse',
+                        action='store_true',
+                        help='''Reverse the output sequence''')
+
     class YesNoToBoolOption(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             setattr(namespace, self.dest, values == 'yes')
@@ -200,6 +246,15 @@ This argument can be specified multiple times for multiple keywords''')
 Ignores every other optional arguments except for --height and --width
 Ignores "all" and "named" macros''')
 
+    parser.add_argument('-g', '--gradient',
+                        action='store_true',
+                        help='''Calculate color gradient for specified two colors
+Ignores "all" and "named" macros''')
+
+    parser.add_argument('-c', '--clockwise',
+                        action=YesNoToBoolOption, nargs='?', choices=['yes', 'no'], const='yes',
+                        help='''Calculate clockwise color gradient for HSV''')
+
     parser.add_argument('--cols', '--columns',
                         type=int,
                         help='Specify terminal columns')
@@ -214,60 +269,103 @@ Ignores "all" and "named" macros''')
     parser.set_defaults(val_fmt=[])
 
     args = parser.parse_intermixed_args()
-    # print(args)
-    # exit()
 
-    if args.tile:
+    if args.tile and args.gradient:
+        print('--tile and --gradient cannot be used together')
+        sys.exit(1)
+
+    elif args.tile:
         main_tile(args)
+
     else:
         main_list(args)
 
 
 def main_list(args):
-    if args.merge is None:
-        if 'all' in args.targets or 'named' in args.targets:
-            args.merge = True
-        elif args.aliases:
-            args.merge = True
+    if args.gradient:
+        # argument handling for gradient
+        if not args.targets:
+            pend_error('No colors to gradient')
+
+        if len(args.targets) == 1:
+            pend_error('Need destination color')
+
+        if len(args.targets) > 3:
+            pend_error('Too many arguments')
+
+        judge_errors()
+
+        arg_src = args.targets[0]
+        arg_dst = args.targets[1]
+
+        if len(args.targets) == 3:
+            arg_n = args.targets[2]
         else:
-            args.merge = False
+            arg_n = None
 
-    if args.grep and not args.targets:
-        args.targets = ['all']
+        src = parse_target(arg_src)
+        if not src:
+            spell_suggestion_err_msg(arg_src)
 
-    expanded = []
-    for arg in args.targets:
-        if arg in ('all', 'named'):
-            local_expansion = []
-            if arg == 'all':
-                for i in range(256):
-                    local_expansion.append((parse_target(str(i)), []))
+        dst = parse_target(arg_dst)
+        if not dst:
+            spell_suggestion_err_msg(arg_dst)
 
-                for name in lib_colors.names:
-                    c = parse_target(name)
-                    local_expansion[c.index][1].append(name)
+        try:
+            n = int(arg_n, 10) if arg_n else None
+        except:
+            pend_error('Invalid number: {}'.format(arg_n))
 
-            elif arg == 'named':
-                for name in lib_colors.names:
-                    local_expansion.append((parse_target(name), [name]))
+        judge_errors()
 
-            for entry in local_expansion:
-                if not entry[1]:
-                    expanded.append((entry[0], None))
-                else:
-                    for name in entry[1]:
-                        expanded.append((entry[0], name))
+        def color_text(this_color):
+            if isinstance(this_color, lib_colors.Color256):
+                return str(this_color.index)
+            elif isinstance(this_color, lib_colors.ColorRGB):
+                return '{:#X}'.format(this_color)
+            elif isinstance(this_color, lib_colors.ColorHSV):
+                return '@{:},{:},{:}'.format(this_color.H, this_color.S, this_color.V)
+            else:
+                line.append('(?)')
 
-            del local_expansion
-            continue
+        expanded = [(g, color_text(g)) for g in lib_colors.gradient(src, dst, n, reverse=args.reverse, clockwise=args.clockwise)]
 
-        t = parse_target(arg)
-        if t:
-            expanded.append((t, arg))
-        else:
-            spell_suggestion_err_msg(arg)
+    else:
+        # argument handling for not gradient
+        if args.merge is None:
+            if 'all' in args.targets or 'named' in args.targets:
+                args.merge = True
+            elif args.aliases:
+                args.merge = True
+            else:
+                args.merge = False
 
-    check_errors()
+        if args.grep and not args.targets:
+            args.targets = ['all']
+
+        expanded = []
+        for arg in args.targets:
+            if arg in ('all', 'named'):
+                if arg == 'all':
+                    expansion = expand_macro_all()
+                elif arg == 'named':
+                    expansion = expand_macro_named()
+
+                for entry in expansion:
+                    if not entry[1]:
+                        expanded.append((entry[0], None))
+                    else:
+                        for name in entry[1]:
+                            expanded.append((entry[0], name))
+                continue
+
+            t = parse_target(arg)
+            if t:
+                expanded.append((t, arg))
+            else:
+                spell_suggestion_err_msg(arg)
+
+        judge_errors()
 
     # Grep
     if args.grep:
@@ -305,7 +403,7 @@ def main_list(args):
             name = ''
 
         m = rere(name)
-        if m.fullmatch(r'[0-9]+') and not m.fullmatch(r'#?[0-9a-fA-F]{6}'):
+        if not args.gradient and m.fullmatch(r'[0-9]+') and not m.fullmatch(r'#?[0-9a-fA-F]{6}'):
             name = ''
 
         if not args.merge:
@@ -365,18 +463,15 @@ def main_list(args):
 
         for val_fmt in args.val_fmt:
             if val_fmt == 'rgb':
-                line.append('(' + ','.join(map(lambda x: str(x).rjust(3), rgb.rgb)) + ')')
+                line.append('({:>3}, {:>3}, {:>3})'.format(*rgb.RGB))
 
             elif val_fmt == 'hex':
                 line.append('{:#X}'.format(rgb))
 
             elif val_fmt == 'hsv':
-                line.append('(@{:>3}, {:>3}%, {:>3}%)'.format(int(hsv.h), int(hsv.s), int(hsv.v)))
+                line.append('(@{:>3}, {:>3}%, {:>3}%)'.format(*hsv.HSV))
 
-        if args.val_fmt:
-            line.append(paint(fg=this_color, bg=this_color)('warawara'))
-        else:
-            line.append(paint(fg=this_color, bg=this_color)('{:#X}'.format(rgb)))
+        line.append(paint(fg=this_color, bg=this_color)('warawara'))
 
         line.append(', '.join(names))
 
@@ -394,26 +489,28 @@ def main_list(args):
 
 def main_tile(args):
     if not args.targets:
-        print('No colors to tile')
-        sys.exit(1)
+        pend_error('No colors to tile')
+
+    judge_errors()
 
     tiles = [[]]
     for arg in args.targets:
         for token in arg.split('/'):
             if token in ('all', 'named'):
-                add_error('"{}" cannot be used in tile mode'.format(token))
+                pend_error('"{}" cannot be used in tile mode'.format(token))
                 continue
 
             t = parse_target(token)
-            if t:
-                tiles[-1].append((token, t))
-
-            else:
+            if not t:
                 spell_suggestion_err_msg(token)
+                continue
+
+            tiles[-1].append((token, t))
 
         tiles.append([])
 
-    check_errors()
+    judge_errors()
+
     if not tiles[-1]:
         tiles.pop()
 
@@ -458,8 +555,3 @@ def main_tile(args):
         finally:
             print('\r\n')
             termios.tcsetattr(fd, when, orig_term_attr)
-
-
-#TODO: gradient
-###### proposal1 [A,B,N]
-###### proposal2 --gradient=N
