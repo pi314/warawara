@@ -39,7 +39,7 @@ class Color(abc.ABC):
     def fg(self, *args):
         return self.apply('38', ' '.join(str(arg) for arg in args))
 
-    def bg(self, *args, **kwargs): # pragma: no cover
+    def bg(self, *args, **kwargs):
         return self.apply('48', ' '.join(str(arg) for arg in args))
 
     def apply(self, ground, s):
@@ -60,7 +60,7 @@ class Color(abc.ABC):
 
     def __or__(self, other):
         if isinstance(other, Color):
-            return self if self.seq else other
+            return other if other.seq else self
         return ColorCompound(fg=self) | other
 
 
@@ -103,16 +103,21 @@ class Color256(Color):
 
         self.index = index
 
-        if index is None:
-            self.seq = ''
-        elif is_uint8(index):
-            self.seq = '5;{}'.format(self.index)
-        else:
+        if not self.index is None and not is_uint8(index):
             raise TypeError('Invalid color index: {}'.format(index))
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, self.index)
 
     @property
     def code(self):
         return self.index
+
+    @property
+    def seq(self):
+        if self.index is None:
+            return ''
+        return '5;{}'.format(self.index)
 
     def to_rgb(self):
         if self.index < 16:
@@ -137,8 +142,8 @@ class Color256(Color):
 
         return ColorRGB(R, G, B)
 
-    def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self.index)
+    def to_hsv(self):
+        return self.to_rgb().to_hsv()
 
     def __int__(self):
         return self.index
@@ -230,6 +235,9 @@ class ColorRGB(Color):
             return '#{r:0>2{x}}{g:0>2{x}}{b:0>2{x}}'.format(r=self.R, g=self.G, b=self.B, x=x)
 
         return format(self.RGB, spec)
+
+    def to_rgb(self):
+        return self
 
     def to_hsv(self, overflow=False):
         import colorsys
@@ -331,6 +339,9 @@ class ColorHSV(Color):
             self.H / 360,
             self.S / 100,
             self.V / 100)) * 255, overflow=overflow)
+
+    def to_hsv(self):
+        return self
 
 
 @export

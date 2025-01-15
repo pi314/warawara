@@ -49,50 +49,70 @@ class TestColorFacade(TestCase):
             ColorRGB(True)
 
 
-class TestColorTrait(TestCase):
+class TestColorTraits(TestCase):
     def setUp(self):
-        self.orange = color(208)
+        self.orange = color(214)
         self.coffee = color('#C0FFEE')
+        self.purple = color('@300,100,50')
 
     def test_repr(self):
-        self.eq(repr(self.orange), 'Color256(208)')
+        self.eq(repr(self.orange), 'Color256(214)')
         self.eq(' '.join(repr(self.coffee).split()), 'ColorRGB(192, 255, 238)')
+        self.eq(' '.join(repr(self.purple).split()), 'ColorHSV(300deg, 100%, 50%)')
 
     def test_int(self):
-        self.eq(int(self.orange), 208)
+        self.eq(int(self.orange), 214)
         self.eq(int(self.coffee), 0xC0FFEE)
+        self.eq(int(self.purple), 300100050)
 
     def test_fg(self):
-        self.eq(self.orange('text'), '\033[38;5;208mtext\033[m')
+        self.eq(self.orange('text'), '\033[38;5;214mtext\033[m')
         self.eq(self.coffee('text'), '\033[38;2;192;255;238mtext\033[m')
-        self.eq(self.orange.fg('text'), '\033[38;5;208mtext\033[m')
+        self.eq(self.purple('text'), '\033[38;2;128;0;128mtext\033[m')
+        self.eq(self.orange.fg('text'), '\033[38;5;214mtext\033[m')
         self.eq(self.coffee.fg('text'), '\033[38;2;192;255;238mtext\033[m')
+        self.eq(self.purple.fg('text'), '\033[38;2;128;0;128mtext\033[m')
 
     def test_bg(self):
-        self.eq(self.orange.bg('text'), '\033[48;5;208mtext\033[m')
+        self.eq(self.orange.bg('text'), '\033[48;5;214mtext\033[m')
         self.eq(self.coffee.bg('text'), '\033[48;2;192;255;238mtext\033[m')
+        self.eq(self.purple.bg('text'), '\033[48;2;128;0;128mtext\033[m')
 
     def test_str(self):
-        self.eq(str(self.orange), '\033[38;5;208m')
+        self.eq(str(self.orange), '\033[38;5;214m')
         self.eq(str(self.coffee), '\033[38;2;192;255;238m')
+        self.eq(str(self.purple), '\033[38;2;128;0;128m')
         self.eq('{}'.format(self.orange), str(self.orange))
         self.eq('{}'.format(self.coffee), str(self.coffee))
+        self.eq('{}'.format(self.purple), str(self.purple))
 
     def test_invert(self):
-        self.eq(str(~self.orange), '\033[48;5;208m')
+        self.eq(str(~self.orange), '\033[48;5;214m')
         self.eq(str(~self.coffee), '\033[48;2;192;255;238m')
+        self.eq(str(~self.purple), '\033[48;2;128;0;128m')
         self.is_true(isinstance(~self.orange, ColorCompound))
         self.is_true(isinstance(~self.coffee, ColorCompound))
+        self.is_true(isinstance(~self.purple, ColorCompound))
 
     def test_div(self):
-        self.eq(self.orange / self.coffee, paint(fg=self.orange, bg=self.coffee))
+        colors_under_test = (self.orange, self.coffee, self.purple)
+        for A in colors_under_test:
+            for B in colors_under_test:
+                self.eq(A / B, paint(fg=A, bg=B))
 
-        with self.assertRaises(TypeError):
-            self.orange / 1
+        for A in colors_under_test:
+            with self.assertRaises(TypeError):
+                A / 1
 
     def test_or(self):
-        self.eq(nocolor | self.coffee, self.coffee)
-        self.eq(self.orange | self.coffee, self.orange)
+        colors_under_test = (self.orange, self.coffee, self.purple)
+        for A in colors_under_test:
+            self.eq(nocolor | A, A)
+            self.eq(A | nocolor, A)
+
+        for A in colors_under_test:
+            for B in colors_under_test:
+                self.eq(A | B, B)
 
 
 class TestColor256(TestCase):
@@ -120,6 +140,27 @@ class TestColor256(TestCase):
         self.eq(color(208).to_rgb(), ColorRGB(0xFF, 0x87, 0x00))
         self.eq(color(232).to_rgb(), ColorRGB(0x08, 0x08, 0x08))
         self.eq(color(237).to_rgb(), ColorRGB(0x3A, 0x3A, 0x3A))
+
+    def test_color256_to_hsv(self):
+        self.eq(color(0).to_hsv(), color(0).to_rgb().to_hsv())
+        self.eq(color(1).to_hsv(), color(1).to_rgb().to_hsv())
+        self.eq(color(2).to_hsv(), color(2).to_rgb().to_hsv())
+        self.eq(color(3).to_hsv(), color(3).to_rgb().to_hsv())
+        self.eq(color(4).to_hsv(), color(4).to_rgb().to_hsv())
+        self.eq(color(5).to_hsv(), color(5).to_rgb().to_hsv())
+        self.eq(color(6).to_hsv(), color(6).to_rgb().to_hsv())
+        self.eq(color(7).to_hsv(), color(7).to_rgb().to_hsv())
+        self.eq(color(8).to_hsv(), color(8).to_rgb().to_hsv())
+        self.eq(color(9).to_hsv(), color(9).to_rgb().to_hsv())
+        self.eq(color(10).to_hsv(), color(10).to_rgb().to_hsv())
+        self.eq(color(11).to_hsv(), color(11).to_rgb().to_hsv())
+        self.eq(color(12).to_hsv(), color(12).to_rgb().to_hsv())
+        self.eq(color(13).to_hsv(), color(13).to_rgb().to_hsv())
+        self.eq(color(14).to_hsv(), color(14).to_rgb().to_hsv())
+        self.eq(color(15).to_hsv(), color(15).to_rgb().to_hsv())
+        self.eq(color(208).to_hsv(), color(208).to_rgb().to_hsv())
+        self.eq(color(232).to_hsv(), color(232).to_rgb().to_hsv())
+        self.eq(color(237).to_hsv(), color(237).to_rgb().to_hsv())
 
 
 class TestColorRGB(TestCase):
@@ -186,6 +227,10 @@ class TestColorRGB(TestCase):
         yellow = d_yellow // 2
         self.eq(yellow, ColorRGB(255, 255, 0))
 
+    def test_rgb_to_rgb(self):
+        red = ColorRGB(255, 0, 0)
+        self.is_true(red.to_rgb() is red)
+
     def test_rgb_to_hsv(self):
         red = ColorRGB(255, 0, 0)
         self.eq(red.to_hsv(), ColorHSV(0, 100, 100))
@@ -216,6 +261,10 @@ class TestColorHSV(TestCase):
 
     def test_to_rgb(self):
         self.eq(ColorHSV('@0,100,100').to_rgb(), ColorRGB(255, 0, 0))
+
+    def test_to_hsv(self):
+        red = ColorHSV('@0,100,100')
+        self.is_true(red.to_hsv() is red)
 
     def test_hsv(self):
         some_color = ColorHSV(60, 90, 0)
