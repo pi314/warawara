@@ -78,6 +78,11 @@ def parse_target(arg):
     elif m.fullmatch(r'#?([0-9a-fA-Z]{6})'):
         ret = color('#' + m.group(1))
 
+    # #RRR,GGG,BBB format
+    elif m.fullmatch(r'#([0-9]+),([0-9]+),([0-9]+)'):
+        r, g, b = map(lambda x: int(x, 10), arg[1:].split(','))
+        ret = lib_colors.ColorRGB(r, g, b)
+
     # @HHH,SSS,VVV format
     elif m.fullmatch(r'@([0-9]+),([0-9]+),([0-9]+)'):
         ret = lib_colors.ColorHSV(arg)
