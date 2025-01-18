@@ -49,12 +49,15 @@ different categories.
 For example, ``warawara.subproc`` contains functions about sub-processes,
 ``warawara.colors`` contains fucntions about colors.
 
-(They are not sub-modules, so they are not ``from warawara import`` able.)
+(They are not sub-modules, so they are not ``from warawara import xxx`` able.)
+
+For convenience, if not specified, functions are accessible directly at package level.
+In other words, ``warawara.subproc.xxx`` is shortcut to ``warawara.xxx``.
 
 Documents and descriptions of the categories are as following:
 
 * `warawara <warawara.rst>`_
-* `warawara.colors <warawara_colors.rst>`_
+* `warawara.colors <warawara.colors.rst>`_
 * ``warawara.fs`` (WIP)
 * ``warawara.itertools`` (WIP)
 * ``warawara.math`` (WIP)

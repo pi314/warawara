@@ -2,7 +2,7 @@
 ``warawara.colors``
 ===============================================================================
 
-This document describes the functionality of ``warawara.colors``.
+This document describes the API set provided by ``warawara.colors``.
 
 For the index of this package, see `warawara.rst <warawara.rst>`_.
 

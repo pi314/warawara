@@ -38,6 +38,9 @@ From my own perspective, Python's subprocess interface is not friendly enough
 for simple uses.
 
 
+For more detailed API use, see `doc/warawara.rst <doc/warawara.rst>`_
+
+
 Installation
 -----------------------------------------------------------------------------
 
