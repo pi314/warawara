@@ -50,4 +50,5 @@ command_line = "-m unittest --verbose"
 omit = [
     "test_*.py",
     "__init__.py",
+    "__main__.py",
     ]
