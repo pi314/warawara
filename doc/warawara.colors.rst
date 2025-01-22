@@ -11,6 +11,14 @@ For the index of this package, see `warawara.rst <warawara.rst>`_.
 
 ``color()``
 -----------------------------------------------------------------------------
+``color(i)``
+-----------------------------------------------------------------------------
+``color(R, G, B)``
+-----------------------------------------------------------------------------
+``color("#RRGGBB")``
+-----------------------------------------------------------------------------
+``color("@HHH,SSS,VVV")``
+-----------------------------------------------------------------------------
 A factory function that produces color objects based on input arguments.
 
 .. code:: python
@@ -142,7 +150,6 @@ and uppercase ``HSV`` for regulated values that are
    assert cc.HSV == (43, 100, 100)  # uppercase = regulated values
 
 
-
 ``ColorCompound``
 -----------------------------------------------------------------------------
 Binds two Color object together, one for foreground and one for background.
@@ -172,7 +179,7 @@ and the later color overrides the former:
    assert ryig('text') == '\033[38;5;9;48;5;12mtext\033[m'
 
 
-``decolor()``
+``decolor(s)``
 -----------------------------------------------------------------------------
 Removes color sequences from input string.
 
@@ -353,7 +360,7 @@ A special color name that has the following properties:
    assert nocolor('anything') == 'anything'
 
 
-``gradient()``
+``gradient(A, B, N=None, reverse=False, clocksiwe=None)``
 -----------------------------------------------------------------------------
 Produces a series of colors from ``A`` to ``B`` of length ``N >= 2``.
 
@@ -363,7 +370,7 @@ Produces a series of colors from ``A`` to ``B`` of length ``N >= 2``.
 
 If ``A`` and ``B`` are different Color types, ``(A, B)`` is returned.
 
-For Color256 colors, the gradient is calculated on xterm 256 color cube.
+For Color256 colors, a discrete gradient path is calculated on xterm 256 color cube.
 RGB range (``range(16, 232)``) and Grayscale range (``range(232,256)``)
 are defined as not compatible to each other.
 
