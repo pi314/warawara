@@ -59,6 +59,8 @@ def parse_target(arg):
     if not isinstance(arg, str):
         return
 
+    ret = None
+
     to = []
 
     while True:
