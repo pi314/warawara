@@ -11,7 +11,7 @@ For the index of this package, see `warawara.rst <warawara.rst>`_.
 
 ``color()``
 -----------------------------------------------------------------------------
-``color(i)``
+``color(index)``
 -----------------------------------------------------------------------------
 ``color(R, G, B)``
 -----------------------------------------------------------------------------
@@ -38,7 +38,7 @@ An object of the following types would be returned based on input arguments:
 If the argument does not have correct format, ``TypeError`` is raised.
 
 
-``Color``
+class ``Color``
 -----------------------------------------------------------------------------
 An abstract base class that is inherited by other Color types.
 
@@ -47,7 +47,7 @@ Intend to be used for type checking, like ``isinstance(obj, Color)``.
 Two ``Color`` objects are defined equal if their escape sequence are equal.
 
 
-``Color256``
+class ``Color256(index)``
 -----------------------------------------------------------------------------
 Represents a xterm 256 color.
 
@@ -71,7 +71,9 @@ A Color256 object could be casted into a ColorRGB object or a ColorHSV object:
    assert c.to_hsv() == ColorHSV(41, 100, 100)
 
 
-``ColorRGB``
+class ``ColorRGB(R, G, B)``
+-----------------------------------------------------------------------------
+class ``ColorRGB("#RRGGBB")``
 -----------------------------------------------------------------------------
 Represents a RGB color.
 
@@ -115,7 +117,9 @@ and uppercase ``RGB`` for regulated values that are
    assert c.RGB == (255, 174, 0)   # uppercase = regulated values
 
 
-``ColorHSV``
+class ``ColorHSV(H, S, V)``
+-----------------------------------------------------------------------------
+class ``ColorHSV("@HHH,SSS,VVV")``
 -----------------------------------------------------------------------------
 Represents a HSV color.
 
@@ -150,7 +154,7 @@ and uppercase ``HSV`` for regulated values that are
    assert cc.HSV == (43, 100, 100)  # uppercase = regulated values
 
 
-``ColorCompound``
+class ``ColorCompound(fg=None, bg=None)``
 -----------------------------------------------------------------------------
 Binds two Color object together, one for foreground and one for background.
 
@@ -199,7 +203,7 @@ The list was taken from `W3C CSS Color Module Level 3, 4.3. Extended color keywo
 with a few extensions.
 
 Note that all these colors are mapped to the nearest xterm 256 color.
-Their RGB value are likely not the consistent with W3C's definition.
+Their RGB value are likely *not* consistent with W3C's definition.
 
 .. _w3c_color_list: https://www.w3.org/TR/css-color-3/#svg-color
 __ w3c_color_list_
@@ -360,7 +364,7 @@ A special color name that has the following properties:
    assert nocolor('anything') == 'anything'
 
 
-``gradient(A, B, N=None, reverse=False, clocksiwe=None)``
+``gradient(A, B, N=None, reverse=False, clockwise=None)``
 -----------------------------------------------------------------------------
 Produces a series of colors from ``A`` to ``B`` of length ``N >= 2``.
 

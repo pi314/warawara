@@ -2,6 +2,11 @@
 ``warawara``
 ===============================================================================
 
+This is the index document of package ``warawara``.
+
+.. contents:: Table of Contents
+
+
 Installation
 -----------------------------------------------------------------------------
 
