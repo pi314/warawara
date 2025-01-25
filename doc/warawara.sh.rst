@@ -1,0 +1,103 @@
+===============================================================================
+``warawara.sh``
+===============================================================================
+
+This document describes the API set provided by ``warawara.sh``.
+
+For the index of this package, see `warawara.rst <warawara.rst>`_.
+
+.. contents:: Table of Contents
+
+
+``cwd(path=None)``
+-----------------------------------------------------------------------------
+If ``path`` is ``None``, returns the current working directory path of ``pathlib.Path``.
+
+Otherwise, it ``os.chdir()`` to ``path``, and returns the latest working directory path.
+
+If ``path`` is not a directory,
+or any exception is raised during the process, ``False`` is returned.
+
+
+``pushd(path=None)`` / ``popd()``
+-----------------------------------------------------------------------------
+``pushd()`` pushes ``cwd()`` into a stack, and then attempt ``os.chdir()`` to ``path``.
+
+``popd()`` pops the path from the stack, and ``os.chdir()`` to it.
+
+If ``path`` is ``None``, ``cwd()`` is used instead.
+
+If any operation fails, ``False`` or a falsy-object is returned.
+
+.. code:: python
+
+   from os.path import expanduser
+   from warawara import cwd, pushd, popd
+
+   here = cwd()
+   pushd(expanduser('~/Downloads'))
+   assert cwd() == expanduser('~/Downloads')
+   popd()
+   assert cwd() == here
+
+``pushd()`` could also be used as context manager:
+
+.. code:: python
+
+   from os.path import expanduser
+   from warawara import cwd, pushd
+
+   print(cwd())
+
+   with pushd(expanduser('~/Downloads')):
+       print(cwd())
+
+   print(cwd())
+   assert popd() == False
+
+
+``dirs()``
+-----------------------------------------------------------------------------
+Returns a copy of the dir stack as a ``list``. The top of the stack is at the end.
+
+.. code:: python
+
+   from os.path import expanduser
+   from warawara import cwd, pushd, dirs
+
+   here = cwd()
+
+   assert dirs() == [here]
+
+   with pushd(expanduser('~/Downloads')):
+       assert dirs() == [here, expanduser('~/Downloads')]
+
+   assert dirs() == [here]
+
+
+``home()``
+-----------------------------------------------------------------------------
+Returns ``Path.home()``.
+
+.. code:: python
+
+   from os.path import expanduser
+   from warawara import home
+
+   assert home() == expanduser('~')
+
+
+``shrinkuser(path)``
+-----------------------------------------------------------------------------
+Returns the opposite of ``os.path.expanduser()``, i.e. replace ``$HOME`` with a ``~`` symbol.
+
+The trailing space is reserved if ``path`` ends with one.
+
+.. code:: python
+
+   from os.path import expanduser
+   from warawara import home
+
+   assert shrinkuser(home()) == '~'
+   HOME = str(home())
+   assert shrinkuser(HOME + '/') == '~/'
