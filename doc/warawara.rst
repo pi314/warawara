@@ -2,6 +2,11 @@
 ``warawara``
 ===============================================================================
 
+This is the index document of package ``warawara``.
+
+.. contents:: Table of Contents
+
+
 Installation
 -----------------------------------------------------------------------------
 
@@ -60,7 +65,7 @@ Documents and descriptions of the categories are as following:
 * `warawara.colors <warawara.colors.rst>`_
 * ``warawara.fs`` (WIP)
 * ``warawara.itertools`` (WIP)
-* ``warawara.math`` (WIP)
+* `warawara.math <warawara.math.rst>_` (WIP)
 * ``warawara.regex`` (WIP)
 * ``warawara.sh`` (WIP)
 * ``warawara.subproc`` (WIP)
