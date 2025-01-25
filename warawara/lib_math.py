@@ -115,8 +115,8 @@ def interval(a, b, close=True):
 
     ret = range(a, b + direction, direction)
     if close:
-        return ret
-    return ret[1:-1]
+        return list(ret)
+    return list(ret[1:-1])
 
 
 @export
@@ -151,49 +151,3 @@ def distribute(samples, N):
                 ret.append(samples[i])
 
     return tuple(ret)
-
-
-# class matrix:
-#     def __init__(self, *args):
-#         def is_int(o):
-#             return isinstance(o, int)
-#         if len(args) == 2 and is_int(args[0]) and is_int(args[1]):
-#             self.rows = args[0]
-#             self.cols = args[1]
-#             self.data = []
-#             for i in range(self.rows):
-#                 self.data.append(vector([0] * self.cols))
-#
-#         elif len(args) == 1 and isinstance(args, (tuple, list)):
-#             self.rows = len(args[0])
-#             self.cols = len(args[0][0])
-#             self.data = []
-#             for i, row in enumerate(args[0]):
-#                 self.data.append(list(row))
-#                 if len(self.data[-1]) != self.cols:
-#                     raise ValueError('Incorrect row length:', row)
-#
-#     def __repr__(self):
-#         return 'matrix(rows={}, cols={})'.format(self.rows, self.cols)
-#
-#     def __mul__(self, other):
-#         if self.cols != other.rows:
-#             raise ValueError('{}x{} matrix cannot multiply with {}x{} matrix'.format(
-#                 self.rows, self.cols, other.rows, other.cols))
-#
-#         ret = matrix(self.rows, other.cols)
-#
-#         for row in range(ret.rows):
-#             for col in range(ret.cols):
-#                 ret.data[row][col] = sum(itertools.starmap(
-#                         lambda a, b: a * b,
-#                         zip(
-#                             self.data[row],
-#                             (other.data[col][i] for i in range(ret.cols))
-#                             )
-#                         ))
-#
-#         return ret
-#
-#     def __getitem__(self, key):
-#         return self.data[key]

@@ -65,7 +65,7 @@ class TestMath(TestCase):
         with self.assertRaises(TypeError):
             vector(1, 2, 3) == 'bla'
 
-        repr(v1)
+        self.eq(repr(v1), '(1, 2, 3)')
 
         with self.assertRaises(ValueError):
             v1 + (1, 2, 3, 4)
@@ -84,10 +84,19 @@ class TestMath(TestCase):
 
     def test_interval(self):
         interval = wara.interval
-        self.eq(list(interval(1, 3)), [1, 2, 3])
-        self.eq(list(interval(3, 1)), [3, 2, 1])
-        self.eq(list(interval(3, -3)), [3, 2, 1, 0, -1, -2, -3])
-        self.eq(list(interval(3, -3, close=False)), [2, 1, 0, -1, -2])
+        self.eq(interval(1, 3), [1, 2, 3])
+        self.eq(interval(3, 1), [3, 2, 1])
+        self.eq(interval(3, -3), [3, 2, 1, 0, -1, -2, -3])
+        self.eq(interval(3, -3, close=False), [2, 1, 0, -1, -2])
 
-        self.eq(list(interval(3, 3)), [3])
-        self.eq(list(interval(3, 3, close=False)), [])
+        self.eq(interval(3, 3), [3])
+        self.eq(interval(3, 3, close=False), [])
+
+    def test_distribute(self):
+        distribute = wara.distribute
+
+        samples = (1, 2, 3, 4, 5)
+
+        self.eq(distribute(samples, 5), samples)
+        self.eq(distribute(samples, 3), (1, 3, 5))
+        self.eq(distribute(samples, 10), (1, 1, 2, 2, 3, 3, 4, 4, 5, 5))
