@@ -1,6 +1,7 @@
+import threading
 import queue
 
-from .test_utils import *
+from .lib_test_utils import *
 
 from warawara import *
 
@@ -56,10 +57,10 @@ class TestStream(TestCase):
         s.writeline('line1')
         s.writeline('line2')
         s.writeline('line3')
-        self.is_false(s.closed)
+        self.false(s.closed)
 
         s.close()
-        self.is_true(s.closed)
+        self.true(s.closed)
 
         self.eq(s.lines, [])
         self.eq(s.readline(), 'line1')
@@ -92,8 +93,8 @@ class TestStream(TestCase):
         self.eq(s.lines, lines)
         self.eq(len(s), 3)
 
-        self.is_false(s.empty)
-        self.is_true(bool(s))
+        self.false(s.empty)
+        self.true(bool(s))
 
         self.eq(s.readline(), 'line1')
         self.eq(s.readline(), 'line2')
@@ -158,8 +159,8 @@ class TestSubproc(TestCase):
 
     def test_disable_stdout_and_stderr(self):
         p = command('seq 5'.split(), stdout=None, stderr=None)
-        self.is_true(p.stdout.closed)
-        self.is_true(p.stderr.closed)
+        self.true(p.stdout.closed)
+        self.true(p.stderr.closed)
 
     def test_wait_early(self):
         p = command('seq 5'.split())
@@ -244,7 +245,7 @@ class TestSubproc(TestCase):
     def test_stdout_queue(self):
         Q = queue.Queue()
         p = command('seq 5'.split(), stdout=Q)
-        self.is_false(p.stdout.keep)
+        self.false(p.stdout.keep)
         p.run()
         self.eq(p.stdout.lines, [])
         self.eq(queue_to_list(Q), ['1', '2', '3', '4', '5'])
@@ -261,7 +262,7 @@ class TestSubproc(TestCase):
         def callback(line):
             lines.append(line)
 
-        self.is_true(hasattr(Q, 'put'))
+        self.true(hasattr(Q, 'put'))
 
         p = command(prog, stdout=(Q, callback, True), stderr=(Q, True))
         p.run()
@@ -412,7 +413,7 @@ class TestSubproc(TestCase):
         p = run(prog, wait=False)
         p.kill()
         p.wait()
-        checkpoint.is_set()
+        checkpoint.check()
 
     def test_read_stdout_twice(self):
         ans = '1 2 3 4 5'.split()
@@ -431,7 +432,7 @@ class TestSubproc(TestCase):
             checkpoint.set()
 
         with self.run_in_thread(may_stuck):
-            checkpoint.is_set()
+            checkpoint.check()
             self.eq(lines, ans)
 
 

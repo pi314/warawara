@@ -1,4 +1,4 @@
-from .test_utils import *
+from .lib_test_utils import *
 
 from .internal_utils import exporter
 

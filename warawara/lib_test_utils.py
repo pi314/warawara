@@ -2,6 +2,11 @@ import unittest
 import threading
 
 
+from .internal_utils import exporter
+export, __all__ = exporter()
+
+
+@export
 class Checkpoint:
     def __init__(self, testcase):
         self.testcase = testcase
@@ -17,19 +22,24 @@ class Checkpoint:
         self.checkpoint.wait()
 
     def is_set(self):
-        self.testcase.is_true(self.checkpoint.is_set(), 'Checkpoint was not set')
+        return self.checkpoint.is_set()
+
+    def check(self):
+        self.testcase.true(self.checkpoint.is_set(), 'Checkpoint was not set')
+
+    def __bool__(self):
+        return self.is_set()
 
 
+@export
 class TestCase(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.eq = self.assertEqual
         self.ne = self.assertNotEqual
         self.le = self.assertLessEqual
-        self.is_true = self.assertTrue
-        self.is_false = self.assertFalse
-        self.true = self.is_true
-        self.false = self.is_false
+        self.true = self.assertTrue
+        self.false = self.assertFalse
 
     def checkpoint(self):
         return Checkpoint(self)

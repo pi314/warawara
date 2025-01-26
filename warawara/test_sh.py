@@ -3,7 +3,7 @@ import shutil
 
 from pathlib import Path
 
-from .test_utils import *
+from .lib_test_utils import *
 
 import warawara as wara
 

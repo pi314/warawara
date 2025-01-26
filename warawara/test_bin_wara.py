@@ -2,7 +2,7 @@ import sys
 
 import unittest.mock
 
-from .test_utils import *
+from .lib_test_utils import *
 
 import warawara as wara
 
@@ -62,11 +62,11 @@ class TestBinWara(TestCase):
             sys.argv = ['warawara', 'wow']
             wara.bin.wara.main()
 
-        self.is_true('Unknown' in '\n'.join(self.stderr))
+        self.true('Unknown' in '\n'.join(self.stderr))
 
     def test_bin_wara_recursion_error(self):
         with self.assertRaises(SystemExit):
             sys.argv = ['warawara', 'wara', 'wara', 'wara']
             wara.bin.wara.main()
 
-        self.is_true('RecursionError' in '\n'.join(self.stderr))
+        self.true('RecursionError' in '\n'.join(self.stderr))

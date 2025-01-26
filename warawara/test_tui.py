@@ -6,7 +6,7 @@ import unittest.mock
 
 from collections import namedtuple
 
-from .test_utils import *
+from .lib_test_utils import *
 
 from warawara import *
 
@@ -114,7 +114,7 @@ class TestTypesettingUtils(TestCase):
                 ]
 
         ret = ljust((vector for vector in data), width=(10, 20))
-        self.is_false(isinstance(ret, (tuple, list)))
+        self.false(isinstance(ret, (tuple, list)))
 
         self.eq(list(ret), [
             ('column1   ', 'col2                '),
