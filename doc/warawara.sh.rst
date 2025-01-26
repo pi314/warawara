@@ -13,17 +13,19 @@ For the index of this package, see `warawara.rst <warawara.rst>`_.
 -----------------------------------------------------------------------------
 If ``path`` is ``None``, returns the current working directory path of ``pathlib.Path``.
 
-Otherwise, it ``os.chdir()`` to ``path``, and returns the latest working directory path.
+Otherwise, it ``os.chdir()`` to ``path``, and returns the new working directory path.
 
 If ``path`` is not a directory,
 or any exception is raised during the process, ``False`` is returned.
 
 
-``pushd(path=None)`` / ``popd()``
+``pushd(path=None)`` / ``popd(all=False)``
 -----------------------------------------------------------------------------
-``pushd()`` pushes ``cwd()`` into a stack, and then attempt ``os.chdir()`` to ``path``.
+``pushd()`` pushes ``cwd()`` into dir stack, and then attempts to ``os.chdir(path)``.
 
-``popd()`` pops the path from the stack, and ``os.chdir()`` to it.
+``popd()`` pops a path from dir stack, and ``os.chdir()`` to it.
+
+``popd(all=True)`` jumps to the first path of dir stack and empty dir stack.
 
 If ``path`` is ``None``, ``cwd()`` is used instead.
 
@@ -56,7 +58,7 @@ If any operation fails, ``False`` or a falsy-object is returned.
    assert popd() == False
 
 
-``dirs()``
+``dirs(clear=False)``
 -----------------------------------------------------------------------------
 Returns a copy of the dir stack as a ``list``. The top of the stack is at the end.
 
@@ -73,6 +75,10 @@ Returns a copy of the dir stack as a ``list``. The top of the stack is at the en
        assert dirs() == [here, expanduser('~/Downloads')]
 
    assert dirs() == [here]
+
+``clear=True`` clears the dir stack, note that it keeps ``cwd()`` with current value.
+
+To jump to the first item of dir stack, use ``popd(all=True)`` instead.
 
 
 ``home()``

@@ -44,11 +44,19 @@ class pushd:
 
 
 @export
-def popd():
+def popd(all=False):
+    if not dir_stack:
+        return False
+
     try:
-        if dir_stack:
+        if all:
+            os.chdir(dir_stack[0])
+            dir_stack.clear()
+
+        else:
             os.chdir(dir_stack.pop())
-            return True
+
+        return True
 
     except:
         pass

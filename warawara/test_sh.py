@@ -61,14 +61,40 @@ class TestSh(TestCase):
         p = wara.pushd('tmp')
         self.false(p)
 
-    def test_popd_invalid_path(self):
+    def test_popd_to_invalid_path(self):
+        here = wara.cwd()
+
         wara.pushd('tmp')
 
         def mock_chdir(path):
             raise FileNotFoundError('deleted')
         self.patch('os.chdir', mock_chdir)
 
-        # self.false(wara.cwd())
+        self.false(wara.popd())
+
+        self.eq(wara.cwd(), here / 'tmp')
+
+    def test_dirs_clear(self):
+        here = wara.cwd()
+        wara.pushd('tmp')
+        wara.pushd('tmp2')
+
+        self.eq(wara.dirs(), [here, here / 'tmp', here / 'tmp' / 'tmp2'])
+
+        wara.dirs(clear=True)
+
+        self.eq(wara.dirs(), [here / 'tmp' / 'tmp2'])
+
+    def test_popd_all(self):
+        here = wara.cwd()
+        wara.pushd('tmp')
+        wara.pushd('tmp2')
+
+        self.eq(wara.dirs(), [here, here / 'tmp', here / 'tmp' / 'tmp2'])
+
+        wara.popd(all=True)
+
+        self.eq(wara.dirs(), [here])
 
     def test_pushd_popd_dirs(self):
         here = wara.cwd()
