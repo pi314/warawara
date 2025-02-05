@@ -11,6 +11,7 @@ if command -v pytest >/dev/null 2>&1 ; then
     if [ ${succ} -eq 0 ]; then
         python "$0"
     fi
+    rm -f "${COVERAGE_JSON}"
 else
     python3 -m unittest --verbose
     succ=$?
