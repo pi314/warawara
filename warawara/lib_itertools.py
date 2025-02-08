@@ -5,7 +5,7 @@ export, __all__ = exporter()
 
 
 @export
-def iterable(obj):
+def is_iterable(obj):
     try:
         iter(obj)
         return True
@@ -47,12 +47,12 @@ def unwrap(obj=None):
 
 @export
 def flatten(tree):
-    if not iterable(tree) or isinstance(tree, str):
+    if not is_iterable(tree) or isinstance(tree, str):
         return tree
 
     wrapper_type = type(tree)
     return wrapper_type(itertools.chain.from_iterable(
-        flatten(i) if iterable(i) and not isinstance(i, str) else [i]
+        flatten(i) if is_iterable(i) and not isinstance(i, str) else [i]
         for i in tree
         ))
 

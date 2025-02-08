@@ -64,7 +64,7 @@ Documents and descriptions of the categories are as following:
 * `warawara <warawara.rst>`_
 * `warawara.colors <warawara.colors.rst>`_
 * ``warawara.fs`` (WIP)
-* ``warawara.itertools`` (WIP)
+* `warawara.itertools <warawara.itertools>`_
 * `warawara.math <warawara.math.rst>_`
 * ``warawara.regex`` (WIP)
 * `warawara.sh <warawara.sh.rst>`_
