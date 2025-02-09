@@ -65,10 +65,10 @@ class TestOpen(TestCase):
         self.eq(lines, answer)
 
 
-class TestFsorted(TestCase):
-    def test_fsorted(self):
+class TestNatsorted(TestCase):
+    def test_natsorted(self):
         self.eq(
-                wara.fsorted([
+                wara.natsorted([
                     'apple1',
                     'apple10',
                     'banana10',
@@ -86,7 +86,7 @@ class TestFsorted(TestCase):
                     ])
 
         self.eq(
-                wara.fsorted([
+                wara.natsorted([
                     'version-1.9',
                     'version-2.0',
                     'version-1.11',

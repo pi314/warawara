@@ -49,19 +49,19 @@ class LineFileWrapper:
 
 
 @export
-def open(file, mode=None, rstrip='\r\n', newline='\n', **kwargs):
+def open(path, mode=None, rstrip='\r\n', newline='\n', **kwargs):
     # Skip for binary mode
     if 'b' in mode:
-        return builtins.open(file, mode=mode, **kwargs)
+        return builtins.open(path, mode=mode, **kwargs)
 
     kwargs['encoding'] = kwargs.get('encoding', 'utf-8')
     kwargs['errors'] = kwargs.get('errors', 'backslashreplace')
 
-    return LineFileWrapper(file, mode, rstrip=rstrip, newline=newline, **kwargs)
+    return LineFileWrapper(path, mode, rstrip=rstrip, newline=newline, **kwargs)
 
 
 @export
-def fsorted(iterable, key=None):
+def natsorted(iterable, key=None):
     import re
     def filename_as_key(name):
         def int_or_not(x):
