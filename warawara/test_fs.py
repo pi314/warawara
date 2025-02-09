@@ -98,3 +98,18 @@ class TestNatsorted(TestCase):
                     'version-1.11',
                     'version-2.0',
                     ])
+
+        from pathlib import Path
+        self.eq(
+                wara.natsorted([
+                    Path('version-1.9'),
+                    Path('version-2.0'),
+                    Path('version-1.11'),
+                    Path('version-1.10'),
+                    ]),
+                [
+                    Path('version-1.9'),
+                    Path('version-1.10'),
+                    Path('version-1.11'),
+                    Path('version-2.0'),
+                    ])

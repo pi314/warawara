@@ -68,7 +68,7 @@ def natsorted(iterable, key=None):
             if x and x[0] in '1234567890':
                 return int(x)
             return x
-        return tuple(int_or_not(x) for x in re.split(r'([0-9]+)', name))
+        return tuple(int_or_not(x) for x in re.split(r'([0-9]+)', str(name)))
 
     sort_key = (filename_as_key
                 if key is None
