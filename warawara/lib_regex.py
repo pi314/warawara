@@ -22,12 +22,12 @@ class rere:
         self.cache = re.fullmatch(pattern, self.text, flags=flags)
         return self.cache
 
+    def sub(self, pattern, repl):
+        return re.sub(pattern, repl, self.text)
+
     def __getattr__(self, attr):
         if hasattr(re, attr):
             re_attr = getattr(re, attr)
             return lambda *args, **kwargs: re_attr(*args, self.text, **kwargs)
 
         return getattr(self.cache, attr)
-
-    def sub(self, pattern, repl):
-        return re.sub(pattern, repl, self.text)
