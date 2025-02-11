@@ -31,9 +31,9 @@ A factory function that produces color objects based on input arguments.
 
 An object of the following types would be returned based on input arguments:
 
-* `Color256`_
-* `ColorRGB`_
-* `ColorHSV`_
+* Color256_
+* ColorRGB_
+* ColorHSV_
 
 If the argument does not have correct format, ``TypeError`` is raised.
 
@@ -46,6 +46,8 @@ Intend to be used for type checking, like ``isinstance(obj, Color)``.
 
 Two ``Color`` objects are defined equal if their escape sequence are equal.
 
+
+.. _Color256:
 
 class ``Color256(index)``
 -----------------------------------------------------------------------------
@@ -70,6 +72,8 @@ A Color256 object could be casted into a ColorRGB object or a ColorHSV object:
    assert c.to_rgb() == ColorRGB(255, 175, 0)
    assert c.to_hsv() == ColorHSV(41, 100, 100)
 
+
+.. _ColorRGB:
 
 class ``ColorRGB(R, G, B)``
 -----------------------------------------------------------------------------
@@ -116,6 +120,8 @@ and uppercase ``RGB`` for regulated values that are
    assert c.rgb == (255, 174.5, 0) # lowercase = real values
    assert c.RGB == (255, 174, 0)   # uppercase = regulated values
 
+
+.. _ColorHSV:
 
 class ``ColorHSV(H, S, V)``
 -----------------------------------------------------------------------------
@@ -202,154 +208,155 @@ with ``warawara.<color name>``.
 The list was taken from `W3C CSS Color Module Level 3, 4.3. Extended color keywords`__,
 with a few extensions.
 
-Note that all these colors are mapped to the nearest xterm 256 color.
+Note that all these colors are mapped to the nearest xterm 256 color, which
+makes their values duplicate *a lot*.
 Their RGB value are likely *not* consistent with W3C's definition.
 
 .. _w3c_color_list: https://www.w3.org/TR/css-color-3/#svg-color
 __ w3c_color_list_
 
-* ``aliceblue``
-* ``antiquewhite``
-* ``aqua``
-* ``aquamarine``
-* ``azure``
-* ``beige``
-* ``bisque``
-* ``black``
-* ``blanchedalmond``
-* ``blue``
-* ``blueviolet``
-* ``brown``
-* ``burlywood``
-* ``cadetblue``
-* ``chartreuse``
-* ``chocolate``
-* ``clementine``
-* ``coral``
-* ``cornflowerblue``
-* ``cornsilk``
-* ``crimson``
-* ``cyan``
-* ``darkblue``
-* ``darkcyan``
-* ``darkgoldenrod``
-* ``darkgray`` / ``darkgrey``
-* ``darkgreen``
-* ``darkkhaki``
-* ``darkmagenta``
-* ``darkolivegreen``
-* ``darkorange``
-* ``darkorchid``
-* ``darkred``
-* ``darksalmon``
-* ``darkseagreen``
-* ``darkslateblue``
-* ``darkslategray`` / ``darkslategrey``
-* ``darkturquoise``
-* ``darkviolet``
-* ``deeppink``
-* ``deepskyblue``
-* ``dimgray`` / ``dimgrey``
-* ``dodgerblue``
-* ``firebrick``
-* ``floralwhite``
-* ``forestgreen``
-* ``fuchsia``
-* ``gainsboro``
-* ``ghostwhite``
-* ``gold``
-* ``goldenrod``
-* ``gray`` / ``grey``
-* ``green``
-* ``greenyellow``
-* ``honeydew``
-* ``hotpink``
-* ``indianred``
-* ``indigo``
-* ``ivory``
-* ``khaki``
-* ``lavender``
-* ``lavenderblush``
-* ``lawngreen``
-* ``lemonchiffon``
-* ``lightblue``
-* ``lightcoral``
-* ``lightcyan``
-* ``lightgoldenrodyellow``
-* ``lightgray`` / ``lightgrey``
-* ``lightgreen``
-* ``lightpink``
-* ``lightsalmon``
-* ``lightseagreen``
-* ``lightskyblue``
-* ``lightslategray`` / ``lightslategrey``
-* ``lightsteelblue``
-* ``lightyellow``
-* ``lime``
-* ``limegreen``
-* ``linen``
-* ``magenta``
-* ``maroon``
-* ``mediumaquamarine``
-* ``mediumblue``
-* ``mediumorchid``
-* ``mediumpurple``
-* ``mediumseagreen``
-* ``mediumslateblue``
-* ``mediumspringgreen``
-* ``mediumturquoise``
-* ``mediumvioletred``
-* ``midnightblue``
-* ``mintcream``
-* ``mistyrose``
-* ``moccasin``
-* ``murasaki``
-* ``navajowhite``
-* ``navy``
-* ``oldlace``
-* ``olive``
-* ``olivedrab``
-* ``orange``
-* ``orangered``
-* ``orchid``
-* ``palegoldenrod``
-* ``palegreen``
-* ``paleturquoise``
-* ``palevioletred``
-* ``papayawhip``
-* ``peachpuff``
-* ``peru``
-* ``pink``
-* ``plum``
-* ``powderblue``
-* ``purple``
-* ``red``
-* ``rosybrown``
-* ``royalblue``
-* ``saddlebrown``
-* ``salmon``
-* ``sandybrown``
-* ``seagreen``
-* ``seashell``
-* ``sienna``
-* ``silver``
-* ``skyblue``
-* ``slateblue``
-* ``slategray`` / ``slategrey``
-* ``snow``
-* ``springgreen``
-* ``steelblue``
-* ``tan``
-* ``teal``
-* ``thistle``
-* ``tomato``
-* ``turquoise``
-* ``violet``
-* ``wheat``
-* ``white``
-* ``whitesmoke``
-* ``yellow``
-* ``yellowgreen``
+* ``aliceblue`` (15)
+* ``antiquewhite`` (230)
+* ``aqua`` (14)
+* ``aquamarine`` (122)
+* ``azure`` (15)
+* ``beige`` (230)
+* ``bisque`` (224)
+* ``black`` (0 black)
+* ``blanchedalmond`` (230)
+* ``blue`` (12)
+* ``blueviolet`` (92)
+* ``brown`` (124)
+* ``burlywood`` (180)
+* ``cadetblue`` (73)
+* ``chartreuse`` (118)
+* ``chocolate`` (166)
+* ``clementine`` (166)
+* ``coral`` (209)
+* ``cornflowerblue`` (69)
+* ``cornsilk`` (230)
+* ``crimson`` (161)
+* ``cyan`` (14)
+* ``darkblue`` (18)
+* ``darkcyan`` (30)
+* ``darkgoldenrod`` (136)
+* ``darkgray`` / ``darkgrey`` (248)
+* ``darkgreen`` (22)
+* ``darkkhaki`` (143)
+* ``darkmagenta`` (90)
+* ``darkolivegreen`` (239)
+* ``darkorange`` (208)
+* ``darkorchid`` (98)
+* ``darkred`` (88)
+* ``darksalmon`` (174)
+* ``darkseagreen`` (108)
+* ``darkslateblue`` (60)
+* ``darkslategray`` / ``darkslategrey`` (238)
+* ``darkturquoise`` (44)
+* ``darkviolet`` (92)
+* ``deeppink`` (198)
+* ``deepskyblue`` (39)
+* ``dimgray`` / ``dimgrey`` (242)
+* ``dodgerblue`` (33)
+* ``firebrick`` (124)
+* ``floralwhite`` (15)
+* ``forestgreen`` (28)
+* ``fuchsia`` (13)
+* ``gainsboro`` (253)
+* ``ghostwhite`` (15)
+* ``gold`` (220)
+* ``goldenrod`` (178)
+* ``gray`` / ``grey`` (8 gray)
+* ``green`` (2 green)
+* ``greenyellow`` (154)
+* ``honeydew`` (255)
+* ``hotpink`` (205)
+* ``indianred`` (167)
+* ``indigo`` (54)
+* ``ivory`` (15)
+* ``khaki`` (222)
+* ``lavender`` (255)
+* ``lavenderblush`` (15)
+* ``lawngreen`` (118)
+* ``lemonchiffon`` (230)
+* ``lightblue`` (152)
+* ``lightcoral`` (210)
+* ``lightcyan`` (195)
+* ``lightgoldenrodyellow`` (230)
+* ``lightgray`` / ``lightgrey`` (252)
+* ``lightgreen`` (120)
+* ``lightpink`` (217)
+* ``lightsalmon`` (216)
+* ``lightseagreen`` (37)
+* ``lightskyblue`` (117)
+* ``lightslategray`` / ``lightslategrey`` (102)
+* ``lightsteelblue`` (152)
+* ``lightyellow`` (230)
+* ``lime`` (10)
+* ``limegreen`` (77)
+* ``linen`` (255)
+* ``magenta`` (13)
+* ``maroon`` (1 maroon)
+* ``mediumaquamarine`` (79)
+* ``mediumblue`` (20)
+* ``mediumorchid`` (134)
+* ``mediumpurple`` (98)
+* ``mediumseagreen`` (71)
+* ``mediumslateblue`` (99)
+* ``mediumspringgreen`` (48)
+* ``mediumturquoise`` (80)
+* ``mediumvioletred`` (162)
+* ``midnightblue`` (17)
+* ``mintcream`` (15)
+* ``mistyrose`` (224)
+* ``moccasin`` (223)
+* ``murasaki`` (135)
+* ``navajowhite`` (223)
+* ``navy`` (4 navy)
+* ``oldlace`` (230)
+* ``olive`` (3 olive)
+* ``olivedrab`` (64)
+* ``orange`` (214)
+* ``orangered`` (202)
+* ``orchid`` (170)
+* ``palegoldenrod`` (223)
+* ``palegreen`` (120)
+* ``paleturquoise`` (159)
+* ``palevioletred`` (168)
+* ``papayawhip`` (230)
+* ``peachpuff`` (223)
+* ``peru`` (173)
+* ``pink`` (218)
+* ``plum`` (182)
+* ``powderblue`` (152)
+* ``purple`` (5 purple)
+* ``red`` (9 red)
+* ``rosybrown`` (138)
+* ``royalblue`` (62)
+* ``saddlebrown`` (94)
+* ``salmon`` (209)
+* ``sandybrown`` (215)
+* ``seagreen`` (29)
+* ``seashell`` (255)
+* ``sienna`` (130)
+* ``silver`` (7 silver)
+* ``skyblue`` (117)
+* ``slateblue`` (62)
+* ``slategray`` / ``slategrey`` (66)
+* ``snow`` (15)
+* ``springgreen`` (48)
+* ``steelblue`` (67)
+* ``tan`` (180)
+* ``teal`` (6 teal)
+* ``thistle`` (182)
+* ``tomato`` (203)
+* ``turquoise`` (80)
+* ``violet`` (213)
+* ``wheat`` (223)
+* ``white`` (15)
+* ``whitesmoke`` (255)
+* ``yellow`` (11)
+* ``yellowgreen`` (113)
 
 
 ``nocolor``
