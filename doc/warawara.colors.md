@@ -1,70 +1,56 @@
-# warawara.colors
+===============================================================================
+warawara.colors
+===============================================================================
 
 This document describes the API set provided by `warawara.colors`.
 
-For the index of this package, see [warawara.rst](warawara.rst).
+For the index of this package, see [warawara.md](warawara.md).
 
 
-## `color()`
+`color()`
+-------------------------------------------------------------------------------
 
 A factory function that produces color objects based on input arguments.
 
-
-### `color(): -> Color256`
-
-Returns a `Color256` object that does nothing
-
-
-### `color(index: int): -> Color256`
-
-Returns a `Color256` object from `index`.
-
-`index` should be a `int` between `0 ~ 255`.
-
-Examples:
-```python
-color(214)  # darkorange
+__Parameters__
+```
+color()
+color(index)
+color(R, G, B)
+color('#RRGGBB')
+color('@HHH,SSS,VVV')
 ```
 
-### `color(R: int, G: int, B: int) -> ColorRGB`
+__Examples__
 
-Returns a `ColorRGB` object from `R`, `G`, and `B` arguments.
-
-Examples:
 ```python
-color(255, 175, 0)  # orange
-```
-
-### `color("#RRGGBB"): -> ColorRGB`
-
-Returns a `ColorRGB` object from this certain formatted string.
-
-Examples:
-```python
-color('#FFAF00') # orange
-```
-
-### `color("@HHH,SSS,VVV"): -> ColorHSV`
-
-Returns a `ColorHSV` object from this certain formatted string.
-Examples:
-```python
-color('@41,100,100') # orange
+color()              # Color256: empty
+color(214)           # Color256: darkorange
+color(255, 175, 0)   # ColorRGB: orange
+color('#FFAF00')     # ColorRGB: orange
+color('@41,100,100') # ColorHSV: orange
 ```
 
 If the argument does not have correct format, `TypeError` is raised.
 
+See [Color256](#class-color256), [ColorRGB](#class-colorrgb),
+and [ColorHSV](#class-colorhsv) for more details.
 
-## `class Color`
+
+`class Color`
+-------------------------------------------------------------------------------
 
 An abstract base class that is inherited by other Color types.
 
-Intend to be used for type checking, like `isinstance(obj, Color)`.
+It's intended to be used for type checking. For example, `isinstance(obj, Color)`.
 
 Two `Color` objects are defined equal if their escape sequence are equal.
 
 
-## `class Color256(index)`
+`class Color256`
+-------------------------------------------------------------------------------
+
+`class Color256(index)`
 
 Represents a xterm 256 color.
 
@@ -72,7 +58,7 @@ The actual color displayed in your terminal might look different
 depends on your palette settings.
 
 ```python
-c = color(214) # orange
+c = Color256(214) # orange
 assert c.index == 214
 assert int(c) == 214
 assert str(c) == '\033[38;5;214m'
@@ -80,50 +66,54 @@ assert c('text') == str(c) + 'text' + '\033[m'
 assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
 ```
 
-A `Color256` object could be casted into a ColorRGB object or a ColorHSV object:
+A `Color256` object could be casted into a `ColorRGB` object or a `ColorHSV`
+object through `to_rgb()` or `to_hsv()` methods:
 
 ```python
 assert c.to_rgb() == ColorRGB(255, 175, 0)
 assert c.to_hsv() == ColorHSV(41, 100, 100)
 ```
 
-
-.. _ColorRGB:
-
-class ``ColorRGB(R, G, B)``
+class ``ColorRGB``
 -----------------------------------------------------------------------------
-class ``ColorRGB("#RRGGBB")``
------------------------------------------------------------------------------
+
 Represents a RGB color.
 
-.. code:: python
+__Parameters__
+```
+ColorRGB(R, G, B)
+ColorRGB('#RRGGBB')
+```
 
-   c = ColorRGB(255, 175, 0) # orange
-   assert c.r == 255
-   assert c.g == 175
-   assert c.b == 0
-   assert c.rgb = (c.r, c.g, r.v)
-   assert int(c) == 0xFFAF00
-   assert str(c) == '\033[38;2;255;175;0m'
-   assert c('text') == str(c) + 'text' + '\033[m'
-   assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
+__Examples__
+```python
+c = ColorRGB(255, 175, 0) # orange
+assert c.r == 255
+assert c.g == 175
+assert c.b == 0
+assert c.rgb = (c.r, c.g, r.v)
+assert int(c) == 0xFFAF00
+assert str(c) == '\033[38;2;255;175;0m'
+assert c('text') == str(c) + 'text' + '\033[m'
+assert '{}{}{}'.format(c, 'text', nocolor) == c('text')
+```
 
 ColorRGB objects could be mixed to produce new colors:
 
-.. code:: python
-
-   red = ColorRGB('#FF0000')
-   green = ColorRGB('#00FF00')
-   assert red + green == ColorRGB('#FFFF00')
-   assert (red + green) // 2 == ColorRGB('#7F7F00')
-   assert ((red * 2) + green) // 2 == ColorRGB('#FF7F00')
+```python
+red = ColorRGB('#FF0000')
+green = ColorRGB('#00FF00')
+assert red + green == ColorRGB('#FFFF00')
+assert (red + green) // 2 == ColorRGB('#7F7F00')
+assert ((red * 2) + green) // 2 == ColorRGB('#FF7F00')
+```
 
 A ColorRGB object could be casted into a ColorHSV object:
 
-.. code:: python
-
-   assert ColorRGB(255, 0, 0).to_rgb() == ColorRGB(255, 0, 0)
-   assert ColorRGB(255, 0, 0).to_hsv() == ColorHSV(0, 100, 100)
+```python
+assert ColorRGB(255, 0, 0).to_rgb() == ColorRGB(255, 0, 0)
+assert ColorRGB(255, 0, 0).to_hsv() == ColorHSV(0, 100, 100)
+```
 
 Two sets of RGB values are provided, lowercase ``rgb`` for real values,
 and uppercase ``RGB`` for regulated values that are
@@ -140,7 +130,7 @@ and uppercase ``RGB`` for regulated values that are
 
 class ``ColorHSV(H, S, V)``
 -----------------------------------------------------------------------------
-class ``ColorHSV("@HHH,SSS,VVV")``
+class ``ColorHSV('@HHH,SSS,VVV')``
 -----------------------------------------------------------------------------
 Represents a HSV color.
 
