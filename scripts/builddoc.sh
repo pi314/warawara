@@ -18,7 +18,7 @@ GFM='scripts/gfm'
 
 [ -d "$HTMLDOC" ] || mkdir "$HTMLDOC"
 
-# "$GFM" README.md "$HTMLDOC/README.html"
+"$GFM" README.md "$HTMLDOC/README.html"
 
 find doc -name '*.md' \
     -exec sh -c "$GFM"' "{}" "'"$HTMLDOC"'/$(basename {} .md)".html' ';' \
