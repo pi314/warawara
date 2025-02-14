@@ -464,7 +464,7 @@ assert nocolor('anything') == 'anything'
 ```
 
 
-`gradient(A, B, N=None, reverse=False, clockwise=None)`
+`gradient()`
 -----------------------------------------------------------------------------
 Produces a series of colors from ``A`` to ``B`` of length ``N >= 2``.
 
