@@ -457,10 +457,15 @@ A special color name that has the following properties:
 
 __Examples__
 ```python
+# It's colorless
 assert nocolor == color()
+
+# It doesn't add color to strings
+assert nocolor('anything') == 'anything'
+
+# And it ends color when formated
 assert str(nocolor) == '\033[m'
 assert '{}'.format(nocolor) == '\033[m'
-assert nocolor('anything') == 'anything'
 ```
 
 
