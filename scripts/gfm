@@ -63,16 +63,20 @@ class RenderWithTaskLists < Redcarpet::Render::HTML
   def list_item(text, list_type)
     if text.start_with?("[x]", "[X]")
       text[0..2] = %(<input type="checkbox" class="task-list-item-checkbox" disabled="" checked="checked">)
+      %(<li class="task-list-item">#{text}</li>)
+
     elsif text.start_with?("[ ]")
       text[0..2] = %(<input type="checkbox" class="task-list-item-checkbox" disabled="">)
-    end
+      %(<li class="task-list-item">#{text}</li>)
 
-    %(<li class="task-list-item">#{text}</li>)
+    else
+      %(<li>#{text}</li>)
+    end
   end
 end
 
 markdown_renderer = Redcarpet::Markdown.new(
-  RenderWithTaskLists,
+  RenderWithTaskLists.new(with_toc_data: true),
   no_intra_emphasis: true,
   autolink: true,
   tables: true,
@@ -111,19 +115,19 @@ __END__
       }
 
       .markdown-body {
-	  box-sizing: border-box;
-	  min-width: 200px;
-	  max-width: 980px;
-	  margin: 1 auto;
-	  padding: 45px;
+          box-sizing: border-box;
+          min-width: 200px;
+          max-width: 980px;
+          margin: 1 auto;
+          padding: 45px;
           border: 1px solid #d0d7de;
           border-radius: 6px;
       }
 
       @media (max-width: 767px) {
-	  .markdown-body {
-	      padding: 15px;
-	  }
+          .markdown-body {
+              padding: 15px;
+          }
       }
     </style>
   </head>
