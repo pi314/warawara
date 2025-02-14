@@ -1,4 +1,5 @@
-# Warawara
+Warawara
+===============================================================================
 
 A swiss-knife-like library that collects cute utilities for my other projects.
 
@@ -39,10 +40,10 @@ for simple uses.
 For more detailed API usage, see [doc/warawara.md](doc/warawara.md)
 
 
-## Installation
-
-```shell
-$ pip3 install warawara
+Installation
+-------------------------------------------------------------------------------
+```console
+sh$ pip3 install warawara
 ```
 
 Or just copy the whole folder to your machine, and add the path to `sys.path`:
@@ -53,21 +54,26 @@ sys.path.insert(0, '/some/path/to/place/warawara')
 import warawara
 ```
 
-## Test
 
+Test
+-------------------------------------------------------------------------------
 Testing:
 
-```shell
-$ python3 -m unittest
+```console
+sh$ python3 -m unittest
 ```
 
 With [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/):
 
-```shell
-$ pipx install pytest-cov --include-deps
-# or
-$ pipx install pytest
-$ pipx runpip pytest install pytest-cov
+```console
+sh$ pipx install pytest-cov --include-deps
+```
 
-$ pytest --cov=warawara --cov-report=html
+or
+
+```console
+sh$ pipx install pytest
+sh$ pipx runpip pytest install pytest-cov
+
+sh$ pytest --cov=warawara --cov-report=html
 ```

@@ -1,5 +1,6 @@
 warawara.colors
 ===============================================================================
+
 This document describes the API set provided by `warawara.colors`.
 
 For the index of this package, see [warawara.md](warawara.md).
