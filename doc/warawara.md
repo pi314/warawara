@@ -63,7 +63,7 @@ Documents and descriptions of the categories are as following:
 *   [warawara.fs](warawara.fs.md)
 *   [warawara.itertools](warawara.itertools.md)
 *   [warawara.math](warawara.math.md)
-*   `warawara.regex` (WIP)
+*   [warawara.regex](warawara.regex.md)
 *   `warawara.sh` (WIP)
 *   `warawara.subproc` (WIP)
 *   `warawara.tui` (WIP)
