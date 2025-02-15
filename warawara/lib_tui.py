@@ -11,7 +11,7 @@ import unicodedata
 
 from . import lib_colors as paints
 
-from .lib_itertools import zip_longest, unwrap_one, flatten
+from .lib_itertools import zip_longest, flatten
 from .lib_colors import decolor
 
 

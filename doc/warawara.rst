@@ -63,10 +63,10 @@ Documents and descriptions of the categories are as following:
 
 * `warawara <warawara.rst>`_
 * `warawara.colors <warawara.colors.rst>`_
-* `warawara.fs <warawara.fs.rst>`_ (WIP)
-* `warawara.itertools <warawara.itertools>`_
-* `warawara.math <warawara.math.rst>_`
-* `warawara.regex <warawara.regex.rst>`_ (WIP)
+* `warawara.fs <warawara.fs.rst>`_
+* `warawara.itertools <warawara.itertools.rst>`_
+* `warawara.math <warawara.math.rst>`_
+* `warawara.regex <warawara.regex.rst>`_
 * `warawara.sh <warawara.sh.rst>`_
 * ``warawara.subproc`` (WIP)
 * ``warawara.tui`` (WIP)

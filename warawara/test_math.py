@@ -12,7 +12,11 @@ class TestMath(TestCase):
 
     def test_lerp(self):
         lerp = wara.lerp
+        self.eq(lerp(0, 10, 0), 0)
         self.eq(lerp(0, 10, 0.5), 5)
+        self.eq(lerp(0, 10, 1), 10)
+        self.eq(lerp(0, 10, 2), 20)
+
         self.eq(lerp(0, 9, 0.333333333333333333), 3)
         self.eq(lerp(-10, 10, 0), -10)
         self.eq(lerp(-10, 10, 0.1), -8)
@@ -25,8 +29,9 @@ class TestMath(TestCase):
         self.eq(clamp(3, 5, 7), 5)
         self.eq(clamp(3, 9, 7), 7)
 
-        with self.assertRaises(ValueError):
-            clamp(7, 5, 3)
+        self.eq(clamp(7, 0, 3), 3)
+        self.eq(clamp(7, 5, 3), 5)
+        self.eq(clamp(7, 9, 3), 7)
 
     def test_vector(self):
         vector = wara.vector
@@ -57,7 +62,7 @@ class TestMath(TestCase):
         with self.assertRaises(TypeError):
             v1 // v2
 
-        self.eq(v1.map(lambda x: x * 10), (10, 20, 30))
+        self.eq(v1.map(lambda x: 3 * x + 1), (4, 7, 10))
 
         with self.assertRaises(ValueError):
             vector('bla')
