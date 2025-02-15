@@ -118,7 +118,7 @@ def interval(a, b, close=True):
 
 
 @export
-def distribute(samples, N):
+def resample(samples, N):
     if N is None:
         return samples
 
@@ -128,7 +128,7 @@ def distribute(samples, N):
         return samples
 
     if N < n:
-        # Averaging skipped samples to into N-1 gaps
+        # Averaging skipped samples into N-1 gaps
         skip_count = n - N
         gap_count = N - 1
 

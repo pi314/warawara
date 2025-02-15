@@ -113,7 +113,7 @@ assert interval(3, 3, close=False) == []
 ```
 
 
-`distribute(samples, N)`
+`resample(samples, N)`
 -----------------------------------------------------------------------------
 Returns a list that "distrubutes" `samples` into `N` items.
 
@@ -123,7 +123,7 @@ Returns a list that "distrubutes" `samples` into `N` items.
 __Examples__
 ```python
 samples = (1, 2, 3, 4, 5)
-assert distribute(samples, 5) == samples
-assert distribute(samples, 3) == (1, 3, 5)
-assert distribute(samples, 10) == (1, 1, 2, 2, 3, 3, 4, 4, 5, 5)
+assert resample(samples, 5) == samples
+assert resample(samples, 3) == (1, 3, 5)
+assert resample(samples, 10) == (1, 1, 2, 2, 3, 3, 4, 4, 5, 5)
 ```

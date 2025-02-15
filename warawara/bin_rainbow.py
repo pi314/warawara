@@ -10,7 +10,7 @@ from . import lib_colors
 from .lib_colors import paint
 from .lib_colors import color
 from .lib_regex import rere
-from .lib_math import distribute
+from .lib_math import resample
 from .lib_math import is_uint8
 from .lib_itertools import lookahead
 
@@ -528,7 +528,7 @@ def main_tile(args):
     if lines < 0:
         lines = len(tiles)
 
-    for idx, is_last in lookahead(distribute(range(len(tiles)), lines)):
+    for idx, is_last in lookahead(resample(range(len(tiles)), lines)):
         colors = tiles[idx]
         widths = []
         quo, rem = divmod(cols, len(colors))

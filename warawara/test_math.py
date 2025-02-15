@@ -97,11 +97,11 @@ class TestMath(TestCase):
         self.eq(interval(3, 3), [3])
         self.eq(interval(3, 3, close=False), [])
 
-    def test_distribute(self):
-        distribute = wara.distribute
+    def test_resample(self):
+        resample = wara.resample
 
         samples = (1, 2, 3, 4, 5)
 
-        self.eq(distribute(samples, 5), samples)
-        self.eq(distribute(samples, 3), (1, 3, 5))
-        self.eq(distribute(samples, 10), (1, 1, 2, 2, 3, 3, 4, 4, 5, 5))
+        self.eq(resample(samples, 5), samples)
+        self.eq(resample(samples, 3), (1, 3, 5))
+        self.eq(resample(samples, 10), (1, 1, 2, 2, 3, 3, 4, 4, 5, 5))

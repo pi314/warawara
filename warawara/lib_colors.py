@@ -6,7 +6,7 @@ from .lib_math import sgn
 from .lib_math import vector
 from .lib_math import lerp
 from .lib_math import interval
-from .lib_math import distribute
+from .lib_math import resample
 from .lib_math import is_uint8
 from .lib_math import clamp
 
@@ -563,7 +563,7 @@ def gradient_color256_grayscale_range(A, B, N=None):
     a, b = A.index, B.index
     direction = sgn(b - a)
     n = abs(b - a) + 1
-    return tuple(Color256(c) for c in distribute(interval(a, b), N or n))
+    return tuple(Color256(c) for c in resample(interval(a, b), N or n))
 
 
 def gradient_color256_rgb_range(A, B, N=None):
@@ -591,14 +591,14 @@ def gradient_color256_rgb_range(A, B, N=None):
             steps.append(step)
             delta = delta.map(lambda x: x - sgn(x))
 
-        ret = distribute(list(itertools.accumulate([rgb_a] + steps)), N)
+        ret = resample(list(itertools.accumulate([rgb_a] + steps)), N)
 
     else:
         # N is shorter than minimum contiguous path
         ret = zip(
-                distribute(interval(rgb_a[0], rgb_b[0]), N),
-                distribute(interval(rgb_a[1], rgb_b[1]), N),
-                distribute(interval(rgb_a[2], rgb_b[2]), N),
+                resample(interval(rgb_a[0], rgb_b[0]), N),
+                resample(interval(rgb_a[1], rgb_b[1]), N),
+                resample(interval(rgb_a[2], rgb_b[2]), N),
                 )
 
     return tuple(rgb6_to_color(i) for i in ret)
