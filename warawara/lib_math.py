@@ -24,11 +24,9 @@ def lerp(a, b, t):
 
 
 @export
-def clamp(min, x, max):
-    if min > max:
-        raise ValueError('min value should not larger than max value')
-
+def clamp(A, x, B):
     import builtins
+    min, max = builtins.min(A, B), builtins.max(A, B)
     return builtins.max(min, builtins.min(x, max))
 
 
