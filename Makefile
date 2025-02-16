@@ -1,13 +1,16 @@
-help:
+.PHONY: what
+what:
 	@echo $$ make run
 	@echo $$ make clean
 	@echo $$ make htmldoc
 
 
+.PHONY: run
 run:
 	@sh scripts/runtest.sh
 
 
+.PHONY: clean
 clean:
 	@echo $$ rm -rf htmlcov
 	@rm -rf htmlcov
@@ -32,7 +35,8 @@ clean:
 HTMLDOC := htmldoc
 GFM := scripts/gfm
 
-htmldocs: ${HTMLDOC}/README.html $(patsubst doc/%.md,${HTMLDOC}/%.html,$(wildcard doc/*.md))
+.PHONY: htmldoc
+htmldoc: ${HTMLDOC}/README.html $(patsubst doc/%.md,${HTMLDOC}/%.html,$(wildcard doc/*.md))
 
 ${HTMLDOC}/%.html: %.md Makefile ${GFM}
 	@[ -d '${HTMLDOC}' ] || mkdir '${HTMLDOC}'
