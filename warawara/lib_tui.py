@@ -205,13 +205,13 @@ def alt_if_none(A, B):
 
 
 class UserSelection:
-    def __init__(self, options, accept_cr=None, abbr=None, sep=None, ignorecase=None):
+    def __init__(self, options, accept_empty=None, abbr=None, sep=None, ignorecase=None):
         if not options:
-            accept_cr = True # carriage return
+            accept_empty = True
             abbr = False
             ignorecase = False
 
-        self.accept_cr = alt_if_none(accept_cr, True)
+        self.accept_empty = alt_if_none(accept_empty, True)
         self.abbr = alt_if_none(abbr, True)
         self.ignorecase = alt_if_none(ignorecase, self.abbr)
         self.sep = alt_if_none(sep, ' / ')
@@ -220,7 +220,7 @@ class UserSelection:
         self.options = [o for o in options]
 
         if self.options:
-            if self.accept_cr:
+            if self.accept_empty:
                 self.mapping[''] = self.options[0]
 
             for opt in self.options:
@@ -248,7 +248,7 @@ class UserSelection:
             return ''
 
         opts = [o for o in self.options]
-        if self.accept_cr and self.ignorecase:
+        if self.accept_empty and self.ignorecase:
             opts[0] = opts[0].capitalize()
 
         if self.abbr:
@@ -269,7 +269,7 @@ class UserSelection:
         return False
 
     def __str__(self):
-        return self.selected
+        return str(self.selected)
 
     def __repr__(self):
         return '<warawara.tui.UserSelection selected=[{}]>'.format(self.selected)
@@ -316,16 +316,16 @@ class ExceptionSuppressor:
 
 @export
 def prompt(question, options=tuple(),
-           accept_cr=None,
-           abbr=None,
+           accept_empty=True,
+           abbr=True,
            ignorecase=None,
-           sep=None,
+           sep=' / ',
            suppress=(EOFError, KeyboardInterrupt)):
 
     if isinstance(options, str) and ' ' in options:
         options = options.split()
 
-    user_selection = UserSelection(options, accept_cr=accept_cr, abbr=abbr, sep=sep, ignorecase=ignorecase)
+    user_selection = UserSelection(options, accept_empty=accept_empty, abbr=abbr, sep=sep, ignorecase=ignorecase)
 
     with HijackStdio():
         with ExceptionSuppressor(suppress):

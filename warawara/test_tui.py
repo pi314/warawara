@@ -478,9 +478,9 @@ class TestPromotAskUser(TestCase):
         self.eq(yn, 'tea')
         self.ne(yn, 'TEA')
 
-    def test_noaccept_cr(self):
+    def test_noaccept_empty(self):
         self.set_input('', 'c')
-        yn = prompt('Coffee or tea?', 'coffee tea', accept_cr=False)
+        yn = prompt('Coffee or tea?', 'coffee tea', accept_empty=False)
         self.expect_output(
                 'Coffee or tea? [(c)offee / (t)ea] ',
                 'Coffee or tea? [(c)offee / (t)ea] ',
