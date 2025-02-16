@@ -169,7 +169,9 @@ assert yn != 'no'
 In this example, `accept_empty=True`, so empty string is treated as equal
 to the first option specified, i.e. `'yes'`.
 
-Similarly, if user input an empty string, `yn == 'yes'` also evaluates to `True`.
+Similarly, if user input an empty string, both `yn == 'yes'` and `yn == ''` evaluates to `True`.
 
-In this example, if user triggers `EOFError` or `KeyboardInterrupt`,
+If user triggers `EOFError` or `KeyboardInterrupt`,
 it will be suppressed and make `yn` stores `None`.
+
+`yn.selected` stores the user input, so you could distinguish `yes` and `''`.
