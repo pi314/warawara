@@ -2,7 +2,7 @@ import queue
 import subprocess as sub
 import threading
 
-from .lib_itertools import unwrap_one
+from .lib_itertools import is_iterable
 
 from .internal_utils import exporter
 export, __all__ = exporter()
@@ -136,7 +136,7 @@ class command:
     '''
     A line-oriented wrapper for running external commands.
 
-    cmd: iterable[str] | callable
+    cmd: tuple[str] | list[str] | callable
         The command to run.
 
     stdin: None | iterable[str] | Queue | True
@@ -177,11 +177,18 @@ class command:
         The environment variables.
     '''
 
-    def __init__(self, *cmd,
+    def __init__(self, cmd=None, *,
             stdin=None, stdout=True, stderr=True,
             newline='\n', env=None):
 
-        cmd = unwrap_one(cmd)
+        if cmd and isinstance(cmd, str):
+            cmd = [cmd]
+        elif callable(cmd):
+            cmd = [cmd]
+        elif isinstance(cmd, (tuple, list)):
+            pass
+        else:
+            raise ValueError('Invalid command:' + repr(cmd))
 
         if not cmd:
             raise ValueError('command is empty')
@@ -374,8 +381,8 @@ class command:
 
 
 @export
-def run(*cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
-    ret = command(*cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
+def run(cmd=None, *, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
+    ret = command(cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
     ret.run(wait=wait, timeout=timeout)
     return ret
 
@@ -408,7 +415,7 @@ class RunMocker:
     def __init__(self):
         self.rules = {}
 
-    def register(self, cmd, callback=None, stdout=None, stderr=None, returncode=None):
+    def register(self, cmd, callback=None, *, stdout=None, stderr=None, returncode=None):
         if all((callback is None, stdout is None, stderr is None, returncode is None)):
             raise ValueError('Meaningless mock')
 
@@ -454,7 +461,7 @@ class RunMocker:
 
         return args
 
-    def __call__(self, cmd, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
+    def __call__(self, cmd, *, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
         matched_pattern = None
         matched_args = []
         for rule in self.rules.items():

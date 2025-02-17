@@ -6,7 +6,7 @@ COVERAGE_JSON='coverage.json'
 
 if command -v pytest >/dev/null 2>&1 ; then
     rm -f "${COVERAGE_JSON}"
-    pytest --cov=warawara --cov-report=json:"${COVERAGE_JSON}" --cov-report=html
+    pytest --cov=warawara --cov-report=json:"${COVERAGE_JSON}" --cov-report=html --full-trace
     succ=$?
     if [ ${succ} -eq 0 ]; then
         python "$0"

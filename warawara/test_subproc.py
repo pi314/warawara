@@ -197,12 +197,17 @@ class TestSubproc(TestCase):
         p = run('false')
         self.eq(p.returncode, 1)
 
-    def test_empty_cmd(self):
+    def test_invalid_cmd(self):
         with self.assertRaises(ValueError):
             p = command()
-
         with self.assertRaises(ValueError):
-            p = command([])
+            p = run()
+
+        for i in ([], True, 3, None, queue.Queue()):
+            with self.assertRaises(ValueError):
+                command(i)
+            with self.assertRaises(ValueError):
+                run(i)
 
     def test_run_with_context_manager(self):
         barrier = threading.Barrier(2)
