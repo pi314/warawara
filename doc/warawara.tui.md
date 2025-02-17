@@ -110,13 +110,68 @@ If other threads also prints contents on to screen, the output could become a me
 
 `prompt()`
 -----------------------------------------------------------------------------
+Configurable function to prompt a message and wait for user input.
 
 __Parameters__
 ```python
 prompt(question, options=tuple(),
-       accept_cr=None,
-       abbr=None,
+       accept_empty=True,
+       abbr=True,
        ignorecase=None,
-       sep=None,
+       sep=' / ',
        suppress=(EOFError, KeyboardInterrupt))
+
+# question: the message printed on screen
+# accept_empty: accept empty string, otherwise keep asking
+# abbr: Show abbreviations of the options
+# ignorecase: ignorecase
+# sep: the separator between options
+# suppress: exception type list that being suppressed
 ```
+
+In the simplest form, it could be used like `input()`:
+```python
+user_input = prompt('Input anything to continue>')
+```
+
+If `options` is specified, user is prompted to choose one from it:
+```python
+yn = prompt('Do you like warawara, or do you not like it?', ('yes', 'no'))
+print("You've replied:", yn)
+```
+User is prompted with a message like this (`_` represents the cursor):
+```
+Do you like warawara, or do you not like it? [(Y)es / (n)o] _
+```
+In this case, `yes`, `no`, `y`, `n`, and empty string are accepted and returned.
+
+All other inputs are ignored and the prompt repeats:
+```
+Do you like warawara, or do you not like it? [(Y)es / (n)o] what
+Do you like warawara, or do you not like it? [(Y)es / (n)o] why
+Do you like warawara, or do you not like it? [(Y)es / (n)o] #
+Do you like warawara, or do you not like it? [(Y)es / (n)o] yes
+You've replied: yes
+```
+
+The returned object contains the `rstrip()` user input.
+
+It overloads `__eq__()` and allows you to compare it with equivalent values:
+
+```python
+assert yn == 'yes'
+assert yn == 'Yes'
+assert yn == 'YES'
+assert yn == ''
+assert yn != 'no'
+```
+
+In this example, `accept_empty=True`, so empty string is treated as equal
+to the first option specified, i.e. `'yes'`.
+
+Similarly, if user input an empty string, both `yn == 'yes'` and `yn == ''` evaluates to `True`.
+
+If user triggers `EOFError` or `KeyboardInterrupt`,
+it will be suppressed and make `yn` stores `None`.
+
+`yn.selected` stores the user input, so you could distinguish `yes` and `''`.

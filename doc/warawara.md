@@ -49,7 +49,7 @@ Like Python standard libraries, `warawara` divide its functionalities into
 different categories.
 
 For example, `warawara.subproc` contains functions about sub-processes,
-`0warawara.colors0` contains fucntions about colors.
+`warawara.colors` contains fucntions about colors.
 
 (Note that they are not sub-modules, so they are not `from warawara import xxx` able.)
 
@@ -66,4 +66,4 @@ Documents and descriptions of the categories are as following:
 *   [warawara.regex](warawara.regex.md)
 *   [warawara.sh](warawara.sh.md)
 *   `warawara.subproc` (WIP)
-*   [warawara.tui](warawara.tui.md) (WIP)
+*   [warawara.tui](warawara.tui.md)
