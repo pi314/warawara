@@ -1,13 +1,13 @@
 .PHONY: what
 what:
-	@echo $$ make run
+	@echo $$ make run VERBOSE=1
 	@echo $$ make clean
 	@echo $$ make htmldoc
 
 
 .PHONY: run
 run:
-	@sh scripts/runtest.sh
+	@sh scripts/runtest.sh ${VERBOSE}
 
 
 .PHONY: clean

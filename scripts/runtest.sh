@@ -4,9 +4,13 @@ COVERAGE_JSON='coverage.json'
 
 'true' '''shell start'
 
+if [ "$1" != '' ]; then
+    verbose_flag=--full-trace
+fi
+
 if command -v pytest >/dev/null 2>&1 ; then
     rm -f "${COVERAGE_JSON}"
-    pytest --cov=warawara --cov-report=json:"${COVERAGE_JSON}" --cov-report=html --full-trace
+    pytest --cov=warawara --cov-report=json:"${COVERAGE_JSON}" --cov-report=html ${verbose_flag}
     succ=$?
     if [ ${succ} -eq 0 ]; then
         python "$0"
