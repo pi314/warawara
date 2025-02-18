@@ -145,7 +145,7 @@ class command:
 
         If set to ``None`` or ``False``, stdin is closed after creation.
         If set to a ``list`` or a ``tuple``, stdin is closed after data fed into the process.
-        Otherwise, stdin will be a subproc.stream object, stdin.close() needs to be called manually.
+        Otherwise, stdin.close() needs to be called manually.
 
         If a Queue is provided, stdin.task_done() will be called for each item.
 
@@ -213,13 +213,20 @@ class command:
         # Initialize stdin stream
         self.stdin = stream()
         self.stdin.keep = True
+        self.stdin_queue = None
+        self.stdin_autoclose = False
         if stdin is None or stdin is False:
             self.proc_stdin = None
             self.stdin.close()
             self.user_stdin = []
         else:
             self.proc_stdin = sub.PIPE
-            self.user_stdin = stdin
+            if isinstance(stdin, queue.Queue):
+                self.stdin_queue = stdin
+            elif is_iterable(stdin):
+                for line in stdin:
+                    self.stdin.writeline(line)
+                self.stdin_autoclose = True
 
         # Initialize stdout stream
         self.stdout = stream()
@@ -314,22 +321,19 @@ class command:
                     t.start()
                     self.io_threads.append(t)
 
-        # Feed user stdin and close the stream
-        if self.user_stdin is not True:
+        # Pull data from stdin_queue and feed into stdin stream
+        if self.stdin_queue:
             def feeder():
-                if isinstance(self.user_stdin, queue.Queue):
-                    while True:
-                        self.stdin.writeline(self.user_stdin.get())
-                        self.user_stdin.task_done()
-
-                else:
-                    for line in self.user_stdin:
-                        self.stdin.writeline(line)
-                    self.stdin.close()
+                while True:
+                    self.stdin.writeline(self.stdin_queue.get())
+                    self.stdin_queue.task_done()
 
             t = threading.Thread(target=feeder)
             t.daemon = True
             t.start()
+
+        elif self.stdin_autoclose:
+            self.stdin.close()
 
         if wait or timeout:
             self.wait(timeout)

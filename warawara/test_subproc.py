@@ -283,23 +283,24 @@ class TestSubproc(TestCase):
         self.eq(p.stdout.lines, ['1:hello', '2:world'])
 
     def test_stdin_delayed_write(self):
-        data = []
+        data = ['hello', 'world']
         p = command('nl -w 1 -s :'.split(), stdin=data)
 
-        data += ['hello', 'world']
-        data.append('hello')
-        data.append('world')
-        p.stdin.writeline('wah')
+        data += ['wow', 'haha']     # ignored
+        p.stdin.writeline('wah')    # allow write before run
         p.run(wait=False).wait()
 
-        self.eq(p.stdout.lines, ['1:wah', '2:hello', '3:world', '4:hello', '5:world'])
+        self.eq(p.stdout.lines, ['1:hello', '2:world', '3:wah'])
 
     def test_stdin_queue(self):
         Q = queue.Queue()
         p = command('nl -w 1 -s :'.split(), stdin=Q)
 
+        Q.put('pre')
+
         p.run(wait=False)
 
+        Q.join()
         Q.put('hello')
         Q.put('world')
         Q.join()
@@ -309,7 +310,7 @@ class TestSubproc(TestCase):
         p.stdin.close()
 
         p.wait()
-        self.eq(p.stdout.lines, ['1:hello', '2:world', '3:wah'])
+        self.eq(p.stdout.lines, ['1:pre', '2:hello', '3:world', '4:wah'])
 
     def test_pipe(self):
         p1 = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
