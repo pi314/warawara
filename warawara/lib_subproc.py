@@ -178,8 +178,8 @@ class command:
     '''
 
     def __init__(self, cmd=None, *,
-            stdin=None, stdout=True, stderr=True,
-            newline='\n', env=None):
+                 stdin=None, stdout=True, stderr=True,
+                 newline='\n', env=None):
 
         if cmd and isinstance(cmd, str):
             cmd = [cmd]
@@ -340,6 +340,13 @@ class command:
 
         return self
 
+    def poll(self):
+        if self.proc:
+            return self.proc.poll()
+        if self.thread:
+            return self.returncode
+        return False
+
     def wait(self, timeout=None):
         # Wait for child process to finish
         if self.proc:
@@ -385,8 +392,13 @@ class command:
 
 
 @export
-def run(cmd=None, *, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
-    ret = command(cmd, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
+def run(cmd=None, *,
+        stdin=None, stdout=True, stderr=True,
+        newline='\n', env=None,
+        wait=True, timeout=None):
+    ret = command(cmd,
+                  stdin=stdin, stdout=stdout, stderr=stderr,
+                  newline=newline, env=env)
     ret.run(wait=wait, timeout=timeout)
     return ret
 

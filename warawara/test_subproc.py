@@ -409,6 +409,24 @@ class TestSubproc(TestCase):
         self.le(t2 - t1, 1)
         p.kill()
 
+    def test_poll(self):
+        p = command('true')
+        self.eq(p.poll(), False)
+        p.run()
+        self.eq(p.poll(), 0)
+
+        checkpoint = self.checkpoint()
+        def prog(proc, *args):
+            checkpoint.wait()
+            return 1
+        p = command(prog)
+        self.eq(p.poll(), False)
+        p.run(wait=False)
+        self.eq(p.poll(), None)
+        checkpoint.set()
+        p.wait()
+        self.eq(p.poll(), 1)
+
     def test_kill_callable(self):
         checkpoint = self.checkpoint()
 
