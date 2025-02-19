@@ -332,7 +332,7 @@ class command:
 
                 else:
                     # binary
-                    while True:
+                    while self.poll() is None:
                         data = proc_stream.read(
                                 -1
                                 if self.bufsize < 0
@@ -340,11 +340,13 @@ class command:
                                 )
 
                         if not data:
-                            if self.poll() is None:
-                                continue
-                            else:
-                                break
+                            continue
 
+                        self_stream.writeline(data)
+
+                    # read all remaining data
+                    data = proc_stream.read()
+                    if data:
                         self_stream.writeline(data)
 
                 self_stream.close()
