@@ -1,13 +1,4 @@
-import contextlib
-import enum
-import itertools
-import os
-import re
-import shutil
 import sys
-import threading
-import time
-import unicodedata
 
 from . import lib_colors as paints
 
@@ -21,6 +12,7 @@ export, __all__ = exporter()
 
 @export
 def strwidth(s):
+    import unicodedata
     return sum((1 + (unicodedata.east_asian_width(c) in 'WF')) for c in decolor(s))
 
 
@@ -126,6 +118,8 @@ class ThreadedSpinner:
         self.is_end = False
         self.thread = None
         self._text = ''
+
+        import itertools
         self.icon_iter = (
                 itertools.chain(
                     self.icon_entry,
@@ -135,7 +129,8 @@ class ThreadedSpinner:
                 )
         self.icon_head = [None, None]
 
-        self.print_function = print
+        import builtins
+        self.print_function = builtins.print
 
     def __enter__(self):
         if self.thread:
@@ -166,6 +161,8 @@ class ThreadedSpinner:
         self.print_function('\r' + self.icon + '\033[K ' + self._text, end='')
 
     def animate(self):
+        import time
+
         while not self.is_end:
             self.refresh()
             time.sleep(self.delay)
@@ -185,6 +182,7 @@ class ThreadedSpinner:
         if self.thread:
             return
 
+        import threading
         self.thread = threading.Thread(target=self.animate)
         self.thread.daemon = True
         self.thread.start()
@@ -332,6 +330,7 @@ def prompt(question, options=tuple(),
             while user_selection.selected is None:
                 print((question + (user_selection.prompt)), end=' ')
 
+                import contextlib
                 with contextlib.suppress(ValueError):
                     i = input().strip()
                     user_selection.select(i)
