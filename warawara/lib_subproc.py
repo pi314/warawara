@@ -179,7 +179,9 @@ class command:
 
     def __init__(self, cmd=None, *,
                  stdin=None, stdout=True, stderr=True,
-                 newline='\n', env=None):
+                 encoding='utf8', rstrip='\r\n',
+                 bufsize=-1,
+                 env=None):
 
         if cmd and isinstance(cmd, str):
             cmd = [cmd]
@@ -198,7 +200,9 @@ class command:
         else:
             self.cmd = [str(token) for token in cmd]
 
-        self.newline = newline
+        self.encoding = encoding
+        self.bufsize = bufsize
+        self.rstrip = rstrip
 
         self.env = env
         self.proc = None
@@ -288,25 +292,61 @@ class command:
             self.thread.start()
 
         else:
+            if self.encoding == False:
+                # binary mode
+                kwargs = {
+                        'bufsize': 2 if self.bufsize == 1 else self.bufsize,
+                        'text': False,
+                        }
+            else:
+                kwargs = {
+                        'bufsize': 1,
+                        'encoding': self.encoding,
+                        'errors': 'backslashreplace',
+                        }
+
             self.proc = sub.Popen(
                     self.cmd,
                     stdin=self.proc_stdin,
                     stdout=self.proc_stdout,
                     stderr=self.proc_stderr,
-                    encoding='utf-8', errors='backslashreplace',
-                    bufsize=1, universal_newlines=True,
-                    env=self.env)
+                    env=self.env, **kwargs)
 
             def writer(self_stream, proc_stream):
                 for line in self_stream:
-                    proc_stream.write(line + self.newline)
+                    if self.encoding != False:
+                        # text
+                        proc_stream.write(line + '\n')
+                    else:
+                        # binary
+                        proc_stream.write(line)
                     proc_stream.flush()
                 proc_stream.close()
 
             def reader(self_stream, proc_stream):
-                for line in proc_stream:
-                    line = line.rstrip(self.newline)
-                    self_stream.writeline(line)
+                if self.encoding != False:
+                    # text
+                    for line in proc_stream:
+                        line = line.rstrip(self.rstrip)
+                        self_stream.writeline(line)
+
+                else:
+                    # binary
+                    while True:
+                        data = proc_stream.read(
+                                -1
+                                if self.bufsize < 0
+                                else (self.bufsize or 1)
+                                )
+
+                        if not data:
+                            if self.poll() is None:
+                                continue
+                            else:
+                                break
+
+                        self_stream.writeline(data)
+
                 self_stream.close()
                 proc_stream.close()
 
@@ -394,11 +434,14 @@ class command:
 @export
 def run(cmd=None, *,
         stdin=None, stdout=True, stderr=True,
-        newline='\n', env=None,
+        encoding='utf8', rstrip='\r\n',
+        bufsize=-1,
+        env=None,
         wait=True, timeout=None):
     ret = command(cmd,
                   stdin=stdin, stdout=stdout, stderr=stderr,
-                  newline=newline, env=env)
+                  encoding=encoding,
+                  rstrip=rstrip, env=env)
     ret.run(wait=wait, timeout=timeout)
     return ret
 
@@ -477,7 +520,12 @@ class RunMocker:
 
         return args
 
-    def __call__(self, cmd, *, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
+    def __call__(self, cmd, *,
+                 stdin=None, stdout=True, stderr=True,
+                 encoding='utf8', rstrip='\r\n',
+                 bufsize=-1,
+                 env=None,
+                 wait=True, timeout=None):
         matched_pattern = None
         matched_args = []
         for rule in self.rules.items():
@@ -506,6 +554,10 @@ class RunMocker:
         if len(matched_callbacks) > 1:
             matched_callbacks.pop(0)
 
-        p = command([callback] + matched_args, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
+        p = command([callback] + matched_args,
+                    stdin=stdin, stdout=stdout, stderr=stderr,
+                    encoding=encoding, rstrip=rstrip,
+                    bufsize=bufsize,
+                    env=env)
         p.run(wait=wait, timeout=timeout)
         return p
