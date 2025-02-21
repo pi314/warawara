@@ -81,21 +81,27 @@ class stream:
             else:
                 raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
 
-    def readline(self):
-        line = self.queue.get()
-        return line
+    def read(self):
+        data = self.queue.get()
+        return data
 
-    def writeline(self, line, suppress=True):
+    def readline(self):
+        return self.read()
+
+    def write(self, data, *, suppress=True):
         if self.closed:
             if suppress:
                 return
             raise BrokenPipeError('stream already closed')
 
         if self.keep:
-            self.lines.append(line)
+            self.lines.append(data)
 
-        self.queue.put(line)
-        self.hub.broadcast(line)
+        self.queue.put(data)
+        self.hub.broadcast(data)
+
+    def writeline(self, line, *, suppress=True):
+        self.write(line, suppress=suppress)
 
     def writelines(self, lines):
         for line in lines:
@@ -211,7 +217,7 @@ class command:
         self.killed = threading.Event()
         self.returncode = None
 
-        if isinstance(stdin, str):
+        if isinstance(stdin, (str, bytes, bytearray)):
             stdin = [stdin]
 
         # Initialize stdin stream
@@ -229,7 +235,7 @@ class command:
                 self.stdin_queue = stdin
             elif is_iterable(stdin):
                 for line in stdin:
-                    self.stdin.writeline(line)
+                    self.stdin.write(line)
                 self.stdin_autoclose = True
 
         # Initialize stdout stream
@@ -314,12 +320,12 @@ class command:
 
             def writer(self_stream, proc_stream):
                 for line in self_stream:
-                    if self.encoding != False:
-                        # text
-                        proc_stream.write(line + '\n')
-                    else:
-                        # binary
+                    if self.encoding == False:
                         proc_stream.write(line)
+                    elif isinstance(line, (bytes, bytearray)):
+                        proc_stream.buffer.write(line)
+                    else:
+                        proc_stream.write(line + '\n')
                     proc_stream.flush()
                 proc_stream.close()
 
@@ -342,9 +348,9 @@ class command:
                         if not data:
                             continue
 
-                        self_stream.writeline(data)
+                        self_stream.write(data)
 
-                    # read all remaining data
+                    # Read all remaining data left in stream
                     data = proc_stream.read()
                     if data:
                         self_stream.writeline(data)
@@ -458,13 +464,22 @@ def pipe(istream, *ostreams):
             raise BrokenPipeError('ostream already closed')
 
     def worker(istream, ostreams):
-        for line in istream:
-            for ostream in ostreams:
-                ostream.writeline(line)
+        exception = None
+        try:
+            for line in istream:
+                for ostream in ostreams:
+                    ostream.write(line)
+
+        except Exception as e:
+            exception = e
+            istream.close()
 
         istream.eof.wait()
         for ostream in ostreams:
             ostream.close()
+
+        if exception:
+            raise exception
 
     t = threading.Thread(target=worker, args=(istream, ostreams))
     t.daemon = True
