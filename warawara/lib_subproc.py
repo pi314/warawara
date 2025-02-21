@@ -49,7 +49,6 @@ class QueueEventAdapter:
         self.Q.put(line)
 
 
-@export
 class stream:
     def __init__(self):
         self.queue = queue.Queue()

@@ -5,6 +5,9 @@ from .lib_test_utils import *
 
 from warawara import *
 
+import warawara
+stream = warawara.subproc.stream
+
 
 def queue_to_list(Q):
     ret = []
