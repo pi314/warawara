@@ -49,7 +49,6 @@ class QueueEventAdapter:
         self.Q.put(line)
 
 
-@export
 class stream:
     def __init__(self):
         self.queue = queue.Queue()
@@ -81,21 +80,27 @@ class stream:
             else:
                 raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
 
-    def readline(self):
-        line = self.queue.get()
-        return line
+    def read(self):
+        data = self.queue.get()
+        return data
 
-    def writeline(self, line, suppress=True):
+    def readline(self):
+        return self.read()
+
+    def write(self, data, *, suppress=True):
         if self.closed:
             if suppress:
                 return
             raise BrokenPipeError('stream already closed')
 
         if self.keep:
-            self.lines.append(line)
+            self.lines.append(data)
 
-        self.queue.put(line)
-        self.hub.broadcast(line)
+        self.queue.put(data)
+        self.hub.broadcast(data)
+
+    def writeline(self, line, *, suppress=True):
+        self.write(line, suppress=suppress)
 
     def writelines(self, lines):
         for line in lines:
@@ -179,7 +184,9 @@ class command:
 
     def __init__(self, cmd=None, *,
                  stdin=None, stdout=True, stderr=True,
-                 newline='\n', env=None):
+                 encoding='utf8', rstrip='\r\n',
+                 bufsize=-1,
+                 env=None):
 
         if cmd and isinstance(cmd, str):
             cmd = [cmd]
@@ -198,7 +205,9 @@ class command:
         else:
             self.cmd = [str(token) for token in cmd]
 
-        self.newline = newline
+        self.encoding = encoding
+        self.bufsize = bufsize
+        self.rstrip = rstrip
 
         self.env = env
         self.proc = None
@@ -207,7 +216,7 @@ class command:
         self.killed = threading.Event()
         self.returncode = None
 
-        if isinstance(stdin, str):
+        if isinstance(stdin, (str, bytes, bytearray)):
             stdin = [stdin]
 
         # Initialize stdin stream
@@ -225,7 +234,7 @@ class command:
                 self.stdin_queue = stdin
             elif is_iterable(stdin):
                 for line in stdin:
-                    self.stdin.writeline(line)
+                    self.stdin.write(line)
                 self.stdin_autoclose = True
 
         # Initialize stdout stream
@@ -288,25 +297,63 @@ class command:
             self.thread.start()
 
         else:
+            if self.encoding == False:
+                # binary mode
+                kwargs = {
+                        'bufsize': 2 if self.bufsize == 1 else self.bufsize,
+                        'text': False,
+                        }
+            else:
+                kwargs = {
+                        'bufsize': 1,
+                        'encoding': self.encoding,
+                        'errors': 'backslashreplace',
+                        }
+
             self.proc = sub.Popen(
                     self.cmd,
                     stdin=self.proc_stdin,
                     stdout=self.proc_stdout,
                     stderr=self.proc_stderr,
-                    encoding='utf-8', errors='backslashreplace',
-                    bufsize=1, universal_newlines=True,
-                    env=self.env)
+                    env=self.env, **kwargs)
 
             def writer(self_stream, proc_stream):
                 for line in self_stream:
-                    proc_stream.write(line + self.newline)
+                    if self.encoding == False:
+                        proc_stream.write(line)
+                    elif isinstance(line, (bytes, bytearray)):
+                        proc_stream.buffer.write(line)
+                    else:
+                        proc_stream.write(line + '\n')
                     proc_stream.flush()
                 proc_stream.close()
 
             def reader(self_stream, proc_stream):
-                for line in proc_stream:
-                    line = line.rstrip(self.newline)
-                    self_stream.writeline(line)
+                if self.encoding != False:
+                    # text
+                    for line in proc_stream:
+                        line = line.rstrip(self.rstrip)
+                        self_stream.writeline(line)
+
+                else:
+                    # binary
+                    while self.poll() is None:
+                        data = proc_stream.read(
+                                -1
+                                if self.bufsize < 0
+                                else (self.bufsize or 1)
+                                )
+
+                        if not data:
+                            continue
+
+                        self_stream.write(data)
+
+                    # Read all remaining data left in stream
+                    data = proc_stream.read()
+                    if data:
+                        self_stream.writeline(data)
+
                 self_stream.close()
                 proc_stream.close()
 
@@ -394,36 +441,62 @@ class command:
 @export
 def run(cmd=None, *,
         stdin=None, stdout=True, stderr=True,
-        newline='\n', env=None,
+        encoding='utf8', rstrip='\r\n',
+        bufsize=-1,
+        env=None,
         wait=True, timeout=None):
     ret = command(cmd,
                   stdin=stdin, stdout=stdout, stderr=stderr,
-                  newline=newline, env=env)
+                  encoding=encoding,
+                  rstrip=rstrip, env=env)
     ret.run(wait=wait, timeout=timeout)
     return ret
 
 
-@export
-def pipe(istream, *ostreams):
-    if istream.closed:
-        raise EOFError('istream already closed')
+class Pipe:
+    def __init__(self, istream, *ostreams):
+        if istream.closed:
+            raise EOFError('istream already closed')
 
-    for ostream in ostreams:
-        if ostream.closed:
-            raise BrokenPipeError('ostream already closed')
-
-    def worker(istream, ostreams):
-        for line in istream:
-            for ostream in ostreams:
-                ostream.writeline(line)
-
-        istream.eof.wait()
         for ostream in ostreams:
+            if ostream.closed:
+                raise BrokenPipeError('ostream already closed')
+
+        self.exception = None
+        self.thread = None
+        self.istream = istream
+        self.ostreams = ostreams
+
+    def loop(self):
+        try:
+            for line in self.istream:
+                for ostream in self.ostreams:
+                    ostream.write(line)
+
+        except Exception as e:
+            self.exception = e
+            self.istream.close()
+
+        self.istream.eof.wait()
+        for ostream in self.ostreams:
             ostream.close()
 
-    t = threading.Thread(target=worker, args=(istream, ostreams))
-    t.daemon = True
-    t.start()
+    def start(self):
+        self.thread = threading.Thread(target=self.loop)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def join(self):
+        self.thread.join()
+        if self.exception:
+            raise self.exception
+
+
+@export
+def pipe(istream, *ostreams):
+    p = Pipe(istream, *ostreams)
+    p.start()
+    return p
 
 
 @export
@@ -477,7 +550,12 @@ class RunMocker:
 
         return args
 
-    def __call__(self, cmd, *, stdin=None, stdout=True, stderr=True, newline='\n', env=None, wait=True, timeout=None):
+    def __call__(self, cmd, *,
+                 stdin=None, stdout=True, stderr=True,
+                 encoding='utf8', rstrip='\r\n',
+                 bufsize=-1,
+                 env=None,
+                 wait=True, timeout=None):
         matched_pattern = None
         matched_args = []
         for rule in self.rules.items():
@@ -506,6 +584,10 @@ class RunMocker:
         if len(matched_callbacks) > 1:
             matched_callbacks.pop(0)
 
-        p = command([callback] + matched_args, stdin=stdin, stdout=stdout, stderr=stderr, newline=newline, env=env)
+        p = command([callback] + matched_args,
+                    stdin=stdin, stdout=stdout, stderr=stderr,
+                    encoding=encoding, rstrip=rstrip,
+                    bufsize=bufsize,
+                    env=env)
         p.run(wait=wait, timeout=timeout)
         return p

@@ -5,6 +5,9 @@ from .lib_test_utils import *
 
 from warawara import *
 
+import warawara
+stream = warawara.subproc.stream
+
 
 def queue_to_list(Q):
     ret = []
@@ -258,8 +261,8 @@ class TestSubproc(TestCase):
     def test_multi_ouptut_merge(self):
         def prog(proc, *args):
             for i in range(5):
-                proc[1].writeline(i)
-                proc[2].writeline(i)
+                proc[1].write(i)
+                proc[2].write(i)
 
         Q = queue.Queue()
 
@@ -325,6 +328,8 @@ class TestSubproc(TestCase):
         self.eq(p2.stdin.lines, ['1:hello', '2:world'])
         self.eq(p2.stdout.lines, ['1/1:hello', '2/2:world'])
 
+        pp.join()
+
     def test_pipe_istream_already_closed(self):
         i = stream()
         o = stream()
@@ -340,6 +345,20 @@ class TestSubproc(TestCase):
 
         with self.assertRaises(BrokenPipeError):
             pipe(i, o)
+
+    def test_pipe_exception(self):
+        i = stream()
+        o = stream()
+        o.queue = None
+        o.close = lambda: None
+
+        p = pipe(i, o)
+        i.writeline('wah')
+
+        with self.assertRaises(Exception):
+            p.join()
+
+        self.ne(p.exception, None)
 
     def test_callable_with_pipe(self):
         def prog(proc, *args):
@@ -381,7 +400,7 @@ class TestSubproc(TestCase):
                 if x == 1:
                     break
                 else:
-                    proc[1].writeline(collatz_function(x))
+                    proc[1].write(collatz_function(x))
 
         p = command(prog, stdin=True)
 
@@ -390,7 +409,7 @@ class TestSubproc(TestCase):
 
         import time
         t = int(time.time())
-        p.stdin.writeline(t)
+        p.stdin.write(t)
         p.run()
 
         # If this test fails, make sure to check the initial input
@@ -458,6 +477,53 @@ class TestSubproc(TestCase):
         with self.run_in_thread(may_stuck):
             checkpoint.check()
             self.eq(lines, ans)
+
+    def test_encoding_false(self):
+        pi = b''
+        pi += b'\x31\x41\x59\x26\x53\x58\x97\x93\x23\x84\x62\x64\x33\x83\x27\x95'
+        pi += b'\x02\x88\x41\x97\x16\x93\x99\x37\x51\x05\x82\x09\x74\x94\x45\x92'
+        pi += b'\x30\x78\x16\x40\x62\x86\x20\x89\x98\x62\x80\x34\x82\x53\x42\x11'
+        pi += b'\x70\x67\x90'
+        p = run(['xxd'], encoding=False, stdin=pi)
+        self.eq(p.returncode, 0)
+        self.eq(p.stdin.lines, [pi])
+        self.eq(len(p.stdout.lines), 1)
+        hex_pi = p.stdout.lines[0].decode('utf-8')
+        self.eq(hex_pi, '''
+00000000: 3141 5926 5358 9793 2384 6264 3383 2795  1AY&SX..#.bd3.'.
+00000010: 0288 4197 1693 9937 5105 8209 7494 4592  ..A....7Q...t.E.
+00000020: 3078 1640 6286 2089 9862 8034 8253 4211  0x.@b. ..b.4.SB.
+00000030: 7067 90                                  pg.
+'''.lstrip())
+
+    def test_encoding_true_but_write_binary(self):
+        pi = b''
+        pi += b'\x31\x41\x59\x26\x53\x58\x97\x93\x23\x84\x62\x64\x33\x83\x27\x95'
+        pi += b'\x02\x88\x41\x97\x16\x93\x99\x37\x51\x05\x82\x09\x74\x94\x45\x92'
+        pi += b'\x30\x78\x16\x40\x62\x86\x20\x89\x98\x62\x80\x34\x82\x53\x42\x11'
+        pi += b'\x70\x67\x90'
+        p = run(['xxd'], stdin=pi)
+        self.eq(p.returncode, 0)
+        self.eq(p.stdin.lines, [pi])
+        self.eq(len(p.stdout.lines), 4)
+        self.eq(p.stdout.lines, [
+            "00000000: 3141 5926 5358 9793 2384 6264 3383 2795  1AY&SX..#.bd3.'.",
+            "00000010: 0288 4197 1693 9937 5105 8209 7494 4592  ..A....7Q...t.E.",
+            "00000020: 3078 1640 6286 2089 9862 8034 8253 4211  0x.@b. ..b.4.SB.",
+            "00000030: 7067 90                                  pg.",
+            ])
+
+    def test_large_amount_of_retention_data(self):
+        p = command(['echo', 'a lot of data'], encoding=False)
+        def mock_poll():
+            # block p.poll() until the p.proc writes all stdout and exits
+            while p.proc.poll() is None:
+                pass
+            return p.proc.poll()
+
+        p.poll = mock_poll
+        p.run()
+        self.eq(p.stdout.lines, [b'a lot of data\n'])
 
 
 class TestSubprocRunMocker(TestCase):
