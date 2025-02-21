@@ -328,6 +328,8 @@ class TestSubproc(TestCase):
         self.eq(p2.stdin.lines, ['1:hello', '2:world'])
         self.eq(p2.stdout.lines, ['1/1:hello', '2/2:world'])
 
+        pp.join()
+
     def test_pipe_istream_already_closed(self):
         i = stream()
         o = stream()
@@ -343,6 +345,20 @@ class TestSubproc(TestCase):
 
         with self.assertRaises(BrokenPipeError):
             pipe(i, o)
+
+    def test_pipe_exception(self):
+        i = stream()
+        o = stream()
+        o.queue = None
+        o.close = lambda: None
+
+        p = pipe(i, o)
+        i.writeline('wah')
+
+        with self.assertRaises(Exception):
+            p.join()
+
+        self.ne(p.exception, None)
 
     def test_callable_with_pipe(self):
         def prog(proc, *args):

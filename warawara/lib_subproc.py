@@ -453,36 +453,50 @@ def run(cmd=None, *,
     return ret
 
 
-@export
-def pipe(istream, *ostreams):
-    if istream.closed:
-        raise EOFError('istream already closed')
+class Pipe:
+    def __init__(self, istream, *ostreams):
+        if istream.closed:
+            raise EOFError('istream already closed')
 
-    for ostream in ostreams:
-        if ostream.closed:
-            raise BrokenPipeError('ostream already closed')
+        for ostream in ostreams:
+            if ostream.closed:
+                raise BrokenPipeError('ostream already closed')
 
-    def worker(istream, ostreams):
-        exception = None
+        self.exception = None
+        self.thread = None
+        self.istream = istream
+        self.ostreams = ostreams
+
+    def loop(self):
         try:
-            for line in istream:
-                for ostream in ostreams:
+            for line in self.istream:
+                for ostream in self.ostreams:
                     ostream.write(line)
 
         except Exception as e:
-            exception = e
-            istream.close()
+            self.exception = e
+            self.istream.close()
 
-        istream.eof.wait()
-        for ostream in ostreams:
+        self.istream.eof.wait()
+        for ostream in self.ostreams:
             ostream.close()
 
-        if exception:
-            raise exception
+    def start(self):
+        self.thread = threading.Thread(target=self.loop)
+        self.thread.daemon = True
+        self.thread.start()
 
-    t = threading.Thread(target=worker, args=(istream, ostreams))
-    t.daemon = True
-    t.start()
+    def join(self):
+        self.thread.join()
+        if self.exception:
+            raise self.exception
+
+
+@export
+def pipe(istream, *ostreams):
+    p = Pipe(istream, *ostreams)
+    p.start()
+    return p
 
 
 @export
