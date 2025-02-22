@@ -227,7 +227,6 @@ class command:
         if stdin is None or stdin is False:
             self.proc_stdin = None
             self.stdin.close()
-            self.user_stdin = []
         else:
             self.proc_stdin = sub.PIPE
             if isinstance(stdin, queue.Queue):
