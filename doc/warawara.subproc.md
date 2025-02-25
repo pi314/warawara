@@ -50,6 +50,8 @@ command(self, cmd=None, *,
     -   If `stdin` is a `tuple` or a `list`, each item is treated as one line of text input.
         +   The stream is left open and accepts more input, and it's closed upon `run()`.
     -   If `stdin` is `True`, the stream is left open and wait for data input.
+    -   If `stdin` is a `queue.Queue`, the stream is left open
+        and the process pulls data from the given `Queue` object and feed into `stdin`.
 
 
 `run()`
