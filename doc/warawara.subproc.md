@@ -71,6 +71,20 @@ command(self, cmd=None, *,
 *   `stderr` (default: `True`)
     -   See `stdout`.
 
+*   `encoding` (default: `'utf8'`)
+    -   If `encoding` is `False`, the process will open in binary mode.
+
+*   `rstrip` (default: `'\r\n'`)
+    -   In text mode (`encoding != False`), each line will be `rstrip()`ed with `rstrip` value
+
+*   `bufsize` (default: `-1`)
+    -   `bufsize` is only meaningful when encoding is `False`.
+    -   This value controls the rough size of underlying buffer.
+
+*   `env` (default: None)
+    -   Environment variables.
+    -   By default, child processs inherits environment variables from parent proess.
+
 
 `run()`
 -------------------------------------------------------------------------------
