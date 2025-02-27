@@ -68,6 +68,9 @@ command(self, cmd=None, *,
         +   `stdout=lambda line: ...`
         +   `stdout=tuple(print, queue.Queue())`
 
+*   `stderr` (default: `True`)
+    -   See `stdout`.
+
 
 `run()`
 -------------------------------------------------------------------------------
