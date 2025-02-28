@@ -2,6 +2,8 @@ import queue
 import subprocess as sub
 import threading
 
+from signal import SIGKILL
+
 from .lib_itertools import is_iterable
 
 from .internal_utils import exporter
@@ -136,6 +138,25 @@ class stream:
                 yield line
 
 
+class IntegerEvent(threading.Event):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.value = None
+
+    def set(self, value=None):
+        self.value = value
+        super().set()
+
+    def clear(self):
+        self.value = None
+        super().clear()
+
+    def __eq__(self, other):
+        if not self.is_set():
+            return other is False or other is None
+        return self.value == other
+
+
 @export
 class command:
     def __init__(self, cmd=None, *,
@@ -169,7 +190,7 @@ class command:
         self.proc = None
         self.thread = None
         self.exception = None
-        self.killed = threading.Event()
+        self.signaled = IntegerEvent()
         self.returncode = None
 
         if isinstance(stdin, (str, bytes, bytearray)):
@@ -219,6 +240,10 @@ class command:
             self.stderr.welcome(stderr)
 
         self.io_threads = []
+
+    @property
+    def killed(self):
+        return self.signaled
 
     def __getitem__(self, idx):
         return [self.stdin, self.stdout, self.stderr][idx]
@@ -374,9 +399,16 @@ class command:
         for t in self.io_threads:
             t.join()
 
-    def kill(self):
+    def signal(self, signal):
         if self.proc:
-            self.proc.kill()
+            self.proc.send_signal(signal)
+
+        self.signaled.set(signal)
+
+    def kill(self, signal=SIGKILL):
+        self.signal(signal)
+
+        if self.proc:
             self.proc.wait()
             for proc_stream in (
                     self.proc.stdin,
@@ -389,7 +421,6 @@ class command:
             self.returncode = self.proc.returncode
 
         if self.thread:
-            self.killed.set()
             self.thread.join()
 
 

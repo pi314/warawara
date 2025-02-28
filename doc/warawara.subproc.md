@@ -90,7 +90,11 @@ A `command` object has the following methods:
 *   `run(wait=True, timeout=None)`: run the command.
 *   `poll()`: check the process status and return the status code.
 *   `wait(timeout=None)`: wait the process to finish for `timeout` seconds.
-*   `kill()`: try to stop the process.
+*   `signal(signal)`: send `signal` to the process.
+*   `kill(signal=SIGKILL)`: send `signal`, wait for the process to stop, and close all streams.
+*   `signaled`: stores the received signal.
+    -   It's a subclass of `threading.Event` thus can be `.wait()`.
+*   `killed`: an alias to `signaled`.
 
 Each stream object (i.e. `command.stdin`, `command.stdout`, and `command.stderr`)
 has the following methods and properties:

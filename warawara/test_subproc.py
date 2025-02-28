@@ -446,6 +446,13 @@ class TestSubproc(TestCase):
         p.wait()
         self.eq(p.poll(), 1)
 
+    def test_signal(self):
+        p = run(['cat'], wait=False)
+        import signal
+        p.signal(signal.SIGINT)
+        p.wait()
+        self.eq(p.signaled, signal.SIGINT)
+
     def test_kill_callable(self):
         checkpoint = self.checkpoint()
 
@@ -454,9 +461,21 @@ class TestSubproc(TestCase):
             checkpoint.set()
 
         p = run(prog, wait=False)
+        self.eq(p.signaled, False)
+        self.eq(p.signaled, None)
         p.kill()
         p.wait()
+
+        import signal
         checkpoint.check()
+        self.eq(p.signaled, signal.SIGKILL)
+
+        p.signaled.clear()
+        self.eq(p.signaled, False)
+        self.eq(p.signaled, None)
+
+        p.kill(signal.SIGTERM)
+        self.eq(p.signaled, signal.SIGTERM)
 
     def test_read_stdout_twice(self):
         ans = '1 2 3 4 5'.split()
