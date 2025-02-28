@@ -72,7 +72,7 @@ command(self, cmd=None, *,
     -   See `stdout`.
 
 *   `encoding` (default: `'utf8'`)
-    -   If `encoding` is `False`, the process will open in binary mode.
+    -   If `encoding` is `False`, the process is opened in binary mode.
 
 *   `rstrip` (default: `'\r\n'`)
     -   In text mode (`encoding != False`), each line will be `rstrip()`ed with `rstrip` value
@@ -84,6 +84,28 @@ command(self, cmd=None, *,
 *   `env` (default: None)
     -   Environment variables.
     -   By default, child processs inherits environment variables from parent proess.
+
+A `command` object has the following methods:
+
+*   `run(wait=True, timeout=None)`: run the command.
+*   `poll()`: check the process status and return the status code.
+*   `wait(timeout=None)`: wait the process to finish for `timeout` seconds.
+*   `kill()`: try to stop the process.
+
+Each stream object (i.e. `command.stdin`, `command.stdout`, and `command.stderr`)
+has the following methods and properties:
+
+*   `read()`: read one line or a block of data from the stream.
+*   `readline()`: an alias to `read()`.
+*   `write(data)`: write one line or a block of data to the stream.
+*   `writeline(line)`: an alias to `write()`.
+*   `writelines(lines)`: write each line in `lines` with `writeline()`.
+*   `close()`: close the stream.
+*   `closed`: indicate if the stream is already closed.
+*   `empty`: indicate if the stream is empty.
+*   `lines`: all lines or data blocks flowed through the stream.
+*   `__len__()`
+*   `__iter__()`
 
 
 `run()`

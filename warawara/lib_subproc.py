@@ -138,50 +138,6 @@ class stream:
 
 @export
 class command:
-    '''
-    A line-oriented wrapper for running external commands.
-
-    cmd: tuple[str] | list[str] | callable
-        The command to run.
-
-    stdin: None | iterable[str] | Queue | True
-        The input text, one item for each line, without trailing newline.
-        Default: None.
-
-        If set to ``None`` or ``False``, stdin is closed after creation.
-        If set to a ``list`` or a ``tuple``, stdin is closed after data fed into the process.
-        Otherwise, stdin.close() needs to be called manually.
-
-        If a Queue is provided, stdin.task_done() will be called for each item.
-
-    stdout: None | False | True | callable[str] | Queue
-        The stdout "subscribers".
-        Default: True.
-
-        If set to ``True`` or a callable, stdout will be a subproc.stream object.
-        If set to ``None``, stdout will be left as-is (most likely to the tty).
-        If set to other falsy-values, stdout will be silently dropped.
-        If set to ``Queue`` object, each line will be put into the queue object.
-
-        Multiple objects could be provided at once for output duplication.
-        E.g. tuple(print, queue.Queue())
-
-    stderr: None | False | True | callable[str] | Queue
-        The stderr "subscribers".
-        Default: True.
-
-        If set to ``True`` or a callable, stderr will be a subproc.stream object .
-        If set to ``None``, stderr will be left as-is (most likely to the tty).
-        If set to ``False``, stderr will be silently dropped.
-        If set to ``Queue`` object, each line will be put into the queue object.
-
-        Multiple objects could be provided at once for output duplication.
-        E.g. tuple(print, queue.Queue())
-
-    env: dict[str, str]:
-        The environment variables.
-    '''
-
     def __init__(self, cmd=None, *,
                  stdin=None, stdout=True, stderr=True,
                  encoding='utf8', rstrip='\r\n',
