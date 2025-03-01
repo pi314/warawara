@@ -415,13 +415,38 @@ class TestSubproc(TestCase):
         # If this test fails, make sure to check the initial input
         self.eq(p.stdout.lines[-1], 1, p.stdin.lines[0])
 
+    def test_wait_false(self):
+        checkpoint = self.checkpoint()
+
+        def prog(proc, *args):
+            checkpoint.wait()
+
+        p = command(prog)
+        p.run(wait=False)
+        self.eq(checkpoint.is_set(), False)
+        p.wait(False)
+        self.eq(checkpoint.is_set(), False)
+        checkpoint.set()
+
+    def test_wait_invalid_types(self):
+        checkpoint = self.checkpoint()
+
+        def prog(proc, *args):
+            checkpoint.wait()
+
+        p = command(prog)
+        with self.assertRaises(TypeError):
+            p.run(wait='wah')
+        checkpoint.set()
+        p.wait()
+
     def test_timeout(self):
         import time
 
         p = command(['sleep', 3])
         t1 = time.time()
         try:
-            p.run(timeout=0.1)
+            p.run(wait=0.1)
         except TimeoutExpired:
             pass
         t2 = time.time()

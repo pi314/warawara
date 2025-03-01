@@ -85,11 +85,16 @@ command(self, cmd=None, *,
     -   Environment variables.
     -   By default, child processs inherits environment variables from parent proess.
 
-A `command` object has the following methods:
+A `command` object has the following methods and properties:
 
-*   `run(wait=True, timeout=None)`: run the command.
+*   `run(wait=True)`: run the command and returns the command object itself.
+    -   The `wait` argument is passed to `wait()` method, see below.
 *   `poll()`: check the process status and return the status code.
 *   `wait(timeout=None)`: wait the process to finish for `timeout` seconds.
+    -   If `timeout` is `True` or `None`, it waits for the command to finish.
+    -   If `timeout` is `False`, it returns immediately.
+    -   If `timeout` is an `int` or a `float`, it waits for the specified seconds.
+    -   Otherwise, `TypeError` is raised.
 *   `signal(signal)`: send `signal` to the process.
 *   `kill(signal=SIGKILL)`: send `signal`, wait for the process to stop, and close all streams.
 *   `signaled`: stores the received signal.

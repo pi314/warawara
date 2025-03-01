@@ -257,7 +257,10 @@ class command:
         self.stderr.close()
         self.wait()
 
-    def run(self, wait=True, timeout=None):
+    def run(self, wait=None):
+        if wait is not None and not isinstance(wait, (int, bool, float)):
+            raise TypeError('The type of "wait" should be NoneType, int, bool, or float')
+
         if self.proc or self.thread:
             raise AlreadyRunningError(self)
 
@@ -362,8 +365,7 @@ class command:
         elif self.stdin_autoclose:
             self.stdin.close()
 
-        if wait or timeout:
-            self.wait(timeout)
+        self.wait(wait)
 
         return self
 
@@ -375,6 +377,11 @@ class command:
         return False
 
     def wait(self, timeout=None):
+        if timeout is True:
+            timeout = None
+        elif timeout is False:
+            return
+
         # Wait for child process to finish
         if self.proc:
             self.proc.wait(timeout)
@@ -430,12 +437,12 @@ def run(cmd=None, *,
         encoding='utf8', rstrip='\r\n',
         bufsize=-1,
         env=None,
-        wait=True, timeout=None):
+        wait=True):
     ret = command(cmd,
                   stdin=stdin, stdout=stdout, stderr=stderr,
                   encoding=encoding,
                   rstrip=rstrip, env=env)
-    ret.run(wait=wait, timeout=timeout)
+    ret.run(wait=wait)
     return ret
 
 
@@ -541,7 +548,7 @@ class RunMocker:
                  encoding='utf8', rstrip='\r\n',
                  bufsize=-1,
                  env=None,
-                 wait=True, timeout=None):
+                 wait=True):
         matched_pattern = None
         matched_args = []
         for rule in self.rules.items():
@@ -575,5 +582,5 @@ class RunMocker:
                     encoding=encoding, rstrip=rstrip,
                     bufsize=bufsize,
                     env=env)
-        p.run(wait=wait, timeout=timeout)
+        p.run(wait=wait)
         return p
