@@ -4,21 +4,21 @@ This document describes the API set provided by `warawara.subproc`.
 
 For the index of this package, see [warawara.md](warawara.md).
 
-## `command()`
+## Class `command()`
 
-Creates a line-oriented `command` object for interacing with the specified command.
+A line-oriented object for interacing with the specified command.
 
 The command is not started after creation.  
-You could prepare data for stdin, or creating pipes from stdout/stderr before running.
+You could prepare data for stdin, or create pipes from stdout/stderr before running.
 
 A `command` object holds an external command, or a `callable` with parameters.  
 They could be mixed together in a pipeline in order to complete complex tasks.
 
 For example, you could get stdout from `ls -1` line by line,
-add prefix to all of them,
+add prefix to all of them with a small lambda,
 and pipe the results into `nl` to number them.
 
-It's like writing a pipeline with a lot of `awk`, `sed`, `grep`, etc, all in Python.
+It's like writing a pipeline with a lot of `awk`, `sed`, `grep`, etc, without leaving Python.
 
 ### Parameters
 
@@ -46,7 +46,7 @@ command(self, cmd=None, *,
         +   `['ls', '-a', '-1']`
         +   Callable
             *   `lambda proc: ...`
-            *   `[(lambda proc, arg1, arg2: ...), 'bar', 'baz']` (a callable with arguments)
+            *   `[(lambda proc, *args: ...), 'bar', 'baz']` (a callable with arguments)
 
 *   `stdin` (default: `None`)
     -   If `stdin` is `None` or `False`, the stream is closed.
@@ -86,7 +86,7 @@ command(self, cmd=None, *,
     -   By default, child processs inherits environment variables from parent proess.
 
 
-### `command` Methods and Properties
+### Methods and Properties
 
 #### `command.run(wait=True)`
 
@@ -153,7 +153,15 @@ run(cmd=None, *,
     encoding='utf8', rstrip='\r\n',
     bufsize=-1,
     env=None,
-    wait=True, timeout=None)
+    wait=True)
+```
+
+Conceptually equals to:
+```python
+def run(..., wait=True):
+    p = command(...)
+    p.run(wait=wait)
+    return p
 ```
 
 
@@ -164,6 +172,17 @@ Connect input/output streams together.
 __Parameters__
 ```python
 pipe(istream, *ostreams)
+```
+
+A thread is created and started for a pipe.
+
+__Examples__
+```python
+p1 = command(...)
+p2 = command(...)
+p3 = command(...)
+pipe(p1.stdout, p2.stdin)
+pipe(p2.stdout, p3.stdin)
 ```
 
 ## Class `RunMocker`
