@@ -594,6 +594,48 @@ class TestPipe(TestCase):
 
         self.ne(p.exception, None)
 
+    def test_pipe_merge_to_same_stream(self):
+        i1 = stream()
+        i2 = stream()
+        o = stream()
+        o.keep = True
+
+        pp1 = pipe(i1, o)
+        e1 = threading.Event()
+        pp1.post_write = e1.set
+        pp2 = pipe(i2, o)
+        e2 = threading.Event()
+        pp2.post_write = e2.set
+
+        i1.writeline('wah1')
+        e1.wait()
+        e1.clear()
+        self.eq(o.lines, ['wah1'])
+
+        i2.writeline('wow1')
+        e2.wait()
+        e2.clear()
+        self.eq(o.lines, ['wah1', 'wow1'])
+
+        i1.writeline('wah2')
+        e1.wait()
+        e1.clear()
+        self.eq(o.lines, ['wah1', 'wow1', 'wah2'])
+
+        i1.close()
+        pp1.join()
+        self.false(o.closed)
+
+        i2.writeline('wow2')
+        e2.wait()
+        e2.clear()
+        self.eq(o.lines, ['wah1', 'wow1', 'wah2', 'wow2'])
+
+        i2.close()
+        pp2.join()
+
+        self.true(o.closed)
+
 
 class TestSubprocRunMocker(TestCase):
     def test_mock_basic(self):

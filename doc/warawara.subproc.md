@@ -185,6 +185,12 @@ pipe(istream, *ostreams, *, start=True)
 
 A daemon thread is created and returned, that pulls data from istream and duplicate to ostreams.
 
+*   When a `pipe` is created, it notifies `ostreams` objects and cause their reference count increase by 1.
+
+*   When the `istream` closes, the `Pipe` object notifies each `ostreams` for its leaving
+    and cause their reference count decrease by 1.  
+    -   A `ostream` object closes itself on this event when its reference count is less than or equals to 0.
+
 __Examples__
 ```python
 p1 = command(...)

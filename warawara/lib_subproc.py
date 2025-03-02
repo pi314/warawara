@@ -59,6 +59,9 @@ class stream:
         self.eof = threading.Event()
         self.hub = EventBroadcaster()
 
+        self.pipe_count_lock = threading.Lock()
+        self.pipe_count = 0
+
     def welcome(self, subscriber):
         if isinstance(subscriber, (list, tuple)):
             for s in subscriber:
@@ -81,6 +84,22 @@ class stream:
                 self.hub += handler
             else:
                 raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
+
+    def pipe_attached(self):
+        self.pipe_count_lock.acquire()
+        try:
+            self.pipe_count += 1
+        finally:
+            self.pipe_count_lock.release()
+
+    def pipe_detached(self):
+        self.pipe_count_lock.acquire()
+        try:
+            self.pipe_count -= 1
+            if self.pipe_count <= 0:
+                self.close()
+        finally:
+            self.pipe_count_lock.release()
 
     def read(self):
         data = self.queue.get()
@@ -459,12 +478,15 @@ class Pipe:
         self.thread = None
         self.istream = istream
         self.ostreams = ostreams
+        self.post_write = None
 
     def main(self):
         try:
             for line in self.istream:
                 for ostream in self.ostreams:
                     ostream.write(line)
+                if self.post_write:
+                    self.post_write()
 
         except Exception as e:
             self.exception = e
@@ -472,7 +494,7 @@ class Pipe:
 
         self.istream.eof.wait()
         for ostream in self.ostreams:
-            ostream.close()
+            ostream.pipe_detached()
 
     def start(self):
         self.thread = threading.Thread(target=self.main)
@@ -488,6 +510,9 @@ class Pipe:
 @export
 def pipe(istream, *ostreams, start=True):
     p = Pipe(istream, *ostreams)
+    for ostream in ostreams:
+        ostream.pipe_attached()
+
     if start:
         p.start()
     return p
