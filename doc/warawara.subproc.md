@@ -1,27 +1,27 @@
-warawara.subproc
-===============================================================================
+# warawara.subproc
 
 This document describes the API set provided by `warawara.subproc`.
 
 For the index of this package, see [warawara.md](warawara.md).
 
-`command()`
--------------------------------------------------------------------------------
-Creates a line-oriented `command` object for interacing with the specified command.
+## Class `command()`
+
+A line-oriented object for interacing with the specified command.
 
 The command is not started after creation.  
-You could prepare data for stdin, or creating pipes from stdout/stderr before running.
+You could prepare data for stdin, or create pipes from stdout/stderr before running.
 
 A `command` object holds an external command, or a `callable` with parameters.  
 They could be mixed together in a pipeline in order to complete complex tasks.
 
 For example, you could get stdout from `ls -1` line by line,
-add prefix to all of them,
+add prefix to all of them with a small lambda,
 and pipe the results into `nl` to number them.
 
-It's like writing a pipeline with a lot of `awk`, `sed`, `grep`, etc, all in Python.
+It's like writing a pipeline with a lot of `awk`, `sed`, `grep`, etc, without leaving Python.
 
-__Parameters__
+### Parameters
+
 ```python
 command(self, cmd=None, *,
         stdin=None, stdout=True, stderr=True,
@@ -46,7 +46,7 @@ command(self, cmd=None, *,
         +   `['ls', '-a', '-1']`
         +   Callable
             *   `lambda proc: ...`
-            *   `[(lambda proc, arg1, arg2: ...), 'bar', 'baz']` (a callable with arguments)
+            *   `[(lambda proc, *args: ...), 'bar', 'baz']` (a callable with arguments)
 
 *   `stdin` (default: `None`)
     -   If `stdin` is `None` or `False`, the stream is closed.
@@ -85,21 +85,46 @@ command(self, cmd=None, *,
     -   Environment variables.
     -   By default, child processs inherits environment variables from parent proess.
 
-A `command` object has the following methods and properties:
 
-*   `run(wait=True)`: run the command and returns the command object itself.
-    -   The `wait` argument is passed to `wait()` method, see below.
-*   `poll()`: check the process status and return the status code.
-*   `wait(timeout=None)`: wait the process to finish for `timeout` seconds.
-    -   If `timeout` is `True` or `None`, it waits for the command to finish.
-    -   If `timeout` is `False`, it returns immediately.
-    -   If `timeout` is an `int` or a `float`, it waits for the specified seconds.
-    -   Otherwise, `TypeError` is raised.
-*   `signal(signal)`: send `signal` to the process.
-*   `kill(signal=SIGKILL)`: send `signal`, wait for the process to stop, and close all streams.
-*   `signaled`: stores the received signal.
-    -   It's a subclass of `threading.Event` thus can be `.wait()`.
-*   `killed`: an alias to `signaled`.
+### Methods and Properties
+
+#### `command.run(wait=True)`
+
+Run the command and return the command object itself.  
+The `wait` argument is passed to `wait()` method, see below.
+
+#### `command.poll()`
+
+Check the process status and return the status code.
+
+#### `command.wait(timeout=None)`
+
+Wait the process to finish for `timeout` seconds.
+
+*   If `timeout` is `True` or `None`, it waits for the command to finish.
+*   If `timeout` is `False`, it returns immediately.
+*   If `timeout` is an `int` or a `float`, it waits for the specified seconds.
+*   Otherwise, `TypeError` is raised.
+
+#### `command.signal(signal)`
+
+Send `signal` to the process.
+
+#### `command.kill(signal=SIGKILL)`
+
+Send `signal`, wait for the process to stop, and close all streams.
+
+#### `command.signaled`
+
+Stores the received signal.
+
+It's a subclass of `threading.Event` thus can be `.wait()`.
+
+#### `command.killed`
+
+An alias to `signaled`.
+
+### Stream object methods and properties
 
 Each stream object (i.e. `command.stdin`, `command.stdout`, and `command.stderr`)
 has the following methods and properties:
@@ -117,8 +142,8 @@ has the following methods and properties:
 *   `__iter__()`
 
 
-`run()`
--------------------------------------------------------------------------------
+## `run()`
+
 Creates a `command` object and runs it.
 
 __Parameters__
@@ -128,12 +153,20 @@ run(cmd=None, *,
     encoding='utf8', rstrip='\r\n',
     bufsize=-1,
     env=None,
-    wait=True, timeout=None)
+    wait=True)
+```
+
+Conceptually equals to:
+```python
+def run(..., wait=True):
+    p = command(...)
+    p.run(wait=wait)
+    return p
 ```
 
 
-`pipe()`
--------------------------------------------------------------------------------
+## `pipe()`
+
 Connect input/output streams together.
 
 __Parameters__
@@ -141,8 +174,18 @@ __Parameters__
 pipe(istream, *ostreams)
 ```
 
-Class `RunMocker`
--------------------------------------------------------------------------------
+A thread is created and started for a pipe.
+
+__Examples__
+```python
+p1 = command(...)
+p2 = command(...)
+p3 = command(...)
+pipe(p1.stdout, p2.stdin)
+pipe(p2.stdout, p3.stdin)
+```
+
+## Class `RunMocker`
 
 __Parameters__
 ```python
