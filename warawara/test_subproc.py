@@ -330,6 +330,29 @@ class TestSubproc(TestCase):
 
         pp.join()
 
+    def test_pipe_dont_start(self):
+        p1 = command(lambda prog: prog.stdout.writeline('wah'))
+
+        def cat(prog):
+            for line in prog.stdin:
+                prog.stdout.writeline(line)
+        p2 = command(cat, stdin=True)
+
+        pp = pipe(p1.stdout, p2.stdin, start=False)
+
+        p1.run(wait=False)
+        p2.run(wait=False)
+        p1.wait()
+
+        self.false(p2.stdout.lines)
+        self.eq(p2.returncode, None)
+
+        pp.start()
+        p2.wait()
+        pp.join()
+
+        self.eq(p2.stdout.lines, ['wah'])
+
     def test_pipe_istream_already_closed(self):
         i = stream()
         o = stream()

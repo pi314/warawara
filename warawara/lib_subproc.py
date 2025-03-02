@@ -460,7 +460,7 @@ class Pipe:
         self.istream = istream
         self.ostreams = ostreams
 
-    def loop(self):
+    def main(self):
         try:
             for line in self.istream:
                 for ostream in self.ostreams:
@@ -475,7 +475,7 @@ class Pipe:
             ostream.close()
 
     def start(self):
-        self.thread = threading.Thread(target=self.loop)
+        self.thread = threading.Thread(target=self.main)
         self.thread.daemon = True
         self.thread.start()
 
@@ -486,9 +486,10 @@ class Pipe:
 
 
 @export
-def pipe(istream, *ostreams):
+def pipe(istream, *ostreams, start=True):
     p = Pipe(istream, *ostreams)
-    p.start()
+    if start:
+        p.start()
     return p
 
 

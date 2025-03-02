@@ -4,6 +4,7 @@ This document describes the API set provided by `warawara.subproc`.
 
 For the index of this package, see [warawara.md](warawara.md).
 
+
 ## Class `command()`
 
 A line-oriented object for interacing with the specified command.
@@ -19,6 +20,7 @@ add prefix to all of them with a small lambda,
 and pipe the results into `nl` to number them.
 
 It's like writing a pipeline with a lot of `awk`, `sed`, `grep`, etc, without leaving Python.
+
 
 ### Parameters
 
@@ -93,9 +95,11 @@ command(self, cmd=None, *,
 Run the command and return the command object itself.  
 The `wait` argument is passed to `wait()` method, see below.
 
+
 #### `command.poll()`
 
 Check the process status and return the status code.
+
 
 #### `command.wait(timeout=None)`
 
@@ -106,13 +110,16 @@ Wait the process to finish for `timeout` seconds.
 *   If `timeout` is an `int` or a `float`, it waits for the specified seconds.
 *   Otherwise, `TypeError` is raised.
 
+
 #### `command.signal(signal)`
 
 Send `signal` to the process.
 
+
 #### `command.kill(signal=SIGKILL)`
 
 Send `signal`, wait for the process to stop, and close all streams.
+
 
 #### `command.signaled`
 
@@ -120,9 +127,11 @@ Stores the received signal.
 
 It's a subclass of `threading.Event` thus can be `.wait()`.
 
+
 #### `command.killed`
 
 An alias to `signaled`.
+
 
 ### Stream object methods and properties
 
@@ -171,19 +180,22 @@ Connect input/output streams together.
 
 __Parameters__
 ```python
-pipe(istream, *ostreams)
+pipe(istream, *ostreams, *, start=True)
 ```
 
-A thread is created and started for a pipe.
+A daemon thread is created and returned, that pulls data from istream and duplicate to ostreams.
 
 __Examples__
 ```python
 p1 = command(...)
 p2 = command(...)
 p3 = command(...)
-pipe(p1.stdout, p2.stdin)
-pipe(p2.stdout, p3.stdin)
+pipe1 = pipe(p1.stdout, p2.stdin)
+pipe2 = pipe(p2.stdout, p3.stdin)
+pipe1.join()
+pipe2.join()
 ```
+
 
 ## Class `RunMocker`
 
