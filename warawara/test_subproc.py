@@ -315,74 +315,6 @@ class TestSubproc(TestCase):
         p.wait()
         self.eq(p.stdout.lines, ['1:pre', '2:hello', '3:world', '4:wah'])
 
-    def test_pipe(self):
-        p1 = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
-        p2 = command('nl -w 1 -s /'.split(), stdin=True)
-        pp = pipe(p1.stdout, p2.stdin)
-
-        p1.run()
-        self.eq(p1.stdout.lines, ['1:hello', '2:world'])
-        p2.run(wait=False)
-
-        p2.wait()
-        self.eq(p2.stdin.lines, ['1:hello', '2:world'])
-        self.eq(p2.stdout.lines, ['1/1:hello', '2/2:world'])
-
-        pp.join()
-
-    def test_pipe_dont_start(self):
-        p1 = command(lambda prog: prog.stdout.writeline('wah'))
-
-        def cat(prog):
-            for line in prog.stdin:
-                prog.stdout.writeline(line)
-        p2 = command(cat, stdin=True)
-
-        pp = pipe(p1.stdout, p2.stdin, start=False)
-
-        p1.run(wait=False)
-        p2.run(wait=False)
-        p1.wait()
-
-        self.false(p2.stdout.lines)
-        self.eq(p2.returncode, None)
-
-        pp.start()
-        p2.wait()
-        pp.join()
-
-        self.eq(p2.stdout.lines, ['wah'])
-
-    def test_pipe_istream_already_closed(self):
-        i = stream()
-        o = stream()
-        i.close()
-
-        with self.assertRaises(EOFError):
-            pipe(i, o)
-
-    def test_pipe_ostream_already_closed(self):
-        i = stream()
-        o = stream()
-        o.close()
-
-        with self.assertRaises(BrokenPipeError):
-            pipe(i, o)
-
-    def test_pipe_exception(self):
-        i = stream()
-        o = stream()
-        o.queue = None
-        o.close = lambda: None
-
-        p = pipe(i, o)
-        i.writeline('wah')
-
-        with self.assertRaises(Exception):
-            p.join()
-
-        self.ne(p.exception, None)
-
     def test_callable_with_pipe(self):
         def prog(proc, *args):
             for line in proc[0]:
@@ -591,6 +523,76 @@ class TestSubproc(TestCase):
         p.poll = mock_poll
         p.run()
         self.eq(p.stdout.lines, [b'a lot of data\n'])
+
+
+class TestPipe(TestCase):
+    def test_pipe(self):
+        p1 = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
+        p2 = command('nl -w 1 -s /'.split(), stdin=True)
+        pp = pipe(p1.stdout, p2.stdin)
+
+        p1.run()
+        self.eq(p1.stdout.lines, ['1:hello', '2:world'])
+        p2.run(wait=False)
+
+        p2.wait()
+        self.eq(p2.stdin.lines, ['1:hello', '2:world'])
+        self.eq(p2.stdout.lines, ['1/1:hello', '2/2:world'])
+
+        pp.join()
+
+    def test_pipe_dont_start(self):
+        p1 = command(lambda prog: prog.stdout.writeline('wah'))
+
+        def cat(prog):
+            for line in prog.stdin:
+                prog.stdout.writeline(line)
+        p2 = command(cat, stdin=True)
+
+        pp = pipe(p1.stdout, p2.stdin, start=False)
+
+        p1.run(wait=False)
+        p2.run(wait=False)
+        p1.wait()
+
+        self.false(p2.stdout.lines)
+        self.eq(p2.returncode, None)
+
+        pp.start()
+        p2.wait()
+        pp.join()
+
+        self.eq(p2.stdout.lines, ['wah'])
+
+    def test_pipe_istream_already_closed(self):
+        i = stream()
+        o = stream()
+        i.close()
+
+        with self.assertRaises(EOFError):
+            pipe(i, o)
+
+    def test_pipe_ostream_already_closed(self):
+        i = stream()
+        o = stream()
+        o.close()
+
+        with self.assertRaises(BrokenPipeError):
+            pipe(i, o)
+
+    def test_pipe_exception(self):
+        i = stream()
+        o = stream()
+        o.queue = None
+        o.close = lambda: None
+
+        p = pipe(i, o)
+        i.writeline('wah')
+
+        with self.assertRaises(Exception):
+            p.join()
+
+        self.ne(p.exception, None)
 
 
 class TestSubprocRunMocker(TestCase):
