@@ -201,18 +201,3 @@ pipe2 = pipe(p2.stdout, p3.stdin)
 pipe1.join()
 pipe2.join()
 ```
-
-
-## Class `RunMocker`
-
-__Parameters__
-```python
-RunMocker()
-RunMocker.register(cmd, callback=None, *, stdout=None, stderr=None, returncode=None)
-RunMocker.__call__(self, cmd, *,
-                   stdin=None, stdout=True, stderr=True,
-                   encoding='utf8', rstrip='\r\n',
-                   bufsize=-1,
-                   env=None,
-                   wait=True, timeout=None)
-```
