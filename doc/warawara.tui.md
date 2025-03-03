@@ -52,7 +52,7 @@ assert ljust(data) == [
 ```
 
 
-class `ThreadedSpinner`
+Class `ThreadedSpinner`
 -----------------------------------------------------------------------------
 Displays a pipx-inspired spinner on screen in a daemon thread.
 

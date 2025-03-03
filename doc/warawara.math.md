@@ -63,7 +63,7 @@ assert clamp(3, 9, 7) == 7
 ```
 
 
-class `vector(*args)`
+Class `vector(*args)`
 -----------------------------------------------------------------------------
 A `tuple`-like object that supports numeric operations with `int` and `float`.
 
