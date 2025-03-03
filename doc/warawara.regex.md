@@ -6,7 +6,7 @@ This document describes the API set provided by `warawara.regex`.
 For the index of this package, see [warawara.md](warawara.md).
 
 
-class `rere`
+Class `rere`
 -----------------------------------------------------------------------------
 A proxy class that caches the last result of `search` / `match` / `fullmatch`.
 
