@@ -16,35 +16,23 @@ TestCase(*args, **kwargs)
 
 ### Methods and Properties
 
-#### `TestCase.eq()`
-An alias to `self.assertEqual`.
+#### `TestCase.eq()` / `TestCase.ne()`
+An alias to `self.assertEqual` and `self.assertNotEqual`, respectively.
 
-#### `TestCase.ne()`
-An alias to `self.assertNotEqual`.
+#### `TestCase.le()` / `TestCase.lt()`
+An alias to `self.assertLessEqual` and `self.assertLess`, respectively.
 
-#### `TestCase.le()`
-An alias to `self.assertLessEqual`.
+#### `TestCase.ge()` / `TestCase.gt()`
+An alias to `self.assertGreaterEqual` and `self.assertGreater`, respectively.
 
-#### `TestCase.lt()`
-An alias to `self.assertLess`.
-
-#### `TestCase.ge()`
-An alias to `self.assertGreaterEqual`.
-
-#### `TestCase.gt()`
-An alias to `self.assertGreater`.
-
-#### `TestCase.true()`
-An alias to `self.assertTrue`.
-
-#### `TestCase.false()`
-An alias to `self.assertFalse`.
+#### `TestCase.true()` / `TestCase.false()`
+An alias to `self.assertTrue` and `self.assertFalse`, respectively.
 
 #### `TestCase.raises()`
 An alias to `self.assertRaises`.
 
 #### `TestCase.checkpoint()`
-Creates a `Checkpoint` object.
+Creates a [Checkpoint](#class-checkpoint) object, see below.
 
 #### `TestCase.run_in_thread(func, args=tuple(), kwargs=dict())`
 Run `func(*args, **kwargs)` in a daemon thread.
@@ -86,17 +74,14 @@ Checkpoint(testcase)
 
 ### Methods and Properties
 
-#### `Checkpoint.set()`
-Set the checkpoint.
-
-#### `Checkpoint.unset()`
-Unset the checkpoint.
-
-#### `Checkpoint.wait()`
-Block the execution and wait for the checkpoint to be set.
+#### `Checkpoint.set()` / `Checkpoint.unset()`
+Set/Unset the checkpoint.
 
 #### `Checkpoint.is_set()`
 Return if the checkpoint was already set.
+
+#### `Checkpoint.wait()`
+Block the execution and wait for the checkpoint to be set.
 
 #### `Checkpoint.check()`
 Check if the checkpoint was already set. If not, fail with the testcase.
@@ -105,4 +90,4 @@ Check if the checkpoint was already set. If not, fail with the testcase.
 Check if the checkpoint was already set. If yes, fail with the testcase.
 
 #### `Checkpoint.__bool__()`
-An alias to `self.is_set()`
+An alias to `self.is_set()`.
