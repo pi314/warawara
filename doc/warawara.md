@@ -65,6 +65,6 @@ Documents and descriptions of the categories are as following:
 *   [warawara.math](warawara.math.md)
 *   [warawara.regex](warawara.regex.md)
 *   [warawara.sh](warawara.sh.md)
-*   [warawara.subproc](warawara.subproc.md) (WIP)
+*   [warawara.subproc](warawara.subproc.md)
 *   [warawara.test_utils](warawara.test_utils.md) (WIP)
 *   [warawara.tui](warawara.tui.md)
