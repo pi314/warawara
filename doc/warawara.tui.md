@@ -8,9 +8,9 @@ For the index of this package, see [warawara.md](warawara.md).
 
 `strwidth(s)`
 -----------------------------------------------------------------------------
-Return the display "width" of the string.
+Return the "display width" of the string.
 
-Printable ASCII characters are count as width 1, and CJK characters are count as width 2.
+Printable ASCII characters are counted as width 1, and CJK characters are counted as width 2.
 
 Color escape sequences are ignored.
 
@@ -54,7 +54,7 @@ assert ljust(data) == [
 
 Class `ThreadedSpinner`
 -----------------------------------------------------------------------------
-Displays a pipx-inspired spinner on screen in a daemon thread.
+Display a pipx-inspired spinner on screen in a daemon thread.
 
 __Parameters__
 ```python
@@ -110,7 +110,7 @@ If other threads also prints contents on to screen, the output could become a me
 
 `prompt()`
 -----------------------------------------------------------------------------
-Configurable function to prompt a message and wait for user input.
+Prompt a message and wait for user input.
 
 __Parameters__
 ```python
@@ -120,14 +120,14 @@ prompt(question, options=tuple(),
        ignorecase=None,
        sep=' / ',
        suppress=(EOFError, KeyboardInterrupt))
-
-# question: the message printed on screen
-# accept_empty: accept empty string, otherwise keep asking
-# abbr: Show abbreviations of the options
-# ignorecase: ignorecase
-# sep: the separator between options
-# suppress: exception type list that being suppressed
 ```
+
+*   `question`: the message printed on screen
+*   `accept_empty`: accept empty string, otherwise keep asking
+*   `abbr`: show abbreviations of the options
+*   `ignorecase`: ignorecase
+*   `sep`: set the separator between options
+*   `suppress`: exception type list that being suppressed
 
 In the simplest form, it could be used like `input()`:
 ```python
