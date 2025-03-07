@@ -27,6 +27,9 @@ class Checkpoint:
     def check(self):
         self.testcase.true(self.checkpoint.is_set(), 'Checkpoint was not set')
 
+    def check_not(self):
+        self.testcase.false(self.checkpoint.is_set(), 'Checkpoint was set')
+
     def __bool__(self):
         return self.is_set()
 
@@ -45,10 +48,11 @@ class TestCase(unittest.TestCase):
         return Checkpoint(self)
 
     class run_in_thread:
-        def __init__(self, func, args=tuple()):
+        def __init__(self, func, args=tuple(), kwargs=dict()):
             self.func = func
             self.args = args
-            self.thread = threading.Thread(target=func, args=args)
+            self.kwargs = kwargs
+            self.thread = threading.Thread(target=func, args=args, kwargs=kwargs)
             self.thread.daemon = True
 
         def __enter__(self, *args):

@@ -378,9 +378,9 @@ class TestSubproc(TestCase):
 
         p = command(prog)
         p.run(wait=False)
-        self.eq(checkpoint.is_set(), False)
+        checkpoint.check_not()
         p.wait(False)
-        self.eq(checkpoint.is_set(), False)
+        checkpoint.check_not()
         checkpoint.set()
 
     def test_wait_invalid_types(self):
