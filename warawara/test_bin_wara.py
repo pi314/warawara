@@ -32,7 +32,7 @@ class TestBinWara(TestCase):
 
     def test_bin_wara(self):
         # Run 'warawara' and check output
-        with self.assertRaises(SystemExit):
+        with self.raises(SystemExit):
             sys.argv = ['warawara']
             wara.bin.wara.main()
 
@@ -50,7 +50,7 @@ class TestBinWara(TestCase):
         self.eq(sorted(modules), sorted(files))
 
     def test_bin_wara_subcmd_rainbow(self):
-        with self.assertRaises(SystemExit):
+        with self.raises(SystemExit):
             sys.argv = ['warawara', 'rainbow']
             wara.bin.wara.main()
 
@@ -58,14 +58,14 @@ class TestBinWara(TestCase):
         wara.bin.wara.main()
 
     def test_bin_wara_subcmd_unknown(self):
-        with self.assertRaises(SystemExit):
+        with self.raises(SystemExit):
             sys.argv = ['warawara', 'wow']
             wara.bin.wara.main()
 
         self.true('Unknown' in '\n'.join(self.stderr))
 
     def test_bin_wara_recursion_error(self):
-        with self.assertRaises(SystemExit):
+        with self.raises(SystemExit):
             sys.argv = ['warawara', 'wara', 'wara', 'wara']
             wara.bin.wara.main()
 

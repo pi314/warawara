@@ -41,8 +41,12 @@ class TestCase(unittest.TestCase):
         self.eq = self.assertEqual
         self.ne = self.assertNotEqual
         self.le = self.assertLessEqual
+        self.lt = self.assertLess
+        self.ge = self.assertGreaterEqual
+        self.gt = self.assertGreater
         self.true = self.assertTrue
         self.false = self.assertFalse
+        self.raises = self.assertRaises
 
     def checkpoint(self):
         return Checkpoint(self)

@@ -6,19 +6,19 @@ from warawara import *
 class TestColorFacade(TestCase):
     def test_color_facade(self):
         # no argument unpack
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             color((208,))
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             color([208])
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             color((0xC0, 0xFF, 0xEE))
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             color([0xC0, 0xFF, 0xEE])
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             color(0xC0, 0xFF)
 
         # copy_ctor
@@ -49,13 +49,13 @@ class TestColorFacade(TestCase):
         self.true(isinstance(lime, Color))
 
     def test_color_invalid_value(self):
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             color(True)
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             Color256(True)
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             ColorRGB(True)
 
 
@@ -111,7 +111,7 @@ class TestColorTraits(TestCase):
                 self.eq(A / B, paint(fg=A, bg=B))
 
         for A in colors_under_test:
-            with self.assertRaises(TypeError):
+            with self.raises(TypeError):
                 A / 1
 
     def test_or(self):
@@ -193,7 +193,7 @@ class TestColorRGB(TestCase):
         self.eq(int(some_color), 0xA05A00)
 
     def test_value_range_check(self):
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             ColorRGB(300, 300, 300)
 
     def test_rgb_mul(self):
@@ -249,7 +249,7 @@ class TestColorRGB(TestCase):
         red = ColorRGB(255, 0, 0)
         self.eq('{:#x}'.format(red), '#ff0000')
         self.eq('{:#X}'.format(red), '#FF0000')
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             self.eq('{:d}'.format(red), str(red))
 
 
@@ -284,13 +284,13 @@ class TestColorHSV(TestCase):
         self.eq(int(some_color), 60090000)
 
     def test_value_range_check(self):
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             ColorHSV(0, 101, 0)
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             ColorHSV(0, 0, 101)
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             ColorHSV(0, 0, 101, 0)
 
     def test_hsv_mul(self):
@@ -329,7 +329,7 @@ class TestColorHSV(TestCase):
         self.eq('{}'.format(lime), str(ColorRGB(0, 255, 0)))
         self.eq('{:#}'.format(lime), '(@120, 100%, 100%)')
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             '{:d}'.format(lime)
 
 
@@ -430,16 +430,16 @@ class TestDecolor(TestCase):
 
 class TestGradient(TestCase):
     def test_invalid_values(self):
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             gradient(True, False)
 
         A = color()
         B = color()
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             gradient(A, B, 1.5)
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             gradient(A, B, 1)
 
     def test_trivial(self):

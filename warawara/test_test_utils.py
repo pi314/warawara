@@ -49,13 +49,13 @@ class TestSubprocRunMocker(TestCase):
     def test_mock_meaningless_mock(self):
         mock_run = RunMocker()
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             mock_run.register('cmd')
 
     def test_mock_ambiguous_mock(self):
         mock_run = RunMocker()
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             mock_run.register('wah', lambda: None, stdout='wah')
 
     def test_mock_unregistered_cmd(self):
@@ -65,7 +65,7 @@ class TestSubprocRunMocker(TestCase):
 
         mock_run('wah'.split())
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             p = mock_run('ls -a -l'.split())
 
     def test_mock_side_effect(self):
@@ -163,7 +163,7 @@ class TestSubprocRunMocker(TestCase):
         self.eq(p.stdout.lines, ['mock rm', '-f non_exist'])
         self.eq(p.returncode, 65535)
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             mock_run('rm non_exist -f'.split())
 
     def test_mock_with_returncode(self):

@@ -225,10 +225,10 @@ class TestThreadedSpinner(TestCase):
         self.eq(spinner.icon_leave, 'LEAVE')
 
     def test_icon_set_invalid(self):
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             spinner = ThreadedSpinner('ENTRY', 'LOOP', 'LEAVE', 'WHAT')
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             spinner = ThreadedSpinner(True)
 
     def test_context_manager(self):
@@ -356,7 +356,7 @@ class TestPromotAskUser(TestCase):
         self.eq(queue_to_list(self.print_queue), list(args))
 
     def test_empty(self):
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             s = prompt()
 
         self.assert_called_open = False
@@ -437,7 +437,7 @@ class TestPromotAskUser(TestCase):
         yn = prompt('Question', suppress=RuntimeError)
         self.eq(yn, None)
 
-        with self.assertRaises(TimeoutError):
+        with self.raises(TimeoutError):
             yn = prompt('Question', suppress=RuntimeError)
         self.eq(yn, None)
 

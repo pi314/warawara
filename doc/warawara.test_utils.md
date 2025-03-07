@@ -25,11 +25,23 @@ An alias to `self.assertNotEqual`.
 #### `TestCase.le()`
 An alias to `self.assertLessEqual`.
 
+#### `TestCase.lt()`
+An alias to `self.assertLess`.
+
+#### `TestCase.ge()`
+An alias to `self.assertGreaterEqual`.
+
+#### `TestCase.gt()`
+An alias to `self.assertGreater`.
+
 #### `TestCase.true()`
 An alias to `self.assertTrue`.
 
 #### `TestCase.false()`
 An alias to `self.assertFalse`.
+
+#### `TestCase.raises()`
+An alias to `self.assertRaises`.
 
 #### `TestCase.checkpoint()`
 Creates a `Checkpoint` object.

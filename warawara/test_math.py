@@ -56,29 +56,29 @@ class TestMath(TestCase):
         self.eq(v1 / 2, (0.5, 1.0, 1.5))
         self.eq(v1 // 2, (0, 1, 1))
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             v1 / v2
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             v1 // v2
 
         self.eq(v1.map(lambda x: 3 * x + 1), (4, 7, 10))
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             vector('bla')
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             vector(1, 2, 3) == 'bla'
 
         self.eq(repr(v1), '(1, 2, 3)')
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             v1 + (1, 2, 3, 4)
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             v1 - (1, 2, 3, 4)
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             v1 * (1, 2, 3, 4)
 
         lerp = wara.lerp

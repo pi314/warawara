@@ -82,7 +82,7 @@ class TestStream(TestCase):
 
         s.close()
 
-        with self.assertRaises(StopIteration):
+        with self.raises(StopIteration):
             next(iter(s))
 
     def test_stream_keep(self):
@@ -122,7 +122,7 @@ class TestStream(TestCase):
         s.welcome(Q)
         s.welcome(True)
 
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             s.welcome(s)
 
         lines = ['line1', 'line2', 'line3']
@@ -136,7 +136,7 @@ class TestStream(TestCase):
             self.fail()
 
         # test in test
-        with self.assertRaises(AssertionError):
+        with self.raises(AssertionError):
             should_not_be_called_handler('wah')
 
         s = stream()
@@ -145,7 +145,7 @@ class TestStream(TestCase):
 
         s.writeline('line1')
 
-        with self.assertRaises(BrokenPipeError):
+        with self.raises(BrokenPipeError):
             s.writeline('line2', suppress=False)
 
 
@@ -181,7 +181,7 @@ class TestSubproc(TestCase):
         p = command(prog)
         p.run(wait=False)
 
-        with self.assertRaises(AlreadyRunningError):
+        with self.raises(AlreadyRunningError):
             p.run()
 
         checkpoint.set()
@@ -189,7 +189,7 @@ class TestSubproc(TestCase):
 
         p = command(['sleep', 1])
         p.run(wait=False)
-        with self.assertRaises(AlreadyRunningError):
+        with self.raises(AlreadyRunningError):
             p.run(wait=False)
         p.kill()
 
@@ -201,15 +201,15 @@ class TestSubproc(TestCase):
         self.eq(p.returncode, 1)
 
     def test_invalid_cmd(self):
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             p = command()
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             p = run()
 
         for i in ([], True, 3, None, queue.Queue()):
-            with self.assertRaises(ValueError):
+            with self.raises(ValueError):
                 command(i)
-            with self.assertRaises(ValueError):
+            with self.raises(ValueError):
                 run(i)
 
     def test_run_with_context_manager(self):
@@ -341,7 +341,7 @@ class TestSubproc(TestCase):
             # NameError
             n + 1
 
-        with self.assertRaises(NameError):
+        with self.raises(NameError):
             p = run(prog)
 
     def test_loopback(self):
@@ -390,7 +390,7 @@ class TestSubproc(TestCase):
             checkpoint.wait()
 
         p = command(prog)
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             p.run(wait='wah')
         checkpoint.set()
         p.wait()
@@ -569,7 +569,7 @@ class TestPipe(TestCase):
         o = stream()
         i.close()
 
-        with self.assertRaises(EOFError):
+        with self.raises(EOFError):
             pipe(i, o)
 
     def test_pipe_ostream_already_closed(self):
@@ -577,7 +577,7 @@ class TestPipe(TestCase):
         o = stream()
         o.close()
 
-        with self.assertRaises(BrokenPipeError):
+        with self.raises(BrokenPipeError):
             pipe(i, o)
 
     def test_pipe_exception(self):
@@ -589,7 +589,7 @@ class TestPipe(TestCase):
         p = pipe(i, o)
         i.writeline('wah')
 
-        with self.assertRaises(Exception):
+        with self.raises(Exception):
             p.join()
 
         self.ne(p.exception, None)
