@@ -18,6 +18,14 @@ class TestOpen(TestCase):
         with wara.open('warawara.txt', 'rb') as f:
             mock_open.assert_called_once_with('warawara.txt', mode='rb')
 
+    def test_open_without_mode(self):
+        mock_open = unittest.mock.mock_open()
+        self.patch('builtins.open', mock_open)
+        with wara.open('warawara.txt') as f:
+            mock_open.assert_called_once_with(
+                    'warawara.txt', mode='rt',
+                    encoding='utf-8', errors='backslashreplace')
+
     def test_write(self):
         mock_open = unittest.mock.mock_open()
         self.patch('builtins.open', mock_open)

@@ -49,7 +49,7 @@ class LineFileWrapper:
 
 
 @export
-def open(path, mode=None, rstrip='\r\n', newline='\n', **kwargs):
+def open(path, mode='rt', rstrip='\r\n', newline='\n', **kwargs):
     # Skip for binary mode
     if 'b' in mode:
         return builtins.open(path, mode=mode, **kwargs)
