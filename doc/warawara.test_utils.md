@@ -32,22 +32,35 @@ An alias to `self.assertTrue` and `self.assertFalse`, respectively.
 An alias to `self.assertRaises`.
 
 #### `TestCase.checkpoint()`
-Creates a [Checkpoint](#class-checkpoint) object, see below.
+Create a [Checkpoint](#class-checkpoint) object, see below.
 
 #### `TestCase.run_in_thread(func, args=tuple(), kwargs=dict())`
 Run `func(*args, **kwargs)` in a daemon thread.
 
 The return value is a context manager.  
 It `start()` the thread on `__enter__`, and `join()` the thread on `__exit__`.
+The object is not reusable.
 
 __Examples__
 ```python
-def may_stuck():
-    ...
-    checkpoint.set()
+import warawara
+import threading
 
-with self.run_in_thread(may_stuck):
-    checkpoint.check()
+class TestRunInThread(TestCase):
+    def test_run_in_thread(self):
+        barrier = threading.Barrier(2)
+        checkpoint = False
+
+        def may_stuck():
+            nonlocal checkpoint
+            barrier.wait()
+            checkpoint = True
+
+        with self.run_in_thread(may_stuck):
+            self.false(checkpoint)
+            barrier.wait()
+
+        self.true(checkpoint)
 ```
 
 #### `TestCase.patch(name, side_effect)`
@@ -65,17 +78,12 @@ After the aboved `patch()` call, any calls to `open()` will be forwared to `mock
 
 ## class `Checkpoint`
 
-A wrapper to `threading.Event()` that binds with a `Testcase`.
-
-### Parameters
-```python
-Checkpoint(testcase)
-```
+A wrapper to `threading.Event()` that links to a `Testcase`.
 
 ### Methods and Properties
 
-#### `Checkpoint.set()` / `Checkpoint.unset()`
-Set/Unset the checkpoint.
+#### `Checkpoint.set()` / `Checkpoint.clear()`
+Set/Clear the checkpoint.
 
 #### `Checkpoint.is_set()`
 Return if the checkpoint was already set.
@@ -83,11 +91,8 @@ Return if the checkpoint was already set.
 #### `Checkpoint.wait()`
 Block the execution and wait for the checkpoint to be set.
 
-#### `Checkpoint.check()`
-Check if the checkpoint was already set. If not, fail with the testcase.
-
-#### `Checkpoint.check_not()`
-Check if the checkpoint was already set. If yes, fail with the testcase.
+#### `Checkpoint.check(is_set=True)`
+Check if `checkpoint.is_set()` equals to argument `is_set`. If not, fail the testcase.
 
 #### `Checkpoint.__bool__()`
-An alias to `self.is_set()`.
+Return `self.is_set()`.

@@ -15,7 +15,7 @@ class Checkpoint:
     def set(self):
         self.checkpoint.set()
 
-    def unset(self):
+    def clear(self):
         self.checkpoint.clear()
 
     def wait(self):
@@ -24,11 +24,11 @@ class Checkpoint:
     def is_set(self):
         return self.checkpoint.is_set()
 
-    def check(self):
-        self.testcase.true(self.checkpoint.is_set(), 'Checkpoint was not set')
-
-    def check_not(self):
-        self.testcase.false(self.checkpoint.is_set(), 'Checkpoint was set')
+    def check(self, is_set=True):
+        self.testcase.eq(
+                self.checkpoint.is_set(),
+                is_set,
+                'Checkpoint was' + (' ' if self.checkpoint.is_set() else ' not ') + 'set')
 
     def __bool__(self):
         return self.is_set()
@@ -56,10 +56,13 @@ class TestCase(unittest.TestCase):
             self.func = func
             self.args = args
             self.kwargs = kwargs
-            self.thread = threading.Thread(target=func, args=args, kwargs=kwargs)
-            self.thread.daemon = True
+            self.thread = None
 
         def __enter__(self, *args):
+            if self.thread is not None:
+                raise RuntimeError('Thread objects cannot be reused')
+            self.thread = threading.Thread(target=self.func, args=self.args, kwargs=self.kwargs)
+            self.thread.daemon = True
             self.thread.start()
 
         def __exit__(self, exc_type, exc_value, traceback):

@@ -4,6 +4,34 @@ from .lib_test_utils import *
 
 import warawara as wara
 
+class TestRunInThread(TestCase):
+    def test_run_in_thread(self):
+        barrier = threading.Barrier(2)
+        checkpoint = False
+
+        def may_stuck():
+            nonlocal checkpoint
+            barrier.wait()
+            checkpoint = True
+
+        with self.run_in_thread(may_stuck):
+            self.false(checkpoint)
+            barrier.wait()
+
+        self.true(checkpoint)
+
+    def test_run_in_thread_reuse(self):
+        def foo():
+            pass
+
+        p = self.run_in_thread(foo)
+        with p:
+            pass
+
+        with self.raises(RuntimeError):
+            with p:
+                pass
+
 
 class TestCheckPoint(TestCase):
     def test_checkpoint(self):
@@ -14,19 +42,20 @@ class TestCheckPoint(TestCase):
         self.false(checkpoint)
         checkpoint.set()
         checkpoint.check()
+        checkpoint.check(True)
+        self.true(checkpoint)
 
-        checkpoint.unset()
+        checkpoint.clear()
+        checkpoint.check(False)
         self.false(checkpoint)
 
         def set_checkpoint():
             checkpoint.wait()
 
-        t = threading.Thread(target=set_checkpoint)
-        t.daemon = True
-        t.start()
+        with self.run_in_thread(set_checkpoint):
+            checkpoint.set()
 
-        checkpoint.set()
-        t.join()
+        checkpoint.check()
 
 
 class TestSubprocRunMocker(TestCase):
