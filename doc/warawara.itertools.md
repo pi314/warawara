@@ -1,13 +1,12 @@
-warawara.itertools
-===============================================================================
+# warawara.itertools
 
 This document describes the API set provided by `warawara.itertools`.
 
 For the index of this package, see [warawara.md](warawara.md).
 
 
-`is_iterable(obj)`
------------------------------------------------------------------------------
+## `is_iterable(obj)`
+
 Returns `True` if `obj` is iterable and `False` otherwise.
 
 __Examples__
@@ -18,8 +17,8 @@ assert not is_iterable(3)
 ```
 
 
-`unwrap(obj=None)`
------------------------------------------------------------------------------
+## `unwrap(obj=None)`
+
 Try to unpack `obj` as much as possible.
 
 `str` stay as-is and doesn't unpacked to characters.
@@ -33,8 +32,8 @@ assert unwrap('warawara') == 'warawara'
 ```
 
 
-`flatten(tree)`
------------------------------------------------------------------------------
+## `flatten(tree)`
+
 Flattens every nested list/tuple and merge them into one.
 
 __Examples__
@@ -43,8 +42,8 @@ assert flatten([[1, 2, 3], [4, 5, 6], [7], [8, 9]]) == [1, 2, 3, 4, 5, 6, 7, 8, 
 ```
 
 
-`lookahead(iterable)`
------------------------------------------------------------------------------
+## `lookahead(iterable)`
+
 Returns a generator object that generate boolean values to indicate the last element.
 
 Like `enumerate()` that generate `index` values for each element,
@@ -62,8 +61,8 @@ assert list(lookahead([1, 2, 3, 4, 5])) == [
 ```
 
 
-`zip_longest(*iterables, fillvalues=None)`
------------------------------------------------------------------------------
+## `zip_longest(*iterables, fillvalues=None)`
+
 Similar to standard `itertools.zip_longest()`, but warawara version supports
 setting `fillvalue` for each iterable.
 

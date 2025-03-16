@@ -1,13 +1,12 @@
-warawara.sh
-===============================================================================
+# warawara.sh
 
 This document describes the API set provided by `warawara.sh`.
 
 For the index of this package, see [warawara.md](warawara.md).
 
 
-`cwd(path=None)`
------------------------------------------------------------------------------
+## `cwd(path=None)`
+
 If `path` is `None`, returns the current working directory path of `pathlib.Path`.
 
 Otherwise, it `os.chdir()` to `path`, and returns the new working directory path.
@@ -26,8 +25,8 @@ if not there:
 ```
 
 
-`pushd(path=None)` / `popd(all=False)`
------------------------------------------------------------------------------
+## `pushd(path=None)` / `popd(all=False)`
+
 `pushd()` pushes `cwd()` into dir stack, and then attempts to `os.chdir(path)`.
 
 `popd()` pops a path from dir stack, and `os.chdir()` to it.
@@ -66,8 +65,8 @@ assert popd() == False
 ```
 
 
-`dirs(clear=False)`
------------------------------------------------------------------------------
+## `dirs(clear=False)`
+
 Returns a copy of the dir stack as a `list`. The top of the stack is at the end.
 
 __Examples__
@@ -90,8 +89,8 @@ assert dirs() == [here]
 To jump to the first item of dir stack, use `popd(all=True)` instead.
 
 
-`home()`
------------------------------------------------------------------------------
+## `home()`
+
 Returns `Path.home()`.
 
 ```python
@@ -102,8 +101,8 @@ assert home() == expanduser('~')
 ```
 
 
-`shrinkuser(path)`
------------------------------------------------------------------------------
+## `shrinkuser(path)`
+
 Returns the opposite of `os.path.expanduser()`, i.e. replace `$HOME` with a `~` symbol.
 
 The trailing slash is reserved if `path` ends with one.

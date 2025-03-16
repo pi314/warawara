@@ -1,13 +1,12 @@
-warawara.colors
-===============================================================================
+# warawara.colors
 
 This document describes the API set provided by `warawara.colors`.
 
 For the index of this package, see [warawara.md](warawara.md).
 
 
-`color()`
--------------------------------------------------------------------------------
+## `color()`
+
 A factory function that produces color objects based on input arguments.
 
 __Parameters__
@@ -34,8 +33,8 @@ See [Color256](#class-color256), [ColorRGB](#class-colorrgb),
 and [ColorHSV](#class-colorhsv) for more details.
 
 
-Class `Color`
--------------------------------------------------------------------------------
+## Class `Color`
+
 An abstract base class that is inherited by other Color types.
 
 It's intended to be used for type checking. For example, `isinstance(obj, Color)`.
@@ -43,8 +42,8 @@ It's intended to be used for type checking. For example, `isinstance(obj, Color)
 Two `Color` objects are defined equal if their escape sequences are equal.
 
 
-Class `Color256`
--------------------------------------------------------------------------------
+## Class `Color256`
+
 Represents a xterm 256 color.
 
 The actual color displayed in your terminal might look different
@@ -81,8 +80,8 @@ assert c.to_rgb() == ColorRGB(255, 175, 0)
 assert c.to_hsv() == ColorHSV(41, 100, 100)
 ```
 
-Class ``ColorRGB``
------------------------------------------------------------------------------
+## Class ``ColorRGB``
+
 Represents a RGB color.
 
 __Parameters__
@@ -163,8 +162,8 @@ assert c.RGB == (255, 174, 0)
 The escape sequence of a `ColorRGB` object is calculated based on `RGB`.
 
 
-Class ``ColorHSV``
------------------------------------------------------------------------------
+## Class ``ColorHSV``
+
 Represents a HSV color.
 
 __Parameters__
@@ -230,8 +229,8 @@ assert cc.HSV == (43, 100, 100)
 The escape sequence of a `ColorHSV` object is calculated based on `HSV`.
 
 
-`paint()`
------------------------------------------------------------------------------
+## `paint()`
+
 An alias function that returns `ColorCompound` object.
 
 __Parameters__
@@ -240,8 +239,8 @@ paint(fg=None, bg=None)
 ```
 
 
-Class ``ColorCompound``
------------------------------------------------------------------------------
+## Class ``ColorCompound``
+
 Binds two Color object together, one for foreground and one for background.
 
 `ColorCompound` objects are created when doing operations on `Color` objects.
@@ -277,8 +276,8 @@ assert ryig('text') == '\033[38;5;9;48;5;12mtext\033[m'
 ```
 
 
-`decolor()`
------------------------------------------------------------------------------
+## `decolor()`
+
 Return a new string that has color escape sequences removed.
 
 __Parameters__
@@ -294,8 +293,8 @@ assert decolor(cs) == s
 ```
 
 
-`names`
------------------------------------------------------------------------------
+## `names`
+
 A list of named colors, that are pre-defined by warawara and could be accessed
 with `warawara.<name>`.
 
@@ -451,8 +450,8 @@ Their RGB values are likely **not** consistent with W3C's definition.
 * `yellowgreen` (113)
 
 
-`nocolor`
------------------------------------------------------------------------------
+## `nocolor`
+
 A special color name that has the following properties:
 
 __Examples__
@@ -469,8 +468,8 @@ assert '{}'.format(nocolor) == '\033[m'
 ```
 
 
-`gradient()`
------------------------------------------------------------------------------
+## `gradient()`
+
 Produces a series of colors from ``A`` to ``B`` of length ``N >= 2``.
 
 __Parameters__

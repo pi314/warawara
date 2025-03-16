@@ -1,13 +1,12 @@
-warawara.math
-===============================================================================
+# warawara.math
 
 This document describes the API set provided by `warawara.math`.
 
 For the index of this package, see [warawara.md](warawara.md).
 
 
-`is_uint8(i)`
------------------------------------------------------------------------------
+## `is_uint8(i)`
+
 Checks if the argument `i` is an 8-bit unsigned integer.
 
 Returns `True` if `i` fulfills all of the following condition:
@@ -17,8 +16,8 @@ Returns `True` if `i` fulfills all of the following condition:
 * `0 <= i < 256`
 
 
-`sgn(i)`
------------------------------------------------------------------------------
+## `sgn(i)`
+
 Return the sign of parameter `i`.
 
 * `-1` if `i < 0`
@@ -26,8 +25,8 @@ Return the sign of parameter `i`.
 * `0` otherwise
 
 
-`lerp(a, b, t)`
------------------------------------------------------------------------------
+## `lerp(a, b, t)`
+
 Calculates the linear interpolation or extrapolation of argument `a`, `b` at ratio `t`.
 
 * If `t = 0`, `a` is returned
@@ -47,8 +46,8 @@ assert lerp(-1, 9, 2) == 19
 ```
 
 
-`clamp(A, x, B)`
------------------------------------------------------------------------------
+## `clamp(A, x, B)`
+
 clamps the value into the specified interval `[A, B]`.
 
 * If `x` is less than `min(A, B)`, `min(A, B)` is returned
@@ -63,8 +62,8 @@ assert clamp(3, 9, 7) == 7
 ```
 
 
-Class `vector(*args)`
------------------------------------------------------------------------------
+## Class `vector(*args)`
+
 A `tuple`-like object that supports numeric operations with `int` and `float`.
 
 __Examples__
@@ -96,8 +95,8 @@ assert v1.map(lambda x: 3 * x + 1) == (4, 7, 10)
 ```
 
 
-`interval(a, b, close=True)`
------------------------------------------------------------------------------
+## `interval(a, b, close=True)`
+
 Returns a `List[int]` that starts from `a` and ends with `b`.
 
 If `close=False`, `a` and `b` are excluded from the result.
@@ -113,8 +112,8 @@ assert interval(3, 3, close=False) == []
 ```
 
 
-`resample(samples, N)`
------------------------------------------------------------------------------
+## `resample(samples, N)`
+
 Returns a list that "distrubutes" `samples` into `N` items.
 
 * If `N` is larger than `len(samples)`, some items are repeated in the result
