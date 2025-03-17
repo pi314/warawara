@@ -22,8 +22,8 @@ p.stdout.lines  # ['1', '2', '3', '4', '5']
 p1 = warawara.command(['seq', '5'])
 
 def func(streams, *args):
-  for line in streams[0]:
-      streams[1].writeline('wara: {}'.format(line))
+    for line in streams[0]:
+        streams[1].writeline('wara: {}'.format(line))
 
 p2 = warawara.command(func, stdin=True)
 
@@ -35,7 +35,6 @@ p2.stdout.lines   # ['wara: 1', 'wara: 2', 'wara: 3', 'wara: 4', 'wara: 5']
 
 From my own perspective, Python's subprocess interface is not friendly enough
 for simple uses.
-
 
 For more detailed API usage, see [doc/warawara.md](doc/warawara.md)
 
