@@ -10,7 +10,7 @@ authors = [
   { name="Cychih", email="michael66230@gmail.com" },
 ]
 description = "Some cute utilties for my other projects"
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
     "Development Status :: 3 - Alpha",
