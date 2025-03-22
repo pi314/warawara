@@ -81,50 +81,43 @@ class RunMocker:
         self.rules = {}
 
     def register(self, cmd, callback=None, *, stdout=None, stderr=None, returncode=None):
-        if all((callback is None, stdout is None, stderr is None, returncode is None)):
-            raise ValueError('Meaningless mock')
-
-        if callback is not None and any((
-                stdout is not None,
-                stderr is not None,
-                returncode is not None
-                )):
-            raise ValueError('Ambiguous mock')
-
         if not isinstance(cmd, str):
-            cmd = tuple(cmd)
+            raise ValueError('cmd must be a str')
+
+        if callback is not None and not isinstance(callback, Exception) and not callable(callback):
+            raise TypeError('callback should be an Exception or a callable')
+
+        by_callback = callback
+        by_output = (stdout, stderr, returncode)
+
+        if by_callback is None and by_output == (None, None, None):
+            raise ValueError('Meaningless behavior')
+
+        if by_callback is not None and by_output != (None, None, None):
+            raise ValueError('Ambiguous behavior')
 
         if cmd not in self.rules:
             self.rules[cmd] = []
 
-        if stdout is not None or stderr is not None or returncode is not None:
-            def simple_prog(proc, *args):
-                if stdout:
-                    proc.stdout.writelines(stdout)
-                if stderr:
-                    proc.stderr.writelines(stderr)
-                return returncode
-
-            callback = simple_prog
-
-        self.rules[cmd].append(callback)
-        return self
-
-    @classmethod
-    def match_pattern(cls, pattern, cmd):
-        if len(pattern) != len(cmd):
-            return None
-
-        args = []
-        for parg, carg in zip(pattern, cmd):
-            if parg == carg:
-                pass
-            elif parg == '{}':
-                args.append(carg)
+        if by_callback:
+            if isinstance(by_callback, Exception):
+                behavior = by_callback
             else:
-                return None
+                def behavior(proc, *args):
+                    proc.cmd = (cmd, *args)
+                    return by_callback(proc, *args)
 
-        return args
+        else:
+            def behavior(proc, *args):
+                proc.cmd = (cmd, *args)
+                if by_output[0]:
+                    proc.stdout.writelines(by_output[0])
+                if by_output[1]:
+                    proc.stderr.writelines(by_output[1])
+                return by_output[2]
+
+        self.rules[cmd].append(behavior)
+        return self
 
     def __call__(self, cmd, *,
                  stdin=None, stdout=True, stderr=True,
@@ -132,36 +125,30 @@ class RunMocker:
                  bufsize=-1,
                  env=None,
                  wait=True):
-        from .lib_subproc import command
-        matched_pattern = None
-        matched_args = []
-        for rule in self.rules.items():
-            pattern = rule[0]
-            callbacks = rule[1]
+        if not cmd:
+            raise ValueError('command is empty')
 
-            if isinstance(pattern, str):
-                continue
+        if isinstance(cmd, str):
+            cmd = [cmd]
 
-            args = type(self).match_pattern(pattern, cmd)
-            if args:
-                matched_pattern = pattern
-                matched_args = args
+        matched_callbacks = None
 
-        if not matched_pattern:
-            if cmd[0] in self.rules:
-                matched_pattern = cmd[0]
-                matched_args = cmd[1:]
-
-        if not matched_pattern:
+        if cmd[0] in self.rules:
+            matched_callbacks = self.rules[cmd[0]]
+        elif '*' in self.rules:
+            matched_callbacks = self.rules['*']
+        else:
             raise ValueError('Unregistered command: {}'.format(cmd))
 
-        matched_callbacks = self.rules[matched_pattern]
-
-        callback = matched_callbacks[0]
+        behavior = matched_callbacks[0]
         if len(matched_callbacks) > 1:
             matched_callbacks.pop(0)
 
-        p = command([callback] + matched_args,
+        if isinstance(behavior, Exception):
+            raise behavior
+
+        from .lib_subproc import command
+        p = command([behavior] + cmd[1:],
                     stdin=stdin, stdout=stdout, stderr=stderr,
                     encoding=encoding, rstrip=rstrip,
                     bufsize=bufsize,
