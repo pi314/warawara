@@ -10,7 +10,7 @@ authors = [
   { name="Cychih", email="michael66230@gmail.com" },
 ]
 description = "Some cute utilties for my other projects"
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -38,3 +38,17 @@ ntfy = "warawara:bin.ntfy.main"
 
 [project.urls]
 Homepage = "https://github.com/pi314/warawara"
+
+
+[tool.coverage.run]
+branch = true
+source = ["warawara/"]
+command_line = "-m unittest --verbose"
+
+
+[tool.coverage.report]
+omit = [
+    "test_*.py",
+    "__init__.py",
+    "__main__.py",
+    ]

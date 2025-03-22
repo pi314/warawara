@@ -1,18 +1,20 @@
 from .lib_itertools import unwrap_one
 
-
-__all__ = ['is_int', 'sgn', 'lerp', 'interval']
-__all__ += ['vector', 'distribute']
-
-
-def is_int(o):
-    return isinstance(o, int)
+from .internal_utils import exporter
+export, __all__ = exporter()
 
 
+@export
+def is_uint8(i):
+    return isinstance(i, int) and not isinstance(i, bool) and 0 <= i < 256
+
+
+@export
 def sgn(i):
     return (i > 0) - (i < 0)
 
 
+@export
 def lerp(a, b, t):
     if t == 0:
         return a
@@ -21,6 +23,14 @@ def lerp(a, b, t):
     return a + t * (b - a)
 
 
+@export
+def clamp(A, x, B):
+    import builtins
+    min, max = builtins.min(A, B), builtins.max(A, B)
+    return builtins.max(min, builtins.min(x, max))
+
+
+@export
 class vector:
     def __init__(self, *args):
         args = unwrap_one(args)
@@ -81,10 +91,21 @@ class vector:
     def __rmul__(self, other):
         return self * other
 
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i / other for i in self)
+        raise TypeError('Cannot operate on vector(len={}) and {}'.format(len(self), other))
+
+    def __floordiv__(self, other):
+        if isinstance(other, (int, float)):
+            return vector(i // other for i in self)
+        raise TypeError('Cannot operate on vector(len={}) and {}'.format(len(self), other))
+
     def map(self, func):
         return vector(func(i) for i in self)
 
 
+@export
 def interval(a, b, close=True):
     direction = sgn(b - a)
     if direction == 0:
@@ -92,11 +113,12 @@ def interval(a, b, close=True):
 
     ret = range(a, b + direction, direction)
     if close:
-        return ret
-    return ret[1:-1]
+        return list(ret)
+    return list(ret[1:-1])
 
 
-def distribute(samples, N):
+@export
+def resample(samples, N):
     if N is None:
         return samples
 
@@ -106,7 +128,7 @@ def distribute(samples, N):
         return samples
 
     if N < n:
-        # Averaging skipped samples to into N-1 gaps
+        # Averaging skipped samples into N-1 gaps
         skip_count = n - N
         gap_count = N - 1
 
@@ -127,47 +149,3 @@ def distribute(samples, N):
                 ret.append(samples[i])
 
     return tuple(ret)
-
-
-# class matrix:
-#     def __init__(self, *args):
-#         if len(args) == 2 and is_int(args[0]) and is_int(args[1]):
-#             self.rows = args[0]
-#             self.cols = args[1]
-#             self.data = []
-#             for i in range(self.rows):
-#                 self.data.append(vector([0] * self.cols))
-#
-#         elif len(args) == 1 and isinstance(args, (tuple, list)):
-#             self.rows = len(args[0])
-#             self.cols = len(args[0][0])
-#             self.data = []
-#             for i, row in enumerate(args[0]):
-#                 self.data.append(list(row))
-#                 if len(self.data[-1]) != self.cols:
-#                     raise ValueError('Incorrect row length:', row)
-#
-#     def __repr__(self):
-#         return 'matrix(rows={}, cols={})'.format(self.rows, self.cols)
-#
-#     def __mul__(self, other):
-#         if self.cols != other.rows:
-#             raise ValueError('{}x{} matrix cannot multiply with {}x{} matrix'.format(
-#                 self.rows, self.cols, other.rows, other.cols))
-#
-#         ret = matrix(self.rows, other.cols)
-#
-#         for row in range(ret.rows):
-#             for col in range(ret.cols):
-#                 ret.data[row][col] = sum(itertools.starmap(
-#                         lambda a, b: a * b,
-#                         zip(
-#                             self.data[row],
-#                             (other.data[col][i] for i in range(ret.cols))
-#                             )
-#                         ))
-#
-#         return ret
-#
-#     def __getitem__(self, key):
-#         return self.data[key]

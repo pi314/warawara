@@ -1,23 +1,18 @@
-import contextlib
-import enum
-import itertools
-import re
 import sys
-import threading
-import time
-import unicodedata
 
-from . import lib_paints as paints
+from . import lib_colors as paints
 
-from .lib_itertools import zip_longest, unwrap_one, flatten
-from .lib_paints import decolor
+from .lib_itertools import zip_longest, flatten
+from .lib_colors import decolor
 
 
-__all__ = ['strwidth', 'ljust', 'rjust']
-__all__ += ['ThreadedSpinner', 'prompt']
+from .internal_utils import exporter
+export, __all__ = exporter()
 
 
+@export
 def strwidth(s):
+    import unicodedata
     return sum((1 + (unicodedata.east_asian_width(c) in 'WF')) for c in decolor(s))
 
 
@@ -78,15 +73,17 @@ def just(just_func, data, width, fillchar):
             ]
 
 
+@export
 def ljust(data, width=None, fillchar=' '):
     return just(just_elem(lpad), data, width, fillchar)
 
 
+@export
 def rjust(data, width=None, fillchar=' '):
     return just(just_elem(rpad), data, width, fillchar)
 
 
-
+@export
 class ThreadedSpinner:
     def __init__(self, *icon, delay=0.1):
         if not icon:
@@ -121,6 +118,8 @@ class ThreadedSpinner:
         self.is_end = False
         self.thread = None
         self._text = ''
+
+        import itertools
         self.icon_iter = (
                 itertools.chain(
                     self.icon_entry,
@@ -130,7 +129,8 @@ class ThreadedSpinner:
                 )
         self.icon_head = [None, None]
 
-        self.print_function = print
+        import builtins
+        self.print_function = builtins.print
 
     def __enter__(self):
         if self.thread:
@@ -161,6 +161,8 @@ class ThreadedSpinner:
         self.print_function('\r' + self.icon + '\033[K ' + self._text, end='')
 
     def animate(self):
+        import time
+
         while not self.is_end:
             self.refresh()
             time.sleep(self.delay)
@@ -180,6 +182,7 @@ class ThreadedSpinner:
         if self.thread:
             return
 
+        import threading
         self.thread = threading.Thread(target=self.animate)
         self.thread.daemon = True
         self.thread.start()
@@ -200,13 +203,13 @@ def alt_if_none(A, B):
 
 
 class UserSelection:
-    def __init__(self, options, accept_cr=None, abbr=None, sep=None, ignorecase=None):
+    def __init__(self, options, accept_empty=None, abbr=None, sep=None, ignorecase=None):
         if not options:
-            accept_cr = True # carriage return
+            accept_empty = True
             abbr = False
             ignorecase = False
 
-        self.accept_cr = alt_if_none(accept_cr, True)
+        self.accept_empty = alt_if_none(accept_empty, True)
         self.abbr = alt_if_none(abbr, True)
         self.ignorecase = alt_if_none(ignorecase, self.abbr)
         self.sep = alt_if_none(sep, ' / ')
@@ -215,7 +218,7 @@ class UserSelection:
         self.options = [o for o in options]
 
         if self.options:
-            if self.accept_cr:
+            if self.accept_empty:
                 self.mapping[''] = self.options[0]
 
             for opt in self.options:
@@ -243,7 +246,7 @@ class UserSelection:
             return ''
 
         opts = [o for o in self.options]
-        if self.accept_cr and self.ignorecase:
+        if self.accept_empty and self.ignorecase:
             opts[0] = opts[0].capitalize()
 
         if self.abbr:
@@ -264,7 +267,7 @@ class UserSelection:
         return False
 
     def __str__(self):
-        return self.selected
+        return str(self.selected)
 
     def __repr__(self):
         return '<warawara.tui.UserSelection selected=[{}]>'.format(self.selected)
@@ -309,23 +312,25 @@ class ExceptionSuppressor:
         return exc_type in self.exc_group
 
 
+@export
 def prompt(question, options=tuple(),
-           accept_cr=None,
-           abbr=None,
+           accept_empty=True,
+           abbr=True,
            ignorecase=None,
-           sep=None,
+           sep=' / ',
            suppress=(EOFError, KeyboardInterrupt)):
 
     if isinstance(options, str) and ' ' in options:
         options = options.split()
 
-    user_selection = UserSelection(options, accept_cr=accept_cr, abbr=abbr, sep=sep, ignorecase=ignorecase)
+    user_selection = UserSelection(options, accept_empty=accept_empty, abbr=abbr, sep=sep, ignorecase=ignorecase)
 
     with HijackStdio():
         with ExceptionSuppressor(suppress):
             while user_selection.selected is None:
                 print((question + (user_selection.prompt)), end=' ')
 
+                import contextlib
                 with contextlib.suppress(ValueError):
                     i = input().strip()
                     user_selection.select(i)

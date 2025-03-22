@@ -6,7 +6,7 @@ import unittest.mock
 
 from collections import namedtuple
 
-from .test_utils import *
+from .lib_test_utils import *
 
 from warawara import *
 
@@ -114,7 +114,7 @@ class TestTypesettingUtils(TestCase):
                 ]
 
         ret = ljust((vector for vector in data), width=(10, 20))
-        self.is_false(isinstance(ret, (tuple, list)))
+        self.false(isinstance(ret, (tuple, list)))
 
         self.eq(list(ret), [
             ('column1   ', 'col2                '),
@@ -225,10 +225,10 @@ class TestThreadedSpinner(TestCase):
         self.eq(spinner.icon_leave, 'LEAVE')
 
     def test_icon_set_invalid(self):
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             spinner = ThreadedSpinner('ENTRY', 'LOOP', 'LEAVE', 'WHAT')
 
-        with self.assertRaises(ValueError):
+        with self.raises(ValueError):
             spinner = ThreadedSpinner(True)
 
     def test_context_manager(self):
@@ -311,6 +311,27 @@ class TestPromotAskUser(TestCase):
         self.patch('builtins.print', self.mock_print)
         self.patch('builtins.input', self.mock_input)
 
+        self.mock_open = unittest.mock.mock_open()
+        self.patch('builtins.open', self.mock_open)
+        self.assert_called_open = True
+
+    def tearDown(self):
+        if self.assert_called_open:
+            self.mock_open.assert_has_calls([
+                    unittest.mock.call('/dev/tty'),
+                    unittest.mock.call('/dev/tty', 'w'),
+                    unittest.mock.call('/dev/tty', 'w'),
+                    ])
+
+            handle = self.mock_open()
+            handle.close.assert_has_calls([
+                    unittest.mock.call(),
+                    unittest.mock.call(),
+                    unittest.mock.call(),
+                ])
+        else:
+            self.mock_open.assert_not_called()
+
     def set_input(self, *lines):
         self.input_queue = queue.Queue()
         for line in lines:
@@ -335,8 +356,10 @@ class TestPromotAskUser(TestCase):
         self.eq(queue_to_list(self.print_queue), list(args))
 
     def test_empty(self):
-        with self.assertRaises(TypeError):
+        with self.raises(TypeError):
             s = prompt()
+
+        self.assert_called_open = False
 
     def test_continue(self):
         self.set_input('wah')
@@ -414,7 +437,7 @@ class TestPromotAskUser(TestCase):
         yn = prompt('Question', suppress=RuntimeError)
         self.eq(yn, None)
 
-        with self.assertRaises(TimeoutError):
+        with self.raises(TimeoutError):
             yn = prompt('Question', suppress=RuntimeError)
         self.eq(yn, None)
 
@@ -455,9 +478,9 @@ class TestPromotAskUser(TestCase):
         self.eq(yn, 'tea')
         self.ne(yn, 'TEA')
 
-    def test_noaccept_cr(self):
+    def test_noaccept_empty(self):
         self.set_input('', 'c')
-        yn = prompt('Coffee or tea?', 'coffee tea', accept_cr=False)
+        yn = prompt('Coffee or tea?', 'coffee tea', accept_empty=False)
         self.expect_output(
                 'Coffee or tea? [(c)offee / (t)ea] ',
                 'Coffee or tea? [(c)offee / (t)ea] ',

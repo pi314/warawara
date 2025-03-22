@@ -1,7 +1,11 @@
 import itertools
 
+from .internal_utils import exporter
+export, __all__ = exporter()
 
-def iterable(obj):
+
+@export
+def is_iterable(obj):
     try:
         iter(obj)
         return True
@@ -9,6 +13,7 @@ def iterable(obj):
         return False
 
 
+@export
 def unwrap_one(obj):
     try:
         while True:
@@ -22,17 +27,37 @@ def unwrap_one(obj):
     return obj
 
 
+@export
+def unwrap(obj=None):
+    try:
+        while True:
+            if isinstance(obj, str):
+                return obj
+
+            if len(obj) == 1:
+                obj = obj[0]
+                continue
+
+            return obj
+    except TypeError:
+        pass
+
+    return obj
+
+
+@export
 def flatten(tree):
-    if not iterable(tree) or isinstance(tree, str):
+    if not is_iterable(tree) or isinstance(tree, str):
         return tree
 
     wrapper_type = type(tree)
     return wrapper_type(itertools.chain.from_iterable(
-        flatten(i) if iterable(i) and not isinstance(i, str) else [i]
+        flatten(i) if is_iterable(i) and not isinstance(i, str) else [i]
         for i in tree
         ))
 
 
+@export
 def lookahead(iterable):
     it = iter(iterable)
     lookahead = next(it)
@@ -44,6 +69,7 @@ def lookahead(iterable):
     yield lookahead, True
 
 
+@export
 def zip_longest(*iterables, fillvalues=None):
     if not isinstance(fillvalues, (tuple, list)):
         fillvalues = (fillvalues,) * len(iterables)

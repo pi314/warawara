@@ -10,8 +10,42 @@ def main():
     prog = basename(sys.argv[0])
     sys.argv = sys.argv[1:]
 
+    arg_idx = None
+    for idx, arg in enumerate(sys.argv):
+        if arg != 'wara':
+            arg_idx = idx
+            break
+
+    if arg_idx is None and len(sys.argv) > 2:
+        print(
+r'''
+        ╭────────────────────────────────╮
+        │       ╭──────────────────────╮ │
+        │       │   ╭────────────────╮ │ │
+        │       │   │ RecursionError │ │ │
+        │       │   ╰──────┬─────────╯ │ │
+        │       │     ,__, ╯           │ │
+        │       │   __(..)             │ │
+        │       │ ~(  (__)             │ │
+        │       │  ||-||               │ │
+        │       ╰────┬─────────────────╯ │
+        │       ,__, ╯                   │
+        │    ___(..)                     │
+        │  /(   (__)                     │
+        │ ' ||--||                       │
+        ╰────────┬───────────────────────╯
+            (__) ╯
+    _______/(..)
+  /(       /(__)
+ * | w----||
+   ||     ||
+''', file=sys.stderr)
+        sys.exit(1)
+
+    sys.argv = sys.argv[(arg_idx or 0):]
+
     if not sys.argv:
-        for f in os.listdir(os.path.dirname(__file__)):
+        for f in sorted(os.listdir(os.path.dirname(__file__))):
             if f.startswith('bin_') and f.endswith('.py'):
                 m = os.path.splitext(f[4:])[0]
                 print(m)
@@ -21,9 +55,6 @@ def main():
 
     try:
         getattr(bin, subcmd).main()
-    except AttributeError:
-        print(f'Unknown subcommand: {subcmd}', file=sys.stderr)
-        sys.exit(1)
-    except ModuleNotFoundError:
+    except (AttributeError, ModuleNotFoundError):
         print(f'Unknown subcommand: {subcmd}', file=sys.stderr)
         sys.exit(1)

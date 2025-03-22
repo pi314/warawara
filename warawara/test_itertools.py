@@ -1,4 +1,4 @@
-from .test_utils import *
+from .lib_test_utils import *
 
 from warawara import *
 
@@ -6,7 +6,9 @@ from warawara import *
 class TestItertools(TestCase):
     def test_unwrap_one(self):
         self.eq(unwrap_one(1), 1)
+        self.eq(unwrap_one((1,)), (1,))
         self.eq(unwrap_one(False), False)
+        self.eq(unwrap_one((False,)), (False,))
         self.eq(unwrap_one('text'), 'text')
         self.eq(unwrap_one([1, 2, 3]), [1, 2, 3])
         self.eq(unwrap_one([[1, 2, 3]]), [1, 2, 3])
@@ -15,6 +17,29 @@ class TestItertools(TestCase):
         self.eq(unwrap_one([(1, 2, 3)]), (1, 2, 3))
         self.eq(unwrap_one(((1, 2, 3))), (1, 2, 3))
         self.eq(unwrap_one(([1, 2, 3])), [1, 2, 3])
+
+    def test_unwrap(self):
+        def wrap(obj, type=tuple):
+            return type((obj,))
+
+        self.eq(unwrap(), None)
+
+        self.eq(unwrap(1), 1)
+        self.eq(unwrap(False), False)
+        self.eq(unwrap('text'), 'text')
+
+        self.eq(unwrap(wrap(1)), 1)
+        self.eq(unwrap(wrap(False)), False)
+        self.eq(unwrap(wrap('text')), 'text')
+
+        self.eq(unwrap([1, 2, 3]), [1, 2, 3])
+        self.eq(unwrap([[1, 2, 3]]), [1, 2, 3])
+        self.eq(unwrap([[[1, 2, 3]]]), [1, 2, 3])
+        self.eq(unwrap([[[[1, 2, 3]]]]), [1, 2, 3])
+
+        self.eq(unwrap([(1, 2, 3),]), (1, 2, 3))
+        self.eq(unwrap(((1, 2, 3),)), (1, 2, 3))
+        self.eq(unwrap(([1, 2, 3],)), [1, 2, 3])
 
     def test_flatten(self):
         self.eq(flatten(False), False)

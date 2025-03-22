@@ -1,0 +1,139 @@
+#!/usr/bin/env ruby
+
+# https://gist.github.com/Pysis868/6a42c95cfb410d5f384c2e8a97ce44f9
+
+# Renders Markdown content offline by converting it to HTML using GitHub's own redcarpet renderer software, and their additional CSS.
+# Does require a download of the additional GitHub CSS to a local cache.
+
+# Replaces grip for preferred offline functionality: https://github.com/joeyespo/grip/issues/35
+
+# Dependencies: redcarpet
+
+require 'optparse'
+
+options = {
+    cache: false,
+  replace: false
+}
+
+OptionParser.new do |opts|
+  opts.banner = 'Usage: [cat <file.md> |] gfm-render [options] <file.md>'
+
+  opts.on('-c', '--cache', 'Only checks to locally cache the additional GitHub CSS file, if it does not exist already.') do
+    options[:cache] = true
+  end
+  opts.on('-f', '--force', 'Sames as -r|--replace.') do
+    options[:replace] = true
+  end
+  opts.on('-h', '--help', "Displays this usage text.") do
+    puts opts
+    exit
+  end
+  opts.on('-r', '--replace', 'Forces a re-download of the additional GitHub CSS file.') do
+    options[:replace] = true
+  end
+end.parse!(ARGV)
+
+gh_markdown_css_filename = File.join(ENV["XDG_CACHE_HOME"] || "#{ENV['HOME']}/.cache", "gfm-render/github-markdown.css")
+unless File.exist?(gh_markdown_css_filename) && !options[:replace]
+  require 'net/http'
+  require 'pathname'
+  CSS_URL = 'https://raw.githubusercontent.com/sindresorhus/github-markdown-css/main/github-markdown.css'
+  STDERR.puts "Downloading \"#{CSS_URL}\" to the cache at \"#{gh_markdown_css_filename}\"."
+  Pathname.new(gh_markdown_css_filename).dirname.mkpath
+  File.open(gh_markdown_css_filename, "w") do |css|
+    css.write(Net::HTTP.get(URI(CSS_URL)))
+  end
+end
+if options[:cache]
+  return
+end
+
+gh_markdown_css = File.read(gh_markdown_css_filename)
+
+input = ARGV[0] && ARGV[0] != "-" &&  File.open(ARGV[0]) || STDIN
+output = ARGV[1] && File.open(ARGV[1], "w") || STDOUT
+
+File.join(ENV["XDG_CACHE_HOME"] || "#{ENV['HOME']}/.cache", "gfm-render")
+
+require 'redcarpet'
+require 'erb'
+
+class RenderWithTaskLists < Redcarpet::Render::HTML
+  def list_item(text, list_type)
+    if text.start_with?("[x]", "[X]")
+      text[0..2] = %(<input type="checkbox" class="task-list-item-checkbox" disabled="" checked="checked">)
+      %(<li class="task-list-item">#{text}</li>)
+
+    elsif text.start_with?("[ ]")
+      text[0..2] = %(<input type="checkbox" class="task-list-item-checkbox" disabled="">)
+      %(<li class="task-list-item">#{text}</li>)
+
+    else
+      %(<li>#{text}</li>)
+    end
+  end
+end
+
+markdown_renderer = Redcarpet::Markdown.new(
+  RenderWithTaskLists.new(with_toc_data: true),
+  no_intra_emphasis: true,
+  autolink: true,
+  tables: true,
+  fenced_code_blocks: true,
+  lax_spacing: true,
+)
+
+html_output = markdown_renderer.render(input.read)
+name = input.is_a?(File) && File.basename(input) || "<stdin>"
+
+erb = ERB.new(DATA.read)
+output.write(erb.result)
+
+__END__
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Rendered <%= name %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+
+      <%= gh_markdown_css %>
+
+      @media (prefers-color-scheme: dark) {
+          body {
+              color: #c9d1d9;
+              background-color: #0d1117;
+          }
+      }
+      @media (prefers-color-scheme: light) {
+          body {
+              color: #24292f;
+              background-color: #ffffff;
+          }
+      }
+
+      .markdown-body {
+          box-sizing: border-box;
+          min-width: 200px;
+          max-width: 980px;
+          margin: 1 auto;
+          padding: 45px;
+          border: 1px solid #d0d7de;
+          border-radius: 6px;
+      }
+
+      @media (max-width: 767px) {
+          .markdown-body {
+              padding: 15px;
+          }
+      }
+    </style>
+  </head>
+  <body>
+    <article class="markdown-body">
+<%= html_output %>
+    </article>
+  </body>
+</html>
