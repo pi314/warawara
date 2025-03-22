@@ -1,13 +1,13 @@
-warawara.fs
-===============================================================================
+# warawara.fs
+
 
 This document describes the API set provided by `warawara.fs`.
 
 For the index of this package, see [warawara.md](warawara.md).
 
 
-`open()`
------------------------------------------------------------------------------
+## `open()`
+
 A factory function that adds line-oriented methods to `builtin.open()`.
 
 __Parameters__
@@ -49,8 +49,8 @@ so when it returns a line without trailing newline, you know it's the last line 
 If you need built-in behavior, setting `rstrip=''` should work.
 
 
-`natsorted()`
------------------------------------------------------------------------------
+## `natsorted()`
+
 A utility function that mimics the very basic functionality of [natsort](https://pypi.org/project/natsort/).
 
 __Parameters__

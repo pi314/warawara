@@ -1,11 +1,10 @@
-warawara
-===============================================================================
+# warawara
 
 This is the index document of package `warawara`.
 
 
-Installation
------------------------------------------------------------------------------
+## Installation
+
 ```console
 sh$ pip3 install warawara
 ```
@@ -19,8 +18,8 @@ import warawara
 ```
 
 
-Test
--------------------------------------------------------------------------------
+## Test
+
 Testing:
 
 ```console
@@ -43,8 +42,8 @@ sh$ pytest --cov=warawara --cov-report=html
 ```
 
 
-"Attributes"
------------------------------------------------------------------------------
+## "Attributes"
+
 Like Python standard libraries, `warawara` divide its functionalities into
 different categories.
 
@@ -66,5 +65,5 @@ Documents and descriptions of the categories are as following:
 *   [warawara.regex](warawara.regex.md)
 *   [warawara.sh](warawara.sh.md)
 *   [warawara.subproc](warawara.subproc.md)
-*   [warawara.test_utils](warawara.test_utils.md) (WIP)
+*   [warawara.test_utils](warawara.test_utils.md)
 *   [warawara.tui](warawara.tui.md)

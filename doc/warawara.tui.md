@@ -1,14 +1,18 @@
-warawara.tui
-===============================================================================
+# warawara.tui
 
 This document describes the API set provided by `warawara.tui`.
 
 For the index of this package, see [warawara.md](warawara.md).
 
 
-`strwidth(s)`
------------------------------------------------------------------------------
+## `strwidth()`
+
 Return the "display width" of the string.
+
+__Parameters__
+```python
+strwidth(s)
+```
 
 Printable ASCII characters are counted as width 1, and CJK characters are counted as width 2.
 
@@ -22,11 +26,15 @@ assert strwidth('哇嗚') == 4
 ```
 
 
-`ljust(data, width=None, fillchar=' ')`
------------------------------------------------------------------------------
-`rjust(data, width=None, fillchar=' ')`
------------------------------------------------------------------------------
+## `ljust()` / `rjust()`
+
 `ljust` and `rjust` `data` based on `strwidth()`.
+
+__Parameters__
+```python
+ljust(data, width=None, fillchar=' ')
+rjust(data, width=None, fillchar=' ')
+```
 
 If `data` is a `str`, the behavior is similar to `str.ljust` and `str.rjust`.
 
@@ -52,8 +60,8 @@ assert ljust(data) == [
 ```
 
 
-Class `ThreadedSpinner`
------------------------------------------------------------------------------
+## Class `ThreadedSpinner`
+
 Display a pipx-inspired spinner on screen in a daemon thread.
 
 __Parameters__
@@ -108,8 +116,8 @@ Note that `ThreadedSpinner` uses control sequences to redraw its content in term
 If other threads also prints contents on to screen, the output could become a mess.
 
 
-`prompt()`
------------------------------------------------------------------------------
+## `prompt()`
+
 Prompt a message and wait for user input.
 
 __Parameters__
