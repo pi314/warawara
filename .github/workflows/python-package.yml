@@ -5,10 +5,10 @@ name: Python package
 
 on:
   push:
-    branches: [ "dev" ]
-    paths-ignore: [ "**.rst" ]
+    branches: ["dev", "main"]
+    paths-ignore: ["**.rst"]
   pull_request:
-    branches: [ "dev" ]
+    branches: ["dev", "main"]
 
 jobs:
   build_and_test:
