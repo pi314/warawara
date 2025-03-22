@@ -12,11 +12,14 @@ run:
 
 .PHONY: clean
 clean:
-	@echo $$ rm -rf htmlcov
-	@rm -rf htmlcov
+	@echo $$ rm -rf htmlcov/
+	@rm -rf htmlcov/
 
-	@echo $$ rm -rf htmldoc
-	@rm -rf htmldoc
+	@echo $$ rm -rf htmldoc/
+	@rm -rf htmldoc/
+
+	@echo $$ rm -rf dist/
+	@rm -rf dist/
 
 
 # =============================================================================
