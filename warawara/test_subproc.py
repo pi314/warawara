@@ -384,16 +384,14 @@ class TestSubproc(TestCase):
         checkpoint.set()
 
     def test_wait_invalid_types(self):
-        checkpoint = self.checkpoint()
-
-        def prog(proc, *args):
-            checkpoint.wait()
+        def prog(proc, *args): # pragma: no cover
+            pass
 
         p = command(prog)
         with self.raises(TypeError):
             p.run(wait='wah')
-        checkpoint.set()
-        p.wait()
+        self.eq(p.proc, None)
+        self.eq(p.thread, None)
 
     def test_timeout(self):
         import time
