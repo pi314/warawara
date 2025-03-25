@@ -602,6 +602,7 @@ class TestKey(TestCase):
 
 class TestGetch(TestCase):
     def setUp(self):
+        self.patch('sys.stdin.fileno', self.mock_stdin_fileno)
         self.patch('select.select', self.mock_select)
         self.patch('os.read', self.mock_read)
         self.patch('tty.setraw', self.mock_setraw)
@@ -622,6 +623,9 @@ class TestGetch(TestCase):
         if isinstance(key, str):
             key = key.encode('utf8')
         self.buffer += key
+
+    def mock_stdin_fileno(self):
+        return 0
 
     def mock_select(self, rlist, wlist, xlist, timeout=None):
         self.eq(self.term_attr[0], 'raw')
