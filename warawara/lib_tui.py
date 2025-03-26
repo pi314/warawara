@@ -350,7 +350,9 @@ class Key:
             raise TypeError('Aliases should be in type str')
 
         self.seq = seq
-        self.aliases = [str(name) for name in aliases]
+        self.aliases = []
+        for name in aliases:
+            self.nameit(str(name))
 
     def __hash__(self):
         return hash(self.seq)
@@ -360,11 +362,11 @@ class Key:
         if self.aliases:
             return fmt.format(self.aliases[0])
         try:
-            return fmt.format(self.seq.decode('utf8'))
+            return fmt.format(repr(self.seq.decode('utf8')))
         except UnicodeError:
             return fmt.format(repr(self.seq))
 
-    def name(self, name):
+    def nameit(self, name):
         if name not in self.aliases:
             self.aliases.append(name)
 
@@ -458,7 +460,7 @@ def register_key(seq, *aliases):
 
     key = key_table[seq]
     for name in aliases:
-        key.name(name)
+        key.nameit(name)
 
     return key
 

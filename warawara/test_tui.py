@@ -496,7 +496,7 @@ class TestPromotAskUser(TestCase):
 
 
 class TestKey(TestCase):
-    def test_key_up(self):
+    def test_builtin_key(self):
         self.eq(KEY_ESCAPE, b'\033')
         self.eq(KEY_ESCAPE, '\033')
         self.eq(KEY_ESCAPE, 'esc')
@@ -599,6 +599,37 @@ class TestKey(TestCase):
             self.eq(key, 'ctrl+' + c)
             self.eq(key, '^' + c.upper())
 
+    def test_key_invalid_seq_and_alias(self):
+        Key = type(KEY_UP)
+        with self.raises(TypeError):
+            Key(['wah'], 'WAH')
+
+        with self.raises(TypeError):
+            Key('wah', ['WAH'])
+
+    def test_key_hash(self):
+        self.eq(hash(KEY_UP), hash(KEY_UP.seq))
+
+    def test_key_nameit(self):
+        Key = type(KEY_UP)
+        TEST_KEY = Key('test_key')
+        self.ne(TEST_KEY, 'wah')
+        TEST_KEY.nameit('wah')
+        self.eq(TEST_KEY, 'wah')
+        TEST_KEY.nameit('wah')
+        self.eq(TEST_KEY, 'wah')
+
+    def test_key_repr(self):
+        self.eq(repr(KEY_UP), 'Key(up)')
+
+        Key = type(KEY_UP)
+        new_key = Key('測')
+        self.eq(repr(new_key), r"Key('測')")
+
+        seq = '測'.encode('utf8')[:-2]
+        new_key2 = Key(seq)
+        self.eq(repr(new_key2), r'Key(' + repr(seq) + ')')
+
 
 class TestGetch(TestCase):
     def setUp(self):
@@ -680,3 +711,35 @@ class TestGetch(TestCase):
         self.press(test_data)
         self.eq(getch(), test_data)
         self.eq(getch(), None)
+
+    def test_register_key_empty_seq(self):
+        with self.raises(ValueError):
+            register_key('')
+
+    def test_register_key(self):
+        self.eq(getch(), None)
+        self.press('測試')
+        self.eq(getch(), '測')
+        self.eq(getch(), '試')
+        self.eq(getch(), None)
+
+        TE = register_key('測'.encode('utf8'), 'TE')
+        ST = register_key('試'.encode('utf8'), 'ST')
+        ABCD = register_key('\033ABCD', 'ABCD')
+        self.eq(TE, '測')
+        self.eq(TE, '測'.encode('utf8'))
+        self.eq(ST, '試')
+        self.eq(ST, '試'.encode('utf8'))
+        self.eq(ABCD, 'ABCD')
+        self.eq(ABCD, '\033ABCD')
+
+        self.press('測試\033ABCD')
+        self.eq(getch(), TE)
+        self.eq(getch(), ST)
+        self.eq(getch(), 'ABCD')
+        self.eq(getch(), None)
+
+        MY_HOME = register_key(KEY_HOME.seq, 'MY_HOME')
+        self.eq(MY_HOME, KEY_HOME)
+        self.press(KEY_HOME.seq)
+        self.eq(getch(), MY_HOME)
