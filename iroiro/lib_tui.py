@@ -66,7 +66,11 @@ def wrap(s, width, clip=None):
             return (s[:to], s[to:])
         aw += cw
         to = idx + 1
-    return (s, '')
+
+    if aw == width:
+        return (s[:to], s[to:])
+    else:
+        return (s, '')
 
 
 def lpad(text, padding):

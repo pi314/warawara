@@ -67,6 +67,9 @@ If theres a color escape sequence right on the wrap boundary, the algorithm tend
 *   include it if it's `\033[m` or `\033[0m`
 *   not include it otherwise
 
+If the color sequence is at the end of string, the algorithm includes it only
+when `width` is larger than the result string.
+
 __Examples__
 ```python
 assert wrap('test', 3) == ('tes', 't')
@@ -75,6 +78,8 @@ assert wrap('いろイロ', 5, clip='>') == ('いろ>', 'イロ')
 assert wrap('いろイロ', 5, clip='\033[1;35m>\033[m') == ('いろ\033[1;35m>\033[m', 'イロ')
 assert wrap('いろ\033[1;35mイ\033[mロ', 4) == ('いろ', '\033[1;35mイ\033[mロ')
 assert wrap('いろ\033[1;35mイ\033[mロ', 6) == ('いろ\033[1;35mイ\033[m', 'ロ')
+assert wrap('いろイロ\033[1;35m', 8) == ('いろイロ', '\033[1;35m')
+assert wrap('いろイロ\033[1;35m', 9) == ('いろイロ\033[1;35m', '')
 ```
 
 
