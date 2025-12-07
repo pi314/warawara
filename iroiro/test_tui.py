@@ -28,25 +28,71 @@ class TestTypesettingUtils(TestCase):
         self.eq(strwidth('哇嗚'), 4)
 
     def test_wrap(self):
-        self.eq(wrap('嗚啦呀哈', 1), ('', '嗚啦呀哈'))
-        self.eq(wrap('嗚啦呀哈', 2), ('嗚', '啦呀哈'))
-        self.eq(wrap('嗚啦呀哈', 3), ('嗚', '啦呀哈'))
-        self.eq(wrap('嗚啦呀哈', 4), ('嗚啦', '呀哈'))
-        self.eq(wrap('嗚啦呀哈', 5), ('嗚啦', '呀哈'))
-        self.eq(wrap('嗚啦呀哈', 6), ('嗚啦呀', '哈'))
-        self.eq(wrap('嗚啦呀哈', 7), ('嗚啦呀', '哈'))
-        self.eq(wrap('嗚啦呀哈', 8), ('嗚啦呀哈', ''))
-        self.eq(wrap('嗚啦呀哈', 9), ('嗚啦呀哈', ''))
+        # Basic cases
+        self.eq(wrap('iroiro', 1), ('i', 'roiro'))
+        self.eq(wrap('iroiro', 2), ('ir', 'oiro'))
+        self.eq(wrap('iroiro', 3), ('iro', 'iro'))
+        self.eq(wrap('iroiro', 4), ('iroi', 'ro'))
+        self.eq(wrap('iroiro', 5), ('iroir', 'o'))
+        self.eq(wrap('iroiro', 6), ('iroiro', ''))
+        self.eq(wrap('iroiro', 7), ('iroiro', ''))
 
-        self.eq(wrap('嗚啦呀哈', 1, clip='>'), ('>', '嗚啦呀哈'))
-        self.eq(wrap('嗚啦呀哈', 2, clip='>'), ('嗚', '啦呀哈'))
-        self.eq(wrap('嗚啦呀哈', 3, clip='>'), ('嗚>', '啦呀哈'))
-        self.eq(wrap('嗚啦呀哈', 4, clip='>'), ('嗚啦', '呀哈'))
-        self.eq(wrap('嗚啦呀哈', 5, clip='>'), ('嗚啦>', '呀哈'))
-        self.eq(wrap('嗚啦呀哈', 6, clip='>'), ('嗚啦呀', '哈'))
-        self.eq(wrap('嗚啦呀哈', 7, clip='>'), ('嗚啦呀>', '哈'))
-        self.eq(wrap('嗚啦呀哈', 8, clip='>'), ('嗚啦呀哈', ''))
-        self.eq(wrap('嗚啦呀哈', 9, clip='>'), ('嗚啦呀哈', ''))
+        # Mixed with CJK
+        self.eq(wrap('いろiろ', 1), ('', 'いろiろ'))
+        self.eq(wrap('いろiろ', 2), ('い', 'ろiろ'))
+        self.eq(wrap('いろiろ', 3), ('い', 'ろiろ'))
+        self.eq(wrap('いろiろ', 4), ('いろ', 'iろ'))
+        self.eq(wrap('いろiろ', 5), ('いろi', 'ろ'))
+        self.eq(wrap('いろiろ', 6), ('いろi', 'ろ'))
+        self.eq(wrap('いろiろ', 7), ('いろiろ', ''))
+        self.eq(wrap('いろiろ', 8), ('いろiろ', ''))
+
+        # Clip
+        self.eq(wrap('いろいろ', 1, clip='>'), ('>', 'いろいろ'))
+        self.eq(wrap('いろいろ', 2, clip='>'), ('い', 'ろいろ'))
+        self.eq(wrap('いろいろ', 3, clip='>'), ('い>', 'ろいろ'))
+        self.eq(wrap('いろいろ', 4, clip='>'), ('いろ', 'いろ'))
+        self.eq(wrap('いろいろ', 5, clip='>'), ('いろ>', 'いろ'))
+        self.eq(wrap('いろいろ', 6, clip='>'), ('いろい', 'ろ'))
+        self.eq(wrap('いろいろ', 7, clip='>'), ('いろい>', 'ろ'))
+        self.eq(wrap('いろいろ', 8, clip='>'), ('いろいろ', ''))
+        self.eq(wrap('いろいろ', 9, clip='>'), ('いろいろ', ''))
+
+        # Clip with color string
+        self.eq(wrap('いろいろ', 1, clip='\033[1;35m>\033[m'), ('\033[1;35m>\033[m', 'いろいろ'))
+        self.eq(wrap('いろいろ', 2, clip='\033[1;35m>\033[m'), ('い', 'ろいろ'))
+        self.eq(wrap('いろいろ', 3, clip='\033[1;35m>\033[m'), ('い\033[1;35m>\033[m', 'ろいろ'))
+        self.eq(wrap('いろいろ', 4, clip='\033[1;35m>\033[m'), ('いろ', 'いろ'))
+        self.eq(wrap('いろいろ', 5, clip='\033[1;35m>\033[m'), ('いろ\033[1;35m>\033[m', 'いろ'))
+        self.eq(wrap('いろいろ', 6, clip='\033[1;35m>\033[m'), ('いろい', 'ろ'))
+        self.eq(wrap('いろいろ', 7, clip='\033[1;35m>\033[m'), ('いろい\033[1;35m>\033[m', 'ろ'))
+        self.eq(wrap('いろいろ', 8, clip='\033[1;35m>\033[m'), ('いろいろ', ''))
+        self.eq(wrap('いろいろ', 9, clip='\033[1;35m>\033[m'), ('いろいろ', ''))
+
+        # String with color sequence
+        self.eq(wrap('い\033[1;35mろい\033[mろ', 1), ('', 'い\033[1;35mろい\033[mろ'))
+        self.eq(wrap('い\033[1;35mろい\033[mろ', 2), ('い', '\033[1;35mろい\033[mろ'))
+        self.eq(wrap('い\033[1;35mろい\033[mろ', 3), ('い', '\033[1;35mろい\033[mろ'))
+        self.eq(wrap('い\033[1;35mろい\033[mろ', 4), ('い\033[1;35mろ', 'い\033[mろ'))
+        self.eq(wrap('い\033[1;35mろい\033[mろ', 5), ('い\033[1;35mろ', 'い\033[mろ'))
+        self.eq(wrap('い\033[1;35mろい\033[mろ', 6), ('い\033[1;35mろい\033[m', 'ろ'))
+        self.eq(wrap('い\033[1;35mろい\033[mろ', 7), ('い\033[1;35mろい\033[m', 'ろ'))
+        self.eq(wrap('い\033[1;35mろい\033[mろ', 8), ('い\033[1;35mろい\033[mろ', ''))
+        self.eq(wrap('い\033[1;35mろい\033[mろ', 9), ('い\033[1;35mろい\033[mろ', ''))
+
+        # String with multiple color sequences
+        self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 1), ('', 'い\033[1;35mろ\033[m\033[1;35mい\033[0mろ'))
+        self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 2), ('い', '\033[1;35mろ\033[m\033[1;35mい\033[0mろ'))
+        self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 3), ('い', '\033[1;35mろ\033[m\033[1;35mい\033[0mろ'))
+        self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 4), ('い\033[1;35mろ\033[m', '\033[1;35mい\033[0mろ'))
+        self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 5), ('い\033[1;35mろ\033[m', '\033[1;35mい\033[0mろ'))
+        self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 6), ('い\033[1;35mろ\033[m\033[1;35mい\033[0m', 'ろ'))
+        self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 7), ('い\033[1;35mろ\033[m\033[1;35mい\033[0m', 'ろ'))
+        self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 8), ('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', ''))
+        self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 9), ('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', ''))
+
+        # String with unknown escape sequence
+        self.eq(wrap('い\033ろいろ', 4), ('い\033ろいろ', ''))
 
         with self.raises(ValueError):
             wrap('whatever', 1, clip=1)
