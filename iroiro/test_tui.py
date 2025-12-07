@@ -16,6 +16,9 @@ class TestTypesettingUtils(TestCase):
         self.eq(charwidth('嗚'), 2)
         self.eq(charwidth('😂'), 2)
 
+        self.eq(charwidth(chr(0x2028)), 0) # Line Separator
+        self.eq(charwidth(chr(0x2060)), 0) # Word Joiner
+
         with self.raises(TypeError):
             charwidth('test')
 

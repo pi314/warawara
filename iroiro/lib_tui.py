@@ -8,6 +8,8 @@ export, __all__ = exporter()
 
 @export
 def charwidth(c):
+    if not c.isprintable():
+        return 0
     import unicodedata
     return 1 + (unicodedata.east_asian_width(c) in 'WF')
 
