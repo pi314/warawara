@@ -95,3 +95,65 @@ def zip_longest(*iterables, fillvalues=None):
             break
 
         yield tuple(values)
+
+
+class Chained:
+    def __init__(self, data, type=None):
+        self.data = data
+        self.type = type
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def iter(self):
+        return iter(self)
+
+    def eval(self):
+        if self.type:
+            return (self.type)(self.data)
+        else:
+            return self.data
+
+    def map(self, func):
+        import builtins
+        return Chained(map(func, self.data),
+                       type=self.type or builtins.type(self.data))
+
+    def starmap(self, func):
+        import builtins
+        return Chained(itertools.starmap(func, self.data),
+                       type=self.type or builtins.type(self.data))
+
+    def enumerate(self, start=0):
+        counter = itertools.count(start=start)
+        return self.map(lambda x: (next(counter), x))
+
+    def zip(self, *others, fill=None):
+        return Chained(zip_longest(self.data, *others))
+
+    def sort(self, key=None):
+        new_seq = sorted(self.eval(), key=key)
+        return Chained(new_seq)
+
+    def filter(self, func=None):
+        import builtins
+        return Chained(filter(func, self.data),
+                       type=self.type or builtins.type(self.data))
+
+    def starfilter(self, func=None):
+        import builtins
+        return Chained(filter(lambda x: func(*x), self.data),
+                       type=self.type or builtins.type(self.data))
+
+    def reduce(self, func, **kwargs):
+        import functools
+        args = (kwargs['initial'],) if 'initial' in kwargs else tuple()
+        return functools.reduce(func, self.eval(), *args)
+
+    def join(self, sep=' '):
+        return sep.join(self.data)
+
+
+@export
+def chain(data):
+    return Chained(data)

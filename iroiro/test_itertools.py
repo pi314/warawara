@@ -79,8 +79,7 @@ class TestItertools(TestCase):
         self.eq([(val, is_last) for val, is_last in lookahead(data)], [])
 
     def test_zip_longest(self):
-        self.eq(
-                list(zip_longest('ABCD', [1, 2])),
+        self.eq(list(zip_longest('ABCD', [1, 2])),
                 [
                     ('A', 1),
                     ('B', 2),
@@ -89,8 +88,7 @@ class TestItertools(TestCase):
                     ]
                 )
 
-        self.eq(
-                list(zip_longest('AB', [1, 2, 3, 4])),
+        self.eq(list(zip_longest('AB', [1, 2, 3, 4])),
                 [
                     ('A', 1),
                     ('B', 2),
@@ -99,8 +97,7 @@ class TestItertools(TestCase):
                     ]
                 )
 
-        self.eq(
-                list(zip_longest('ABCD', [1, 2], fillvalues='#')),
+        self.eq(list(zip_longest('ABCD', [1, 2], fillvalues='#')),
                 [
                     ('A', 1),
                     ('B', 2),
@@ -109,8 +106,7 @@ class TestItertools(TestCase):
                     ]
                 )
 
-        self.eq(
-                list(zip_longest('AB', [1, 2, 3, 4], fillvalues='#')),
+        self.eq(list(zip_longest('AB', [1, 2, 3, 4], fillvalues='#')),
                 [
                     ('A', 1),
                     ('B', 2),
@@ -119,8 +115,7 @@ class TestItertools(TestCase):
                     ]
                 )
 
-        self.eq(
-                list(zip_longest('ABCD', [1, 2], fillvalues=('#', 0))),
+        self.eq(list(zip_longest('ABCD', [1, 2], fillvalues=('#', 0))),
                 [
                     ('A', 1),
                     ('B', 2),
@@ -129,8 +124,7 @@ class TestItertools(TestCase):
                     ]
                 )
 
-        self.eq(
-                list(zip_longest('AB', [1, 2, 3, 4], fillvalues=('#', 0))),
+        self.eq(list(zip_longest('AB', [1, 2, 3, 4], fillvalues=('#', 0))),
                 [
                     ('A', 1),
                     ('B', 2),
@@ -138,3 +132,81 @@ class TestItertools(TestCase):
                     ('#', 4),
                     ]
                 )
+
+class TestChain(TestCase):
+    def test_chain_map(self):
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        self.eq(seq.map(lambda x: x * 2).eval(), [2, 2, 4, 6, 10, 16, 26])
+
+    def test_chain_enumerate(self):
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        self.eq(seq.enumerate().eval(), [
+            (0, 1),
+            (1, 1),
+            (2, 2),
+            (3, 3),
+            (4, 5),
+            (5, 8),
+            (6, 13),
+            ])
+
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        self.eq(seq.enumerate(start=5).eval(), [
+            (5, 1),
+            (6, 1),
+            (7, 2),
+            (8, 3),
+            (9, 5),
+            (10, 8),
+            (11, 13),
+            ])
+
+    def test_chain_sort(self):
+        data = [1, 1, 2, 3, 5, 8, 13]
+        seq = chain(data[::-1])
+        self.eq(seq.sort().eval(), data)
+
+    def test_chain_filter(self):
+        seq = chain([0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 0])
+        self.eq(seq.filter().eval(), [1, 2, 3, 4, 5])
+
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        self.eq(seq.filter(lambda x: x % 2).eval(), [1, 1, 3, 5, 13])
+
+    def test_chain_starfilter(self):
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        self.eq(seq
+                .enumerate()
+                .starfilter(lambda idx, elem: idx >= 4)
+                .starmap(lambda idx, elem: elem)
+                .eval(),
+                [5, 8, 13])
+
+    def test_chain_reduce(self):
+        seq = chain([1, 0, 1, 2, 3, 0, 5, 8, 13])
+        self.eq(seq.reduce(lambda a, b: a + b), 33)
+
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        self.eq(seq.reduce(lambda a, b: a + b, initial=42), 33 + 42)
+
+    def test_chain_join(self):
+        s = chain('iroiro')
+        self.eq(s.map(str.upper).join('.'), 'I.R.O.I.R.O')
+
+    def test_chain_iter(self):
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        i = seq.iter()
+        i2 = iter(seq)
+        self.ne(type(i), list)
+        self.eq(list(i), seq.data)
+        self.eq(list(i2), seq.data)
+
+    def test_chain_method_chaining(self):
+        res = (chain([1, 0, 1, 2, 3, 0, 5, 8, 13])
+               .filter()
+               .map(lambda x: x * 2)
+               .enumerate()
+               .starmap(lambda idx, elem: idx + elem)
+               .reduce(lambda a, b: a + b)
+               )
+        self.eq(res, 87)
