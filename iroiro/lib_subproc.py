@@ -422,6 +422,8 @@ class command:
             try:
                 self.proc.wait(timeout)
                 self.returncode = self.proc.returncode
+                if self.returncode < 0 and not self.signaled.is_set():
+                    self.signaled.set(-self.returncode)
                 _children.discard(self)
             except sub.TimeoutExpired as e:
                 return False

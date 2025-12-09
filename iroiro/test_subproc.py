@@ -438,12 +438,20 @@ class TestSubproc(TestCase):
         self.eq(p.poll(), 1)
 
     def test_signal(self):
-        p = run(['cat'], wait=False)
+        p = run(['sleep', 86400], wait=False)
         import signal
         p.signal(signal.SIGINT)
         p.wait()
         self.eq(p.signaled, signal.SIGINT)
         self.eq(repr(p.signaled), '<IntegerEvent 2>')
+
+    def test_signaled_externally(self):
+        p = run(['sleep', 86400], wait=False)
+        import signal
+        os.kill(p.proc.pid, signal.SIGTERM)
+        p.wait()
+        self.eq(p.signaled, signal.SIGTERM)
+        self.eq(repr(p.signaled), '<IntegerEvent 15>')
 
     def test_kill_callable(self):
         checkpoint = self.checkpoint()
