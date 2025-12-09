@@ -115,35 +115,36 @@ class Chained:
             return self.data
 
     def map(self, func):
-        import builtins
         return Chained(map(func, self.data),
-                       type=self.type or builtins.type(self.data))
+                       type=self.type or type(self.data))
 
     def starmap(self, func):
-        import builtins
         return Chained(itertools.starmap(func, self.data),
-                       type=self.type or builtins.type(self.data))
+                       type=self.type or type(self.data))
 
     def enumerate(self, start=0):
         counter = itertools.count(start=start)
         return self.map(lambda x: (next(counter), x))
 
     def zip(self, *others, fill=None):
-        return Chained(zip_longest(self.data, *others))
+        return Chained(zip(self.data, *others),
+                       type=self.type or type(self.data))
+
+    def zipleft(self, *others, fill=None):
+        return Chained(zip(*others, self.data),
+                       type=self.type or type(self.data))
 
     def sort(self, key=None):
         new_seq = sorted(self.eval(), key=key)
         return Chained(new_seq)
 
     def filter(self, func=None):
-        import builtins
         return Chained(filter(func, self.data),
-                       type=self.type or builtins.type(self.data))
+                       type=self.type or type(self.data))
 
     def starfilter(self, func=None):
-        import builtins
         return Chained(filter(lambda x: func(*x), self.data),
-                       type=self.type or builtins.type(self.data))
+                       type=self.type or type(self.data))
 
     def reduce(self, func, **kwargs):
         import functools

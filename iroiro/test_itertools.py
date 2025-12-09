@@ -161,6 +161,34 @@ class TestChain(TestCase):
             (11, 13),
             ])
 
+    def test_chain_zip(self):
+        import itertools
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = seq.zip(itertools.cycle([0, 1, 2]))
+        self.eq(seq.eval(), [
+            (1, 0),
+            (1, 1),
+            (2, 2),
+            (3, 0),
+            (5, 1),
+            (8, 2),
+            (13, 0),
+            ])
+
+    def test_chain_zipleft(self):
+        import itertools
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = seq.zipleft(itertools.cycle([0, 1, 2]))
+        self.eq(seq.eval(), [
+            (0, 1),
+            (1, 1),
+            (2, 2),
+            (0, 3),
+            (1, 5),
+            (2, 8),
+            (0, 13),
+            ])
+
     def test_chain_sort(self):
         data = [1, 1, 2, 3, 5, 8, 13]
         seq = chain(data[::-1])
