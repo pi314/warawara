@@ -257,6 +257,11 @@ class TestChain(TestCase):
         s = chaining('iroiro')
         self.eq(s.map(str.upper).join('.'), 'I.R.O.I.R.O')
 
+    def test_chain_min_max(self):
+        seq = chaining([3, 5, 34, 8, 13, 21])
+        self.eq(seq.min(), 3)
+        self.eq(seq.max(), 34)
+
     def test_chain_iter(self):
         seq = chaining([1, 1, 2, 3, 5, 8, 13])
         i = seq.iter()

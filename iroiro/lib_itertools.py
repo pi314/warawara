@@ -182,6 +182,12 @@ class Chained:
     def join(self, sep=' '):
         return sep.join(self.data)
 
+    def max(self, key=None):
+        return max(self.data, key=key)
+
+    def min(self, key=None):
+        return min(self.data, key=key)
+
 
 @export
 def chaining(data):
