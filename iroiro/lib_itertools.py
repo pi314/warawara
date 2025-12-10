@@ -157,5 +157,5 @@ class Chained:
 
 
 @export
-def chain(data):
+def chaining(data):
     return Chained(data)

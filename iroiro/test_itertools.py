@@ -135,11 +135,11 @@ class TestItertools(TestCase):
 
 class TestChain(TestCase):
     def test_chain_map(self):
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         self.eq(seq.map(lambda x: x * 2).eval(), [2, 2, 4, 6, 10, 16, 26])
 
     def test_chain_enumerate(self):
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         self.eq(seq.enumerate().eval(), [
             (0, 1),
             (1, 1),
@@ -150,7 +150,7 @@ class TestChain(TestCase):
             (6, 13),
             ])
 
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         self.eq(seq.enumerate(start=5).eval(), [
             (5, 1),
             (6, 1),
@@ -163,7 +163,7 @@ class TestChain(TestCase):
 
     def test_chain_zip(self):
         import itertools
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         seq = seq.zip(itertools.cycle([0, 1, 2]))
         self.eq(seq.eval(), [
             (1, 0),
@@ -177,7 +177,7 @@ class TestChain(TestCase):
 
     def test_chain_zipleft(self):
         import itertools
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         seq = seq.zipleft(itertools.cycle([0, 1, 2]))
         self.eq(seq.eval(), [
             (0, 1),
@@ -191,7 +191,7 @@ class TestChain(TestCase):
 
     def test_chain_zip_with_shorter_seq(self):
         import itertools
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         seq = seq.zip(['foo', 'bar', 'baz'], ['foofoo', 'barbar', 'bazbaz'], fill=True)
         self.eq(seq.eval(), [
             (1, 'foo', 'foofoo'),
@@ -203,7 +203,7 @@ class TestChain(TestCase):
             (13, True, True),
             ])
 
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         seq = seq.zipleft(['foo', 'bar', 'baz'], ['foofoo', 'barbar', 'bazbaz'], fill=True)
         self.eq(seq.eval(), [
             ('foo', 'foofoo', 1),
@@ -217,18 +217,18 @@ class TestChain(TestCase):
 
     def test_chain_sort(self):
         data = [1, 1, 2, 3, 5, 8, 13]
-        seq = chain(data[::-1])
+        seq = chaining(data[::-1])
         self.eq(seq.sort().eval(), data)
 
     def test_chain_filter(self):
-        seq = chain([0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 0])
+        seq = chaining([0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 0])
         self.eq(seq.filter().eval(), [1, 2, 3, 4, 5])
 
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         self.eq(seq.filter(lambda x: x % 2).eval(), [1, 1, 3, 5, 13])
 
     def test_chain_starfilter(self):
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         self.eq(seq
                 .enumerate()
                 .starfilter(lambda idx, elem: idx >= 4)
@@ -237,18 +237,18 @@ class TestChain(TestCase):
                 [5, 8, 13])
 
     def test_chain_reduce(self):
-        seq = chain([1, 0, 1, 2, 3, 0, 5, 8, 13])
+        seq = chaining([1, 0, 1, 2, 3, 0, 5, 8, 13])
         self.eq(seq.reduce(lambda a, b: a + b), 33)
 
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         self.eq(seq.reduce(lambda a, b: a + b, initial=42), 33 + 42)
 
     def test_chain_join(self):
-        s = chain('iroiro')
+        s = chaining('iroiro')
         self.eq(s.map(str.upper).join('.'), 'I.R.O.I.R.O')
 
     def test_chain_iter(self):
-        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = chaining([1, 1, 2, 3, 5, 8, 13])
         i = seq.iter()
         i2 = iter(seq)
         self.ne(type(i), list)
@@ -256,7 +256,7 @@ class TestChain(TestCase):
         self.eq(list(i2), seq.data)
 
     def test_chain_method_chaining(self):
-        res = (chain([1, 0, 1, 2, 3, 0, 5, 8, 13])
+        res = (chaining([1, 0, 1, 2, 3, 0, 5, 8, 13])
                .filter()
                .map(lambda x: x * 2)
                .enumerate()
