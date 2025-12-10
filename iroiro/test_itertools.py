@@ -261,6 +261,8 @@ class TestChain(TestCase):
         seq = chaining([3, 5, 34, 8, 13, 21])
         self.eq(seq.min(), 3)
         self.eq(seq.max(), 34)
+        self.eq(seq.min(key=lambda x: -x), 34)
+        self.eq(seq.max(key=lambda x: -x), 3)
 
     def test_chain_iter(self):
         seq = chaining([1, 1, 2, 3, 5, 8, 13])

@@ -182,10 +182,10 @@ class Chained:
     def join(self, sep=' '):
         return sep.join(self.data)
 
-    def max(self, key=None):
+    def max(self, key=lambda x: x):
         return max(self.data, key=key)
 
-    def min(self, key=None):
+    def min(self, key=lambda x: x):
         return min(self.data, key=key)
 
 
