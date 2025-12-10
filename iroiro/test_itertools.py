@@ -189,6 +189,32 @@ class TestChain(TestCase):
             (0, 13),
             ])
 
+    def test_chain_zip_with_shorter_seq(self):
+        import itertools
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = seq.zip(['foo', 'bar', 'baz'], ['foofoo', 'barbar', 'bazbaz'], fill=True)
+        self.eq(seq.eval(), [
+            (1, 'foo', 'foofoo'),
+            (1, 'bar', 'barbar'),
+            (2, 'baz', 'bazbaz'),
+            (3, True, True),
+            (5, True, True),
+            (8, True, True),
+            (13, True, True),
+            ])
+
+        seq = chain([1, 1, 2, 3, 5, 8, 13])
+        seq = seq.zipleft(['foo', 'bar', 'baz'], ['foofoo', 'barbar', 'bazbaz'], fill=True)
+        self.eq(seq.eval(), [
+            ('foo', 'foofoo', 1),
+            ('bar', 'barbar', 1),
+            ('baz', 'bazbaz', 2),
+            (True, True, 3),
+            (True, True, 5),
+            (True, True, 8),
+            (True, True, 13),
+            ])
+
     def test_chain_sort(self):
         data = [1, 1, 2, 3, 5, 8, 13]
         seq = chain(data[::-1])

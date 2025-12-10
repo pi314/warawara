@@ -110,7 +110,8 @@ class Chained:
 
     def eval(self):
         if self.type:
-            return (self.type)(self.data)
+            self.data = (self.type)(self.data)
+            return self.data
         else:
             return self.data
 
@@ -127,11 +128,11 @@ class Chained:
         return self.map(lambda x: (next(counter), x))
 
     def zip(self, *others, fill=None):
-        return Chained(zip(self.data, *others),
+        return Chained(zip(self.data, *[itertools.chain(o, itertools.repeat(fill)) for o in others]),
                        type=self.type or type(self.data))
 
     def zipleft(self, *others, fill=None):
-        return Chained(zip(*others, self.data),
+        return Chained(zip(*[itertools.chain(o, itertools.repeat(fill)) for o in others], self.data),
                        type=self.type or type(self.data))
 
     def sort(self, key=None):
