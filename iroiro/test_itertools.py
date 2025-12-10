@@ -136,7 +136,19 @@ class TestItertools(TestCase):
 class TestChain(TestCase):
     def test_chain_map(self):
         seq = chaining([1, 1, 2, 3, 5, 8, 13])
-        self.eq(seq.map(lambda x: x * 2).eval(), [2, 2, 4, 6, 10, 16, 26])
+        res = seq.map(lambda x: x * 2).eval()
+        self.isinstance(res, list)
+        self.eq(res, [2, 2, 4, 6, 10, 16, 26])
+
+        seq = chaining((1, 1, 2, 3, 5, 8, 13))
+        res = seq.map(lambda x: x * 2).eval()
+        self.isinstance(res, tuple)
+        self.eq(res, (2, 2, 4, 6, 10, 16, 26))
+
+        seq = chaining({1, 1, 2, 3, 5, 8, 13})
+        res = seq.map(lambda x: x * 2).eval()
+        self.isinstance(res, set)
+        self.eq(res, {2, 4, 6, 10, 16, 26})
 
     def test_chain_enumerate(self):
         seq = chaining([1, 1, 2, 3, 5, 8, 13])
@@ -163,8 +175,7 @@ class TestChain(TestCase):
 
     def test_chain_zip(self):
         import itertools
-        seq = chaining([1, 1, 2, 3, 5, 8, 13])
-        seq = seq.zip(itertools.cycle([0, 1, 2]))
+        seq = chaining([1, 1, 2, 3, 5, 8, 13]).zip(itertools.cycle([0, 1, 2]))
         self.eq(seq.eval(), [
             (1, 0),
             (1, 1),
@@ -177,8 +188,7 @@ class TestChain(TestCase):
 
     def test_chain_zipleft(self):
         import itertools
-        seq = chaining([1, 1, 2, 3, 5, 8, 13])
-        seq = seq.zipleft(itertools.cycle([0, 1, 2]))
+        seq = chaining([1, 1, 2, 3, 5, 8, 13]).zipleft(itertools.cycle([0, 1, 2]))
         self.eq(seq.eval(), [
             (0, 1),
             (1, 1),
@@ -264,3 +274,39 @@ class TestChain(TestCase):
                .reduce(lambda a, b: a + b)
                )
         self.eq(res, 87)
+
+    def test_chain_map_on_dict(self):
+        seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
+        res = seq.map(lambda key, value: (key + key, value * 2)).eval()
+        self.eq(res, {'foofoo': 2, 'barbar': 4, 'bazbaz': 6, 'quxqux': 10, 'quuxquux': 16, 'corgecorge': 26})
+
+    def test_chain_filter_on_dict(self):
+        seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
+        res = seq.filter(lambda key, value: 'b' not in key).eval()
+        self.eq(res, {'foo': 1, 'qux': 5, 'quux': 8, 'corge': 13})
+
+    def test_chain_keys_values_items_on_dict(self):
+        seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
+        res = seq.keys().map(lambda x: f'({x})').eval()
+        self.eq(res, ('(foo)', '(bar)', '(baz)', '(qux)', '(quux)', '(corge)'))
+
+        res = seq.values().map(lambda x: x * 3).eval()
+        self.eq(res, (3, 6, 9, 15, 24, 39))
+
+        res = seq.items().map(lambda x: (x[1], x[0])).eval()
+        self.eq(res, ((1, 'foo'), (2, 'bar'), (3, 'baz'), (5, 'qux'), (8, 'quux'), (13, 'corge')))
+
+    def test_chain_casting(self):
+        seq = chaining(((1, 'foo'), (2, 'bar'), (3, 'baz'), (5, 'qux'), (8, 'quux'), (13, 'corge')))
+
+        res = seq.to_dict()
+        self.eq(res, {1: 'foo', 2: 'bar', 3: 'baz', 5: 'qux', 8: 'quux', 13: 'corge'})
+
+        res = seq.to_list()
+        self.eq(res, [(1, 'foo'), (2, 'bar'), (3, 'baz'), (5, 'qux'), (8, 'quux'), (13, 'corge')])
+
+        res = seq.to_tuple()
+        self.eq(res, ((1, 'foo'), (2, 'bar'), (3, 'baz'), (5, 'qux'), (8, 'quux'), (13, 'corge')))
+
+        res = seq.to_set()
+        self.eq(res, {(1, 'foo'), (2, 'bar'), (3, 'baz'), (5, 'qux'), (8, 'quux'), (13, 'corge')})

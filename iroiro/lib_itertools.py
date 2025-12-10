@@ -115,9 +115,33 @@ class Chained:
         else:
             return self.data
 
+    def items(self):
+        return Chained(self.data.items(), type=tuple)
+
+    def keys(self):
+        return Chained(self.data.keys(), type=tuple)
+
+    def values(self):
+        return Chained(self.data.values(), type=tuple)
+
+    def to_dict(self):
+        return dict(self.data)
+
+    def to_list(self):
+        return list(self.data)
+
+    def to_tuple(self):
+        return tuple(self.data)
+
+    def to_set(self):
+        return set(self.data)
+
     def map(self, func):
-        return Chained(map(func, self.data),
-                       type=self.type or type(self.data))
+        if isinstance(self.data, dict):
+            return Chained(dict(func(key, value) for key, value in self.data.items()))
+        else:
+            return Chained(map(func, self.data),
+                           type=self.type or type(self.data))
 
     def starmap(self, func):
         return Chained(itertools.starmap(func, self.data),
@@ -140,8 +164,11 @@ class Chained:
         return Chained(new_seq)
 
     def filter(self, func=None):
-        return Chained(filter(func, self.data),
-                       type=self.type or type(self.data))
+        if isinstance(self.data, dict):
+            return Chained(dict((key, value) for key, value in self.data.items() if func(key, value)))
+        else:
+            return Chained(filter(func, self.data),
+                           type=self.type or type(self.data))
 
     def starfilter(self, func=None):
         return Chained(filter(lambda x: func(*x), self.data),
