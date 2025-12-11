@@ -1,4 +1,5 @@
 import itertools
+import collections
 
 from .internal_utils import exporter
 export, __all__ = exporter()
@@ -137,8 +138,9 @@ class Chained:
         return set(self.data)
 
     def map(self, func):
-        if isinstance(self.data, dict):
-            return Chained(dict(func(key, value) for key, value in self.data.items()))
+        if isinstance(self.data, (dict, collections.UserDict)):
+            data_type = type(self.data)
+            return Chained(data_type(func(key, value) for key, value in self.data.items()))
         else:
             return Chained(map(func, self.data),
                            type=self.type or type(self.data))
@@ -164,8 +166,10 @@ class Chained:
         return Chained(new_seq)
 
     def filter(self, func=None):
-        if isinstance(self.data, dict):
-            return Chained(dict((key, value) for key, value in self.data.items() if func(key, value)))
+        if isinstance(self.data, (dict, collections.UserDict)):
+            data_type = type(self.data)
+            items = self.data.items()
+            return Chained(data_type((key, value) for key, value in items if func(key, value)))
         else:
             return Chained(filter(func, self.data),
                            type=self.type or type(self.data))
