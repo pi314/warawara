@@ -192,6 +192,9 @@ class Chained:
     def min(self, key=lambda x: x):
         return min(self.data, key=key)
 
+    def concat(self, *other):
+        return Chained(itertools.chain(self.data, *other), type=self.type or type(self.data))
+
 
 @export
 def chaining(data):
