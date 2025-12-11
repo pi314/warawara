@@ -299,6 +299,15 @@ class TestChain(TestCase):
         res = seq.filter(lambda key, value: 'b' not in key).eval()
         self.eq(res, {'foo': 1, 'qux': 5, 'quux': 8, 'corge': 13})
 
+    def test_chaining_reduce_on_dict(self):
+        seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
+        res = seq.reduce(lambda acc, item: (acc[0] + item[0], acc[1] + item[1]))
+        self.eq(res, ('foobarbazquxquuxcorge', 32))
+
+        seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
+        res = seq.reduce(lambda acc, item: (acc[0] + item[0], acc[1] + item[1]), initial=('+', 5))
+        self.eq(res, ('+foobarbazquxquuxcorge', 37))
+
     def test_chaining_keys_values_items_on_dict(self):
         seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
         res = seq.keys().map(lambda x: f'({x})').eval()

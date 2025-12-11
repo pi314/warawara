@@ -179,9 +179,17 @@ class Chained:
                        type=self.type or type(self.data))
 
     def reduce(self, func, **kwargs):
-        import functools
-        args = (kwargs['initial'],) if 'initial' in kwargs else tuple()
-        return functools.reduce(func, self.eval(), *args)
+        if isinstance(self.data, (dict, collections.UserDict)):
+            data_type = type(self.data)
+            items = iter(self.data.items())
+            ret = kwargs['initial'] if 'initial' in kwargs else next(items)
+            for item in items:
+                ret = func(ret, item)
+            return ret
+        else:
+            import functools
+            args = (kwargs['initial'],) if 'initial' in kwargs else tuple()
+            return functools.reduce(func, self.eval(), *args)
 
     def join(self, sep=' '):
         return sep.join(self.data)
