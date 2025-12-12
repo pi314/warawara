@@ -38,7 +38,7 @@ strwidth(s)
 
 `charwidth()` is called for calculating the display width of each indivisual characters.
 
-Color escape sequences are ignored.
+Color escape sequences are count as 0-characters wide.
 
 __Examples__
 ```python
@@ -60,15 +60,26 @@ This function returns a 2-tuple containing two strings.
 The first string should be able to fit into `width`.
 The second string is the remaining string.
 
-If `clip` is specified and it's a single width character, it will be appended
-to the first string if `width` limit is inside a character.
+If `clip` is specified, it should be a single width string,
+and it will be appended to the first string if `width` limit is inside a wide character.
+
+If theres a color escape sequence right on the wrap boundary, the algorithm tends to
+*   include it if it's `\033[m` or `\033[0m`
+*   not include it otherwise
+
+If the color sequence is at the end of string, the algorithm includes it only
+when `width` is larger than the result string.
 
 __Examples__
 ```python
 assert wrap('test', 3) == ('tes', 't')
-assert wrap('t') == 1
-assert wrap('嗚啦呀哈', 5) == ('嗚啦', '呀哈')
-assert wrap('嗚啦呀哈', 5, clip='>') == ('嗚啦>', '呀哈')
+assert wrap('いろイロ', 5) == ('いろ', 'イロ')
+assert wrap('いろイロ', 5, clip='>') == ('いろ>', 'イロ')
+assert wrap('いろイロ', 5, clip='\033[1;35m>\033[m') == ('いろ\033[1;35m>\033[m', 'イロ')
+assert wrap('いろ\033[1;35mイ\033[mロ', 4) == ('いろ', '\033[1;35mイ\033[mロ')
+assert wrap('いろ\033[1;35mイ\033[mロ', 6) == ('いろ\033[1;35mイ\033[m', 'ロ')
+assert wrap('いろイロ\033[1;35m', 8) == ('いろイロ', '\033[1;35m')
+assert wrap('いろイロ\033[1;35m', 9) == ('いろイロ\033[1;35m', '')
 ```
 
 

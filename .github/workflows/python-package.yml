@@ -39,7 +39,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest --cov=warawara --cov-report=html
+        pytest --cov=iroiro --cov-report=html
 
     - name: Upload pytest test results
       if: ${{ always() }}

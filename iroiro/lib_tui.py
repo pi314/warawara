@@ -10,6 +10,8 @@ export, __all__ = exporter()
 
 @export
 def charwidth(c):
+    if not c.isprintable():
+        return 0
     import unicodedata
     return 1 + (unicodedata.east_asian_width(c) in 'WF')
 
@@ -24,18 +26,53 @@ def strwidth(s):
 def wrap(s, width, clip=None):
     if clip is None:
         pass
-    elif not isinstance(clip, str) or (len(clip) != 1) or (charwidth(clip) != 1):
-        raise ValueError('clip should be a single width char')
+    elif not isinstance(clip, str) or (strwidth(clip) != 1):
+        raise ValueError('clip should be a single width string')
 
-    w = 0
+    acc = ''
+    def accumulate(char):
+        nonlocal acc
+        if not acc:
+            if char != '\033':
+                return (char, charwidth(char))
+            acc = char
+            return (None, None)
+
+        elif acc == '\033':
+            acc += char
+            return (None, None)
+
+        else:
+            acc += char
+            if ((not acc.startswith('\033[')) or
+                    (char not in '0123456789;')):
+                ret, acc = acc, ''
+                return (ret, 0)
+        return (None, None)
+
+    aw = 0
+    to = 0
+    pending = ''
     for idx, char in enumerate(s):
-        cw = charwidth(char)
-        if w + cw > width:
-            if clip and w + 1 <= width:
-                return (s[:idx] + clip, s[idx:])
-            return (s[:idx], s[idx:])
-        w += cw
-    return (s, '')
+        char, cw = accumulate(char)
+        if char is None:
+            continue
+
+        if cw == 0 and char not in ('\033[m', '\033[0m'):
+            pending += char
+            continue
+
+        if aw + cw > width:
+            if clip and aw + 1 <= width:
+                return (s[:to] + clip, s[to:])
+            return (s[:to], s[to:])
+        aw += cw
+        to = idx + 1
+
+    if aw == width:
+        return (s[:to], s[to:])
+    else:
+        return (s, '')
 
 
 def lpad(text, padding):

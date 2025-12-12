@@ -1,6 +1,5 @@
 # iroiro.fs
 
-
 This document describes the API set provided by `iroiro.fs`.
 
 For the index of this package, see [iroiro.md](iroiro.md).

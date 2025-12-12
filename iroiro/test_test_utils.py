@@ -17,6 +17,11 @@ class TestTestCase(TestCase):
         self.eq(self.false, self.assertFalse)
         self.eq(self.raises, self.assertRaises)
 
+    def test_isinstance(self):
+        self.isinstance(True, bool)
+        self.isinstance(3, int)
+        self.isinstance(3.1415926535897932384626433832795, float)
+
     def test_list_diff_msg(self):
         try:
             self.eq([1, 2, 3], [1, 2, 3, 4])

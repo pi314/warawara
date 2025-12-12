@@ -3,10 +3,8 @@ import threading
 
 from collections import UserList
 
-
 from .internal_utils import exporter
 export, __all__ = exporter()
-
 
 from .lib_regex import rere
 from .lib_colors import color
