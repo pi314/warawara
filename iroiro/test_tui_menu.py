@@ -335,3 +335,27 @@ class TestMenuItem(TestCase):
         self.eq(i.index, 2)
         i.moveto(0)
         self.eq(i.index, 0)
+
+
+class TestMenuThread(TestCase):
+    def test_menu_thread(self):
+        import iroiro
+        menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
+
+        checkpoint = self.checkpoint()
+
+        def foo(*args, **kwargs):
+            self.eq(args, (1, 2, 3))
+            self.eq(kwargs, {'key': 'value'})
+            checkpoint.wait()
+
+        t = menu.Thread(target=foo, args=[1, 2, 3], kwargs={'key': 'value'})
+        self.false(t.is_alive())
+
+        t.start()
+        self.true(t.thread.daemon)
+        self.true(t.is_alive())
+        checkpoint.set()
+
+        t.join()
+        self.false(t.is_alive())
