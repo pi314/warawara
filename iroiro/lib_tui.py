@@ -1341,7 +1341,7 @@ class Menu:
         finally:
             self._active = False
             self.refresh(force=True)
-            print()
+            self.pager.print()
 
     def interact(self, *, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
         if not sys.stdout.isatty():
@@ -1349,6 +1349,14 @@ class Menu:
 
         with HijackStdio():
             with ExceptionSuppressor(suppress):
+                # Default key handlers
+                if not bool(self.onkey):
+                    self.onkey(KEY_UP, self.cursor.up)
+                    self.onkey(KEY_DOWN, self.cursor.down)
+                    self.onkey(KEY_ENTER, self.done)
+                    self.onkey('q', self.quit)
+
+                self.unselect_all()
                 return self.interact_loop()
 
     def join(self):
@@ -1551,6 +1559,9 @@ class MenuKeyHandler:
         self.parent = parent
         self.clear()
         self.MenuKeySubHandlerList = self.__class__.MenuKeySubHandlerList
+
+    def __bool__(self):
+        return bool(h for k, h in self.handlers.items() if k is not None) and bool(self.handlers[None])
 
     def clear(self):
         self.handlers = {None: self.MenuKeySubHandlerList()}

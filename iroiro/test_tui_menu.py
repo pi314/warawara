@@ -367,3 +367,38 @@ class TestMenu(TestCase):
         menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
         with self.raises(iroiro.Menu.StdoutIsNotAtty):
             menu.interact()
+
+    def test_menu_default_key_handlers(self):
+        from .lib_test_utils import FakeTerminal
+        terminal = FakeTerminal()
+
+        import queue
+        key_queue = queue.Queue()
+        def mock_getch(*args, **kwargs):
+            return key_queue.get()
+        def feedkey(key):
+            key_queue.put(key)
+
+        self.patch('sys.stdout.isatty', lambda *args, **kargs: True)
+        self.patch('shutil.get_terminal_size', lambda *args, **kwargs: terminal.get_terminal_size())
+        self.patch('iroiro.lib_tui.getch', mock_getch)
+
+        from contextlib import nullcontext
+        self.patch('iroiro.lib_tui.HijackStdio', nullcontext)
+
+        import iroiro
+        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
+        menu.pager.print = terminal.print
+
+        feedkey(iroiro.KEY_ENTER)
+        ret = menu.interact()
+        self.eq(ret.text, 'Yes')
+
+        feedkey('q')
+        ret = menu.interact()
+        self.eq(ret, None)
+
+        feedkey(iroiro.KEY_DOWN)
+        feedkey(iroiro.KEY_ENTER)
+        ret = menu.interact()
+        self.eq(ret.text, 'no')
