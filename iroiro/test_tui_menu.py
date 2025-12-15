@@ -359,3 +359,11 @@ class TestMenuThread(TestCase):
 
         t.join()
         self.false(t.is_alive())
+
+
+class TestMenu(TestCase):
+    def test_menu_stdout_not_tty(self):
+        import iroiro
+        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
+        with self.raises(iroiro.Menu.StdoutIsNotAtty):
+            menu.interact()

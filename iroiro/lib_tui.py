@@ -1293,9 +1293,6 @@ class Menu:
 
         self.pager.clear()
 
-        # import time
-        # time.sleep(0.1)
-
         if self.title:
             self.pager.header.extend(self.title.split('\n'))
 
@@ -1342,7 +1339,6 @@ class Menu:
                 except Menu.DoneSelection:
                     return self.selected
         finally:
-            # self.join()
             self._active = False
             self.refresh(force=True)
             print()
