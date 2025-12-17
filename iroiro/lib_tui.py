@@ -689,7 +689,6 @@ class Pager:
         self._max_height = max_height
         self._max_width = max_width
         self.flex = flex
-        self._scroll = 0
 
         self.header = Subpager(parent=self, section='header')
         self.body = Subpager(parent=self, section='body')
@@ -697,7 +696,8 @@ class Pager:
 
         import builtins
         self.print = builtins.print
-        self._display = []
+
+        self.reset()
 
     @property
     def term_size(self):
@@ -844,6 +844,11 @@ class Pager:
         self.header.clear()
         self.body.clear()
         self.footer.clear()
+
+    def reset(self):
+        self._scroll = 0
+        self._display = []
+        self.clear()
 
     @property
     def home(self):
@@ -1326,6 +1331,8 @@ class Menu:
         self._refresh_throttler(blocking=force, args=[], kwargs={'force': force})
 
     def interact_loop(self):
+        self.unselect_all()
+        self.pager.reset()
         try:
             self._active = True
             while True:
@@ -1356,7 +1363,6 @@ class Menu:
                     self.onkey(KEY_ENTER, self.done)
                     self.onkey('q', self.quit)
 
-                self.unselect_all()
                 return self.interact_loop()
 
     def join(self):

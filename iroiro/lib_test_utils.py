@@ -268,7 +268,7 @@ class FakeTerminal:
         self.canvas = [[]]
         self.cursor.reset()
 
-    def get_terminal_size(self):
+    def get_terminal_size(self, *args, **kwargs):
         from os import terminal_size
         return terminal_size((
             self.width or max(len(line) for line in self),

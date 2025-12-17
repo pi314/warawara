@@ -361,44 +361,70 @@ class TestMenuThread(TestCase):
         self.false(t.is_alive())
 
 
-class TestMenu(TestCase):
+class TestMenuStdoutNotTTY(TestCase):
     def test_menu_stdout_not_tty(self):
         import iroiro
         menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
         with self.raises(iroiro.Menu.StdoutIsNotAtty):
             menu.interact()
 
-    def test_menu_default_key_handlers(self):
+
+class TestMenu(TestCase):
+    def setUp(self):
         from .lib_test_utils import FakeTerminal
-        terminal = FakeTerminal()
+        self.terminal = FakeTerminal()
+        self.patch('sys.stdout.isatty', lambda *args, **kargs: True)
+        self.patch('shutil.get_terminal_size', self.terminal.get_terminal_size)
 
         import queue
-        key_queue = queue.Queue()
+        self.key_queue = queue.Queue()
         def mock_getch(*args, **kwargs):
-            return key_queue.get()
+            return self.key_queue.get()
         def feedkey(key):
-            key_queue.put(key)
-
-        self.patch('sys.stdout.isatty', lambda *args, **kargs: True)
-        self.patch('shutil.get_terminal_size', lambda *args, **kwargs: terminal.get_terminal_size())
+            self.key_queue.put(key)
         self.patch('iroiro.lib_tui.getch', mock_getch)
+        self.feedkey = feedkey
 
+    def test_menu_default_key_handlers(self):
         from contextlib import nullcontext
         self.patch('iroiro.lib_tui.HijackStdio', nullcontext)
 
         import iroiro
         menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
-        menu.pager.print = terminal.print
+        menu.pager.print = self.terminal.print
 
-        feedkey(iroiro.KEY_ENTER)
+        self.feedkey(iroiro.KEY_ENTER)
         ret = menu.interact()
         self.eq(ret.text, 'Yes')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            '',
+            ''
+            ])
 
-        feedkey('q')
+        self.terminal.reset()
+        self.feedkey('q')
         ret = menu.interact()
         self.eq(ret, None)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            '',
+            ''
+            ])
 
-        feedkey(iroiro.KEY_DOWN)
-        feedkey(iroiro.KEY_ENTER)
+        self.terminal.reset()
+        self.feedkey(iroiro.KEY_DOWN)
+        self.feedkey(iroiro.KEY_ENTER)
         ret = menu.interact()
         self.eq(ret.text, 'no')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  Yes',
+            '> no',
+            '',
+            ''
+            ])
