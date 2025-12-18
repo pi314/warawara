@@ -1373,10 +1373,14 @@ class Menu:
 
 class MenuItemRef:
     def __cmp__(self, other):
-        a = self.index
         if isinstance(other, MenuItem) and other.menu is self.menu:
+            a = self.index
             b = other.index
+        elif isinstance(other, str):
+            a = self.text
+            b = other
         else:
+            a = self.index
             b = other
         return (a > b) - (a < b)
 

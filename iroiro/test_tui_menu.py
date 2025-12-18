@@ -336,6 +336,10 @@ class TestMenuItem(TestCase):
         i.moveto(0)
         self.eq(i.index, 0)
 
+    def test_cmp(self):
+        self.eq(self.menu[0], 0)
+        self.eq(self.menu[0], 'Option 1')
+
 
 class TestMenuThread(TestCase):
     def test_menu_thread(self):
