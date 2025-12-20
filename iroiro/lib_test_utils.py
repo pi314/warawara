@@ -216,12 +216,14 @@ class FakeTerminalCursor:
         self.y = 0
         self.x = 0
         self.attr = color()
+        self.visible = True
 
     def __eq__(self, other):
         return (self.y, self.x) == other
 
     def __repr__(self): # pragma: no cover
-        return 'Cursor(y={}, x={}, attr={})'.format(self.y, self.x, repr(self.attr))
+        return 'Cursor(y={}, x={}, attr={}, visible={})'.format(
+                self.y, self.x, repr(self.attr), self.visible)
 
 
 @export
@@ -384,6 +386,12 @@ class FakeTerminal:
 
         elif m.fullmatch('\033' + r'\[([\d;]*)m'):
             self.cursor.attr = color(self.cursor.attr.seq + self.chewing)
+
+        elif self.chewing == '\033[?25h':
+            self.cursor.visible = True
+
+        elif self.chewing == '\033[?25l':
+            self.cursor.visible = False
 
         else:
             import string

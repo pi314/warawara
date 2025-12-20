@@ -359,6 +359,26 @@ class TestFakeTerminal(TestCase):
         self.eq(ft.cursor.x, 5)
         self.eq(ft.lines[2], '嗚啦')
 
+    def test_escape_seq_cursor_visibility(self):
+        ft = iro.FakeTerminal()
+        self.eq(ft.cursor.visible, True)
+
+        ft.puts('\033[?25l')
+        self.eq(ft.cursor.visible, False)
+
+        ft.puts('嗚啦呀哈')
+        self.eq(ft.lines, ['嗚啦呀哈'])
+        self.eq(ft.cursor.y, 0)
+        self.eq(ft.cursor.x, 8)
+
+        ft.puts('\033[?25h')
+        self.eq(ft.cursor.visible, True)
+
+        ft.puts('嗚啦呀哈')
+        self.eq(ft.lines, ['嗚啦呀哈嗚啦呀哈'])
+        self.eq(ft.cursor.y, 0)
+        self.eq(ft.cursor.x, 16)
+
     def test_escape_seq_unknown_seq(self):
         ft = iro.FakeTerminal()
         ft.puts('\033$%#^&*(a')
