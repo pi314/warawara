@@ -695,7 +695,11 @@ class Pager:
         self.footer = Subpager(parent=self, section='footer')
 
         import builtins
-        self.print = builtins.print
+        def builtin_print(*args, **kwargs): # pragma: no cover
+            file = kwargs.get('file', sys.stdout)
+            builtins.print(*args, **kwargs)
+            file.flush()
+        self.print = builtin_print
 
         self.reset()
 
