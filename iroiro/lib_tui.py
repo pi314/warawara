@@ -1027,16 +1027,20 @@ class Menu:
 
         return check, box
 
-    def __init__(self, title, options, *,
+    def __init__(self, title, options, *, message=None,
                  max_height=None, wrap=False,
                  format=None, cursor='>', checkbox=None,
-                 onkey=None):
+                 onkey=None, term_cursor_invisible=None):
         self.pager = Pager(max_height=max_height)
 
         self.title = title
         self.options = [MenuItem(self, False, opt, None, None) for opt in options]
-        self.message = ''
+        self.message = message
         self.data = MenuData()
+
+        self.term_cursor_invisible = term_cursor_invisible
+        if self.term_cursor_invisible is None:
+            self.term_cursor_invisible = message is None
 
         self.check, self.box = self.parse_checkbox(checkbox)
 
@@ -1327,7 +1331,8 @@ class Menu:
                     box=box or ('', ''),
                     )
 
-        self.pager.footer.append(self.message)
+        if self.message is not None:
+            self.pager.footer.append(self.message)
 
         self.pager.render()
 
@@ -1339,6 +1344,9 @@ class Menu:
         self.pager.reset()
         try:
             self._active = True
+            if self.term_cursor_invisible:
+                self.pager.print('\033[?25l', end='')
+
             while True:
                 self.refresh(force=True)
                 ch = getch(capture='fs')
@@ -1353,6 +1361,8 @@ class Menu:
             self._active = False
             self.refresh(force=True)
             self.pager.print()
+            if self.term_cursor_invisible:
+                self.pager.print('\033[?25h', end='')
 
     def interact(self, *, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
         if not sys.stdout.isatty():
@@ -1386,7 +1396,10 @@ class MenuItemRef:
         else:
             a = self.index
             b = other
-        return (a > b) - (a < b)
+        try:
+            return (a > b) - (a < b)
+        except TypeError:
+            return a != b
 
     def __lt__(self, other):
         return self.__cmp__(other) < 0

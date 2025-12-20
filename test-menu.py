@@ -1,3 +1,5 @@
+import sys
+
 import iroiro
 
 
@@ -11,7 +13,7 @@ def main():
         if menu.data.grabbing and menu.cursor == item:
             return f'{cursor}{box[0]}{check}{box[1]} {item.text}{ind}'
         return f'{cursor} {box[0]}{check}{box[1]} {item.text}{ind}'
-    menu = iroiro.Menu('title', iroiro.natsorted(os.listdir()), checkbox='[*]', format=format, max_height=20)
+    menu = iroiro.Menu('title', iroiro.natsorted(os.listdir()), checkbox='[*]', format=format, max_height=20, message='', term_cursor_invisible=True)
 
     def pager_info(key):
         menu.message = 'key={} cursor={} grab={} text=[{}] visible={} scroll={} height={}'.format(
@@ -188,4 +190,13 @@ def main():
 
 
 if __name__ == '__main__':
+    menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
+    ret = menu.interact()
+    if ret in (None, 'no'):
+        sys.exit(1)
+
+    ret = menu.interact()
+    if ret in (None, 'no'):
+        sys.exit(1)
+
     main()

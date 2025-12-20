@@ -405,7 +405,6 @@ class TestMenu(TestCase):
             '> Yes',
             '  no',
             '',
-            ''
             ])
 
         self.terminal.reset()
@@ -417,7 +416,6 @@ class TestMenu(TestCase):
             '> Yes',
             '  no',
             '',
-            ''
             ])
 
         self.terminal.reset()
@@ -430,5 +428,4 @@ class TestMenu(TestCase):
             '  Yes',
             '> no',
             '',
-            ''
             ])
