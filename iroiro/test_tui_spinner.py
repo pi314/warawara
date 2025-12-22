@@ -24,6 +24,9 @@ class TestThreadedSpinner(TestCase):
         self.behavior_queue = queue.Queue()
         self.events_upon_sleep = queue.Queue()
 
+        self.patch('iroiro.lib_tui.tui_print', self.mock_print)
+        self.patch('iroiro.lib_tui.tui_flush', lambda: None)
+
     def mock_print(self, *args, **kwargs):
         if not args and not kwargs:
             self.behavior_queue.put((self.sys_time, 'print', None))
@@ -85,7 +88,6 @@ class TestThreadedSpinner(TestCase):
 
     def test_context_manager(self):
         spinner = ThreadedSpinner()
-        spinner.print = lambda *args, **kirogs: None
         with spinner:
             with spinner:
                 spinner.start()
@@ -96,7 +98,6 @@ class TestThreadedSpinner(TestCase):
 
         delay = 1
         spinner = ThreadedSpinner('ENTRY', 'LOOP', 'OUT', delay=delay)
-        spinner.print = self.mock_print
 
         event_list = [
                 Event( 0, 'print', ('E', 'meow')),

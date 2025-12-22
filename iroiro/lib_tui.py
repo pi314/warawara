@@ -1,4 +1,5 @@
 import sys
+import builtins
 
 from collections import UserList
 
@@ -6,6 +7,18 @@ from .lib_itertools import zip_longest
 
 from .internal_utils import exporter
 export, __all__ = exporter()
+
+
+def builtin_print(*args, **kwargs): # pragma: no cover
+    kwargs['file'] = sys.stdout
+    builtins.print(*args, **kwargs)
+
+
+builtin_flush = sys.stdout.flush
+
+
+tui_print = builtin_print
+tui_flush = builtin_flush
 
 
 @export
@@ -188,9 +201,6 @@ class ThreadedSpinner:
                 )
         self.icon_head = [None, None]
 
-        import builtins
-        self.print = builtins.print
-
     def __enter__(self):
         if self.thread:
             return self
@@ -217,7 +227,8 @@ class ThreadedSpinner:
             self.refresh()
 
     def refresh(self):
-        self.print('\r' + self.icon + '\033[K ' + self._text, end='')
+        tui_print('\r' + self.icon + '\033[K ' + self._text, end='')
+        tui_flush()
 
     def animate(self):
         import time
@@ -235,7 +246,8 @@ class ThreadedSpinner:
         except StopIteration:
             pass
 
-        self.print()
+        tui_print()
+        tui_flush()
 
     def start(self):
         if self.thread:
@@ -694,13 +706,6 @@ class Pager:
         self.body = Subpager(parent=self, section='body')
         self.footer = Subpager(parent=self, section='footer')
 
-        import builtins
-        def builtin_print(*args, **kwargs): # pragma: no cover
-            file = kwargs.get('file', sys.stdout)
-            builtins.print(*args, **kwargs)
-            file.flush()
-        self.print = builtin_print
-
         self.reset()
 
     @property
@@ -884,12 +889,12 @@ class Pager:
         cursor = len(self._display) - 1
 
         for i in range(cursor, max(len(visible_lines) - 1, 0), -1):
-            self.print('\r\033[K\033[A', end='')
+            tui_print('\r\033[K\033[A', end='')
             self._display.pop()
             cursor -= 1
 
         if not visible_lines:
-            self.print('\r\033[K', end='')
+            tui_print('\r\033[K', end='')
             self._display.pop()
             return
 
@@ -909,7 +914,7 @@ class Pager:
             if cursor != idx:
                 dist = min(abs(cursor - idx), len(self._display) - 1)
                 if cursor > idx:
-                    self.print('\r\033[{}A'.format(dist), end='')
+                    tui_print('\r\033[{}A'.format(dist), end='')
                 else:
                     down = 0
                     nl = 0
@@ -921,17 +926,19 @@ class Pager:
                     o = ''
                     o += f'\r\033[{down}B' if down else ''
                     o += ('\n' * nl) if nl else ''
-                    self.print(o, end='')
+                    tui_print(o, end='')
 
             wline = wrap(line, self.width)[0]
             self._display[idx] = wline
 
             # Print content onto screen
-            self.print('\r{}\033[K'.format(wline),
+            tui_print('\r{}\033[K'.format(wline),
                   end='' if is_last else '\n')
 
             # Estimate cursor position
             cursor = idx + (not is_last)
+
+        tui_flush()
 
 
 class MenuData:
@@ -1345,7 +1352,7 @@ class Menu:
         try:
             self._active = True
             if self.term_cursor_invisible:
-                self.pager.print('\033[?25l', end='')
+                tui_print('\033[?25l', end='')
 
             while True:
                 self.refresh(force=True)
@@ -1360,9 +1367,9 @@ class Menu:
         finally:
             self._active = False
             self.refresh(force=True)
-            self.pager.print()
+            tui_print()
             if self.term_cursor_invisible:
-                self.pager.print('\033[?25h', end='')
+                tui_print('\033[?25h', end='')
 
     def interact(self, *, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
         if not sys.stdout.isatty():

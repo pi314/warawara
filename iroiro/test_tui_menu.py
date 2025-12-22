@@ -379,6 +379,8 @@ class TestMenu(TestCase):
         self.terminal = FakeTerminal()
         self.patch('sys.stdout.isatty', lambda *args, **kargs: True)
         self.patch('shutil.get_terminal_size', self.terminal.get_terminal_size)
+        self.patch('iroiro.lib_tui.tui_print', lambda *args, **kwargs: self.terminal.print(*args, **kwargs))
+        self.patch('iroiro.lib_tui.tui_flush', lambda: None)
 
         import queue
         self.key_queue = queue.Queue()
@@ -395,7 +397,6 @@ class TestMenu(TestCase):
 
         import iroiro
         menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
-        menu.pager.print = self.terminal.print
 
         self.feedkey(iroiro.KEY_ENTER)
         ret = menu.interact()

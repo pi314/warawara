@@ -8,6 +8,8 @@ class TestPager(TestCase):
         from .lib_test_utils import FakeTerminal
         self.terminal = FakeTerminal()
         self.patch('shutil.get_terminal_size', lambda: self.terminal.get_terminal_size())
+        self.patch('iroiro.lib_tui.tui_print', lambda *args, **kwargs: self.terminal.print(*args, **kwargs))
+        self.patch('iroiro.lib_tui.tui_flush', lambda: None)
 
     def test_data_storing(self):
         pager = Pager()
@@ -52,7 +54,6 @@ class TestPager(TestCase):
 
     def test_render_basic(self):
         pager = Pager()
-        pager.print = self.terminal.print
 
         self.eq(self.terminal.lines, [''])
         pager.render()
@@ -72,7 +73,6 @@ class TestPager(TestCase):
 
     def test_render_horizontal_overflow(self):
         pager = Pager()
-        pager.print = self.terminal.print
         self.eq(self.terminal.width, 80)
         self.eq(self.terminal.height, 24)
 
@@ -93,7 +93,6 @@ class TestPager(TestCase):
         self.eq(self.terminal.height, 5)
 
         pager = Pager(**kwargs)
-        pager.print = self.terminal.print
 
         for i in range(10):
             pager.append('哇 {}'.format(i))
@@ -163,7 +162,6 @@ class TestPager(TestCase):
         self.terminal.print('previous line')
 
         pager = Pager()
-        pager.print = self.terminal.print
         self.eq(pager.term_height, self.terminal.height)
 
         pager.render()
@@ -333,7 +331,6 @@ class TestPager(TestCase):
         pager = Pager()
         pager.max_height = 5
         pager.max_width = 8
-        pager.print = self.terminal.print
 
         self.lt(pager.max_height, self.terminal.height)
         self.lt(pager.max_width, self.terminal.width)
