@@ -361,6 +361,22 @@ class TestMenuItem(TestCase):
     def test_cmp(self):
         self.eq(self.menu[0], 0)
         self.eq(self.menu[0], 'Option 1')
+        self.ne(self.menu[0], None)
+
+    def test_onkey(self):
+        self.false(self.menu[0].onkey)
+
+        self.menu[0].bind('a', lambda item, key: 'a')
+        self.true(self.menu[0].onkey)
+
+        self.menu[0].unbind('a')
+        self.false(self.menu[0].onkey)
+
+        self.menu[0].onkey = ('b', lambda item, key: 'b')
+        self.true(self.menu[0].onkey)
+
+        self.eq(self.menu[0].feedkey('a'), None)
+        self.eq(self.menu[0].feedkey('b'), 'b')
 
 
 class TestMenuThread(TestCase):
