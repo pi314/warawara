@@ -382,51 +382,113 @@ class TestMenu(TestCase):
         self.patch('iroiro.lib_tui.tui_print', lambda *args, **kwargs: self.terminal.print(*args, **kwargs))
         self.patch('iroiro.lib_tui.tui_flush', lambda: None)
 
+        self.menu = None
+        self.menu_ret = None
+
+        import threading
+        self.to_user = threading.Event()
+        self.menu_thread = None
+
         import queue
         self.key_queue = queue.Queue()
-        def mock_getch(*args, **kwargs):
-            return self.key_queue.get()
-        def feedkey(key):
-            self.key_queue.put(key)
-        self.patch('iroiro.lib_tui.getch', mock_getch)
-        self.feedkey = feedkey
+        self.patch('iroiro.lib_tui.getch', self.mock_getch)
+
+    def mock_getch(self, *args, **kwargs):
+        self.to_user.set()
+        ret = self.key_queue.get()
+        return ret
+
+    def start_menu(self, *args, **kwargs):
+        def menu_runner(*args, **kwargs):
+            self.menu_ret = self.menu.interact(*args, **kwargs)
+            self.to_user.set()
+
+        import threading
+        self.menu_thread = threading.Thread(target=menu_runner, args=args, kwargs=kwargs)
+        self.menu_thread.daemon = True
+        self.menu_thread.start()
+        self.to_user.wait()
+
+    def feedkey(self, key):
+        self.to_user.clear()
+        self.key_queue.put(key)
+        self.to_user.wait()
 
     def test_menu_default_key_handlers(self):
         from contextlib import nullcontext
         self.patch('iroiro.lib_tui.HijackStdio', nullcontext)
-
         import iroiro
-        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
 
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            ])
+
+        # Enter
         self.feedkey(iroiro.KEY_ENTER)
-        ret = menu.interact()
-        self.eq(ret.text, 'Yes')
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '> Yes',
             '  no',
             '',
             ])
+        self.eq(self.menu.selected.text, 'Yes')
 
         self.terminal.reset()
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            ])
+
+        # q
         self.feedkey('q')
-        ret = menu.interact()
-        self.eq(ret, None)
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '> Yes',
             '  no',
             '',
             ])
+        self.eq(self.menu.selected, None)
 
         self.terminal.reset()
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            ])
+
         self.feedkey(iroiro.KEY_DOWN)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  Yes',
+            '> no',
+            ])
+
+        self.feedkey(iroiro.KEY_UP)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            ])
+
+        self.feedkey(iroiro.KEY_DOWN)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  Yes',
+            '> no',
+            ])
+
         self.feedkey(iroiro.KEY_ENTER)
-        ret = menu.interact()
-        self.eq(ret.text, 'no')
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '  Yes',
             '> no',
             '',
             ])
+        self.eq(self.menu.selected.text, 'no')
