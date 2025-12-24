@@ -1597,7 +1597,7 @@ class MenuKeyHandler:
         self.MenuKeySubHandlerList = self.__class__.MenuKeySubHandlerList
 
     def __bool__(self):
-        return bool(h for k, h in self.handlers.items() if k is not None) and bool(self.handlers[None])
+        return any(h for k, h in self.handlers.items())
 
     def clear(self):
         self.handlers = {None: self.MenuKeySubHandlerList()}

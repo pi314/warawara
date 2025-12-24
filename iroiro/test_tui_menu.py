@@ -134,6 +134,14 @@ class TestMenuKeyHandler(TestCase):
         ret = handler.handle('a')
         self.eq(ret, None)
 
+    def test_bool(self):
+        import iroiro
+        handler = iroiro.tui.MenuKeyHandler(self.menu)
+        print(handler.handlers)
+        self.false(handler)
+        handler.bind(lambda menu, key: None)
+        self.true(handler)
+
     def test_bind_without_handler(self):
         import iroiro
         handler = iroiro.tui.MenuKeyHandler(self.menu)
