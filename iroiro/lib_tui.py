@@ -1553,6 +1553,9 @@ class MenuCursor(MenuItemRef):
 
 
 class MenuKeyHandler:
+    class SignatureError(ValueError):
+        pass
+
     class MenuKeySubHandlerList(UserList):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -1642,6 +1645,15 @@ class MenuKeyHandler:
             key = key_alias_table.get(key, key)
 
             for handler in handler_list:
+                import inspect
+                sig = inspect.signature(handler).parameters
+                if not sig:
+                    pass
+                elif isinstance(self.parent, Menu) and 'menu' not in sig:
+                    raise self.__class__.SignatureError('Menu() key handlers must have parameter named "menu"')
+                elif isinstance(self.parent, MenuItem) and 'item' not in sig:
+                    raise self.__class__.SignatureError('MenuItem() key handlers must have parameter named "item"')
+
                 if key not in self.handlers:
                     self.handlers[key] = self.MenuKeySubHandlerList()
 

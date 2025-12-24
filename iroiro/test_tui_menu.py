@@ -130,7 +130,6 @@ class TestMenuKeyHandler(TestCase):
     def test_empty_handler(self):
         import iroiro
         handler = iroiro.tui.MenuKeyHandler(self.menu)
-
         ret = handler.handle('a')
         self.eq(ret, None)
 
@@ -139,7 +138,7 @@ class TestMenuKeyHandler(TestCase):
         handler = iroiro.tui.MenuKeyHandler(self.menu)
         print(handler.handlers)
         self.false(handler)
-        handler.bind(lambda menu, key: None)
+        handler.bind(lambda: None)
         self.true(handler)
 
     def test_bind_without_handler(self):
@@ -148,6 +147,21 @@ class TestMenuKeyHandler(TestCase):
 
         with self.raises(ValueError):
             handler.bind('a', 'b', 'c')
+
+    def test_bind_with_wrong_signature(self):
+        import iroiro
+
+        handler = iroiro.tui.MenuKeyHandler(self.menu)
+        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+            self.menu.onkey = ('k', lambda key: 'k')
+        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+            self.menu.onkey = ('k', lambda item, key: 'k')
+
+        handler = iroiro.tui.MenuKeyHandler(self.menu[0])
+        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+            self.menu[0].onkey = ('k', lambda key: 'k')
+        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+            self.menu[0].onkey = ('k', lambda menu, key: 'k')
 
     def test_bind_unbind_handler(self):
         import iroiro
