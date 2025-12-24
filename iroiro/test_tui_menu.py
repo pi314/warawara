@@ -153,15 +153,19 @@ class TestMenuKeyHandler(TestCase):
 
         handler = iroiro.tui.MenuKeyHandler(self.menu)
         with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
-            self.menu.onkey = ('k', lambda key: 'k')
+            handler.bind('k', lambda item, key: 'k')
         with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
-            self.menu.onkey = ('k', lambda item, key: 'k')
+            handler.bind('k', lambda hello, key: 'k')
+        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+            handler.bind('k', lambda key, hello: 'k')
 
         handler = iroiro.tui.MenuKeyHandler(self.menu[0])
         with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
-            self.menu[0].onkey = ('k', lambda key: 'k')
+            handler.bind('k', lambda menu, key: 'k')
         with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
-            self.menu[0].onkey = ('k', lambda menu, key: 'k')
+            handler.bind('k', lambda hello, key: 'k')
+        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+            handler.bind('k', lambda key, hello: 'k')
 
     def test_bind_unbind_handler(self):
         import iroiro
@@ -218,7 +222,7 @@ class TestMenuKeyHandler(TestCase):
         handler -= 'k'
         self.eq(handler['k'], [])
 
-    def test_duplicated_bind(self):
+    def test_ignore_duplicated_bind(self):
         import iroiro
         handler = iroiro.tui.MenuKeyHandler(self.menu)
 
@@ -315,17 +319,60 @@ class TestMenuKeyHandler(TestCase):
         self.eq(ret, 'f')
         self.eq(by, [foo])
 
-    def test_handler_without_args(self):
+    def test_handler_flexible_signatures(self):
         import iroiro
+
         handler = iroiro.tui.MenuKeyHandler(self.menu)
+        def empty():
+            return 'e'
+        handler += empty
+        self.eq(handler.handle('k'), 'e')
 
-        by = []
-        def foo():
-            by.append(foo)
-        handler += foo
+        handler = iroiro.tui.MenuKeyHandler(self.menu)
+        def key_only(key):
+            return key
+        handler += key_only
+        self.eq(handler.handle('g'), 'g')
 
-        handler.handle('f')
-        self.eq(by, [foo])
+        handler = iroiro.tui.MenuKeyHandler(self.menu)
+        def menu_only(menu):
+            self.eq(menu, self.menu)
+            return 'm'
+        handler += menu_only
+        self.eq(handler.handle('k'), 'm')
+
+        handler = iroiro.tui.MenuKeyHandler(self.menu)
+        def key_and_menu(key, menu):
+            self.eq(menu, self.menu)
+            return key
+        handler += key_and_menu
+        self.eq(handler.handle('%'), '%')
+
+        handler = iroiro.tui.MenuKeyHandler(self.menu[0])
+        def empty():
+            return 'e'
+        handler += empty
+        self.eq(handler.handle('k'), 'e')
+
+        handler = iroiro.tui.MenuKeyHandler(self.menu[0])
+        def key_only(key):
+            return key
+        handler += key_only
+        self.eq(handler.handle('k'), 'k')
+
+        handler = iroiro.tui.MenuKeyHandler(self.menu[0])
+        def item_only(item):
+            self.eq(item, self.menu[0])
+            return 'i'
+        handler += item_only
+        self.eq(handler.handle('k'), 'i')
+
+        handler = iroiro.tui.MenuKeyHandler(self.menu[0])
+        def key_and_item(key, item):
+            self.eq(item, self.menu[0])
+            return key
+        handler += key_and_item
+        self.eq(handler.handle('u'), 'u')
 
 
 class TestMenuItem(TestCase):
@@ -438,8 +485,10 @@ class TestMenu(TestCase):
 
     def start_menu(self, *args, **kwargs):
         def menu_runner(*args, **kwargs):
-            self.menu_ret = self.menu.interact(*args, **kwargs)
-            self.to_user.set()
+            try:
+                self.menu_ret = self.menu.interact(*args, **kwargs)
+            finally:
+                self.to_user.set()
 
         import threading
         self.menu_thread = threading.Thread(target=menu_runner, args=args, kwargs=kwargs)

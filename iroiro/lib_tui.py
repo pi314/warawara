@@ -1645,14 +1645,21 @@ class MenuKeyHandler:
             key = key_alias_table.get(key, key)
 
             for handler in handler_list:
+                if isinstance(self.parent, Menu):
+                    ok_args = ['key', 'menu']
+                elif isinstance(self.parent, MenuItem):
+                    ok_args = ['key', 'item']
+                else:
+                    ok_args = ['key']
+
                 import inspect
                 sig = inspect.signature(handler).parameters
-                if not sig:
-                    pass
-                elif isinstance(self.parent, Menu) and 'menu' not in sig:
-                    raise self.__class__.SignatureError('Menu() key handlers must have parameter named "menu"')
-                elif isinstance(self.parent, MenuItem) and 'item' not in sig:
-                    raise self.__class__.SignatureError('MenuItem() key handlers must have parameter named "item"')
+                nok_args = tuple(repr(key) for key, value in sig.items()
+                            if value.default == value.empty and
+                            value.kind not in (value.VAR_POSITIONAL, value.VAR_KEYWORD) and
+                            key not in ok_args)
+                if nok_args:
+                    raise self.__class__.SignatureError(f'Unreachable parameters: {",".join(nok_args)}')
 
                 if key not in self.handlers:
                     self.handlers[key] = self.MenuKeySubHandlerList()
@@ -1682,15 +1689,19 @@ class MenuKeyHandler:
     def handle(self, key):
         key = key_alias_table.get(key, key)
         for handler in self.handlers.get(key, []) + self.handlers[None]:
-            try:
-                param = {}
-                if isinstance(self.parent, Menu):
-                    param['menu'] = self.parent
-                elif isinstance(self.parent, MenuItem):
-                    param['item'] = self.parent
-                ret = handler(key=key, **param)
-            except TypeError:
-                ret = handler()
+            kwargs = {}
+
+            import inspect
+            sig = inspect.signature(handler).parameters
+
+            if 'key' in sig:
+                kwargs['key'] = key
+            if isinstance(self.parent, Menu) and 'menu' in sig:
+                kwargs['menu'] = self.parent
+            if isinstance(self.parent, MenuItem) and 'item' in sig:
+                kwargs['item'] = self.parent
+
+            ret = handler(**kwargs)
 
             if ret:
                 return ret
