@@ -13,12 +13,14 @@ def builtin_print(*args, **kwargs): # pragma: no cover
     kwargs['file'] = sys.stdout
     builtins.print(*args, **kwargs)
 
-
 builtin_flush = sys.stdout.flush
+
+builtin_input = input
 
 
 tui_print = builtin_print
 tui_flush = builtin_flush
+tui_input = builtin_input
 
 
 @export
@@ -379,7 +381,7 @@ class ExceptionSuppressor:
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type in (EOFError, KeyboardInterrupt):
-            print()
+            tui_print()
         return exc_type in self.exc_group
 
 
@@ -399,11 +401,11 @@ def prompt(question, options=tuple(),
     with HijackStdio():
         with ExceptionSuppressor(suppress):
             while user_selection.selected is None:
-                print((question + (user_selection.prompt)), end=' ')
+                tui_print((question + (user_selection.prompt)), end=' ')
 
                 import contextlib
                 with contextlib.suppress(ValueError):
-                    i = input().strip()
+                    i = tui_input().strip()
                     user_selection.select(i)
 
     return user_selection

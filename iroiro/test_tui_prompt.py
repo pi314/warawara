@@ -19,8 +19,8 @@ class TestPromotAskUser(TestCase):
         self.input_queue = None
         self.print_queue = queue.Queue()
 
-        self.patch('builtins.print', self.mock_print)
-        self.patch('builtins.input', self.mock_input)
+        self.patch('iroiro.lib_tui.tui_print', self.mock_print)
+        self.patch('iroiro.lib_tui.tui_input', self.mock_input)
 
         self.mock_open = unittest.mock.mock_open()
         self.patch('builtins.open', self.mock_open)
