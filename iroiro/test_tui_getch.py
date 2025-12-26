@@ -165,3 +165,29 @@ class TestGetch(TestCase):
         self.press('\x03')
         getch(capture='unknown key')
         self.eq(self.killed, signal.SIGINT)
+
+    def test_simultaneous_getch_error(self):
+        def mock_select(rlist, wlist, xlist, timeout=None):
+            got_it.wait()
+            return (rlist, [], [])
+        self.patch('select.select', mock_select)
+
+        def mock_read(fd, n):
+            got_it.wait()
+            return 'q'.encode('utf8')
+        self.patch('os.read', mock_read)
+
+        from iroiro import ResourceError
+
+        got_it = self.checkpoint()
+
+        def run_getch():
+            try:
+                getch()
+            except ResourceError:
+                got_it.set()
+
+        with self.run_in_thread(run_getch):
+            run_getch()
+
+        self.true(got_it.is_set())

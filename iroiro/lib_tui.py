@@ -3,6 +3,7 @@ import builtins
 
 from collections import UserList
 
+from .lib_threading import Lock
 from .lib_itertools import zip_longest
 
 from .internal_utils import exporter
@@ -21,6 +22,11 @@ builtin_input = input
 tui_print = builtin_print
 tui_flush = builtin_flush
 tui_input = builtin_input
+
+
+@export
+class ResourceError(RuntimeError):
+    pass
 
 
 @export
@@ -558,6 +564,8 @@ def deregister_key(seq):
     return key
 
 
+_getch_lock = Lock()
+
 @export
 def getch(*, timeout=None, encoding='utf8', capture=('ctrl+c', 'ctrl+z', 'fs')):
     import termios, tty
@@ -565,87 +573,91 @@ def getch(*, timeout=None, encoding='utf8', capture=('ctrl+c', 'ctrl+z', 'fs')):
     import select
     import signal
 
-    fd = sys.stdin.fileno()
-    orig_term_attr = termios.tcgetattr(fd)
-    when = termios.TCSADRAIN
+    with _getch_lock.acquire(blocking=False) as locked:
+        if not locked:
+            raise ResourceError('Simultaneous getch() calls are not allowed')
 
-    term_attr_cc = termios.tcgetattr(fd)[6]
+        fd = sys.stdin.fileno()
+        orig_term_attr = termios.tcgetattr(fd)
+        when = termios.TCSADRAIN
 
-    capture_table = [
-            [KEY_CTRL_C, term_attr_cc[termios.VINTR], signal.SIGINT],
-            [KEY_CTRL_Z, term_attr_cc[termios.VSUSP], signal.SIGTSTP],
-            [KEY_FS,     term_attr_cc[termios.VQUIT], signal.SIGQUIT],
-            ]
+        term_attr_cc = termios.tcgetattr(fd)[6]
 
-    if isinstance(capture, str):
-        capture = [capture]
+        capture_table = [
+                [KEY_CTRL_C, term_attr_cc[termios.VINTR], signal.SIGINT],
+                [KEY_CTRL_Z, term_attr_cc[termios.VSUSP], signal.SIGTSTP],
+                [KEY_FS,     term_attr_cc[termios.VQUIT], signal.SIGQUIT],
+                ]
 
-    for cap in capture or []:
-        for entry in capture_table:
-            if entry[0] == cap:
-                entry[2] = None
+        if isinstance(capture, str):
+            capture = [capture]
 
-    def has_data(t=0):
-        return select.select([fd], [], [], t)[0]
-
-    def read_one_byte():
-        return os.read(sys.stdin.fileno(), 1)
-
-    try:
-        tty.setraw(fd, when=when)
-
-        # Wait for input until timeout
-        if not has_data(timeout):
-            return None
-
-        acc = b''
-        candidate_matches = set(key_seq_table.keys())
-        while True:
-            acc += read_one_byte()
-
-            # Check special sequences that correspond to signals
+        for cap in capture or []:
             for entry in capture_table:
-                key, seq, sig = entry
-                if acc[-len(seq):] == seq:
-                    if sig is not None:
-                        os.kill(os.getpid(), sig)
-                    else:
-                        break
+                if entry[0] == cap:
+                    entry[2] = None
 
-            if not has_data():
-                break
+        def has_data(t=0):
+            return select.select([fd], [], [], t)[0]
 
-            # Still have chance to match in key table
-            if candidate_matches:
-                # eliminate potential matches
-                candidate_matches = set(key_seq for key_seq in candidate_matches if key_seq.startswith(acc))
-
-                # Perfect match, return
-                if candidate_matches == {acc}:
-                    break
-
-                # multiple prefix matchs: collect more byte
-                if candidate_matches:
-                    continue
-
-            # Input sequence does not match anything in key table
-            # Collect enough bytes to decode at least one unicode char
-            try:
-                acc.decode(encoding)
-                break
-            except UnicodeError:
-                continue
-
-        if acc in key_seq_table:
-            return key_seq_table[acc]
+        def read_one_byte():
+            return os.read(sys.stdin.fileno(), 1)
 
         try:
-            return acc.decode(encoding)
-        except UnicodeError:
-            return acc
+            tty.setraw(fd, when=when)
 
-    finally:
-        termios.tcsetattr(fd, when, orig_term_attr)
+            # Wait for input until timeout
+            if not has_data(timeout):
+                return None
+
+            acc = b''
+            candidate_matches = set(key_seq_table.keys())
+            while True:
+                acc += read_one_byte()
+
+                # Check special sequences that correspond to signals
+                for entry in capture_table:
+                    key, seq, sig = entry
+                    if acc[-len(seq):] == seq:
+                        if sig is not None:
+                            os.kill(os.getpid(), sig)
+                        else:
+                            break
+
+                if not has_data():
+                    break
+
+                # Still have chance to match in key table
+                if candidate_matches:
+                    # eliminate potential matches
+                    candidate_matches = set(key_seq for key_seq in candidate_matches if key_seq.startswith(acc))
+
+                    # Perfect match, return
+                    if candidate_matches == {acc}:
+                        break
+
+                    # multiple prefix matchs: collect more byte
+                    if candidate_matches:
+                        continue
+
+                # Input sequence does not match anything in key table
+                # Collect enough bytes to decode at least one unicode char
+                try:
+                    acc.decode(encoding)
+                    break
+                except UnicodeError:
+                    continue
+
+            if acc in key_seq_table:
+                return key_seq_table[acc]
+
+            try:
+                return acc.decode(encoding)
+            except UnicodeError:
+                return acc
+
+        finally:
+            termios.tcsetattr(fd, when, orig_term_attr)
 
 
 class Pagee:
@@ -1068,8 +1080,6 @@ class Menu:
         self._cursor = MenuCursor(self, wrap=wrap)
 
         self._active = False
-
-        import threading
 
         from .lib_threading import Throttler
         self._refresh_throttler = Throttler(self.do_render, 1/60)
