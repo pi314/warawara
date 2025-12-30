@@ -121,6 +121,43 @@ class TestMenuCursor(TestCase):
         with self.raises(AttributeError):
             c.bau
 
+    def test_relay(self):
+        c = self.menu.cursor
+        with self.raises(AttributeError):
+            c.wrong_attr = 3
+
+        c.to(self.menu[0])
+        self.eq(c.text, self.menu[0].text)
+        c.text = 'wah'
+        self.eq(self.menu[0].text, 'wah')
+
+    def test_relay_select_unselect_toggle(self):
+        c = self.menu.cursor
+        c.to(self.menu[0])
+
+        c.select()
+        self.true(self.menu[0].selected)
+
+        c.unselect()
+        self.false(self.menu[0].selected)
+
+        c.toggle()
+        self.true(self.menu[0].selected)
+
+    def test_feedkey(self):
+        c = self.menu.cursor
+        c.to(self.menu[0])
+
+        import queue
+        q = queue.Queue()
+
+        def foo(item, key):
+            q.put((item, key))
+            return 42
+        self.menu[0].bind('k', foo)
+        self.eq(c.feedkey('k'), 42)
+        self.eq(q.get(), (self.menu[0], 'k'))
+
 
 class TestMenuKeyHandler(TestCase):
     def setUp(self):
