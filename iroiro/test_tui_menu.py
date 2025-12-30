@@ -458,7 +458,7 @@ class TestMenuStdoutNotTTY(TestCase):
             menu.interact()
 
 
-class TestMenu(TestCase):
+class TestMenuFixture(TestCase):
     def setUp(self):
         from .lib_test_utils import FakeTerminal
         self.terminal = FakeTerminal()
@@ -466,6 +466,9 @@ class TestMenu(TestCase):
         self.patch('shutil.get_terminal_size', self.terminal.get_terminal_size)
         self.patch('iroiro.lib_tui.tui_print', lambda *args, **kwargs: self.terminal.print(*args, **kwargs))
         self.patch('iroiro.lib_tui.tui_flush', lambda: None)
+
+        from contextlib import nullcontext
+        self.patch('iroiro.lib_tui.HijackStdio', nullcontext)
 
         self.menu = None
         self.menu_ret = None
@@ -501,9 +504,9 @@ class TestMenu(TestCase):
         self.key_queue.put(key)
         self.to_user.wait()
 
+
+class TestBasicMenu(TestMenuFixture):
     def test_menu_default_key_handlers(self):
-        from contextlib import nullcontext
-        self.patch('iroiro.lib_tui.HijackStdio', nullcontext)
         import iroiro
 
         self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
@@ -579,3 +582,84 @@ class TestMenu(TestCase):
             '',
             ])
         self.eq(self.menu.selected.text, 'no')
+
+
+class TestSingleSelectMenu(TestMenuFixture):
+    def test_menu_render(self):
+        import iroiro
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> ( ) Yes',
+            '  ( ) no',
+            ])
+
+        self.feedkey(' ')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> (*) Yes',
+            '  ( ) no',
+            ])
+
+        self.feedkey(iroiro.KEY_DOWN)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  (*) Yes',
+            '> ( ) no',
+            ])
+
+        self.feedkey(' ')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  ( ) Yes',
+            '> (*) no',
+            ])
+
+        self.feedkey(' ')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  ( ) Yes',
+            '> ( ) no',
+            ])
+
+
+class TestMultiSelectMenu(TestMenuFixture):
+    def test_menu_render(self):
+        import iroiro
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]')
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> [ ] Yes',
+            '  [ ] no',
+            ])
+
+        self.feedkey(' ')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> [*] Yes',
+            '  [ ] no',
+            ])
+
+        self.feedkey(iroiro.KEY_DOWN)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  [*] Yes',
+            '> [ ] no',
+            ])
+
+        self.feedkey(' ')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  [*] Yes',
+            '> [*] no',
+            ])
+
+        self.feedkey(iroiro.KEY_UP)
+        self.feedkey(' ')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> [ ] Yes',
+            '  [*] no',
+            ])

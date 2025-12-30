@@ -1393,6 +1393,7 @@ class Menu:
                 if not bool(self.onkey):
                     self.onkey(KEY_UP, self.cursor.up)
                     self.onkey(KEY_DOWN, self.cursor.down)
+                    self.onkey(KEY_SPACE, self.cursor.toggle)
                     self.onkey(KEY_ENTER, self.done)
                     self.onkey('q', self.quit)
 
