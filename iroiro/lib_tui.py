@@ -1502,6 +1502,10 @@ class MenuCursor(MenuItemRef):
         self.wrap = wrap
         self.index = 0
 
+    @property
+    def item(self):
+        return self.menu[self.index]
+
     def __repr__(self):
         return f'MenuCursor(index={self.index}, wrap={self.wrap})'
 
@@ -1532,9 +1536,16 @@ class MenuCursor(MenuItemRef):
         return self
 
     def __getattr__(self, attr):
-        item = self.menu[self.index]
-        if not attr.startswith('_') and hasattr(item, attr):
-            return getattr(item, attr)
+        if not attr.startswith('_') and hasattr(self.item, attr):
+            return getattr(self.item, attr)
+        raise AttributeError(attr)
+
+    def __setattr__(self, attr, value):
+        if attr in ('menu', 'wrap', 'index'):
+            return super().__setattr__(attr, value)
+
+        if not attr.startswith('_') and hasattr(self.item, attr):
+            return setattr(self.item, attr, value)
         raise AttributeError(attr)
 
     def cal_index(self, value):
@@ -1560,6 +1571,18 @@ class MenuCursor(MenuItemRef):
 
     def down(self, count=1):
         self += count
+
+    def select(self):
+        self.item.select()
+
+    def unselect(self):
+        self.item.unselect()
+
+    def toggle(self):
+        self.item.toggle()
+
+    def feedkey(self, key):
+        return self.item.feedkey(key)
 
 
 class MenuKeyHandler:

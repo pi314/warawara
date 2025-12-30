@@ -190,13 +190,18 @@ def main():
 
 
 if __name__ == '__main__':
-    menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
+    menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
+
     ret = menu.interact()
+    print(ret)
     if ret in (None, 'no'):
         sys.exit(1)
 
+    print()
     ret = menu.interact()
+    print(ret)
     if ret in (None, 'no'):
         sys.exit(1)
 
+    print()
     main()
