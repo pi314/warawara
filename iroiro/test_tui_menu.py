@@ -516,41 +516,53 @@ class TestMenuFixture(TestCase):
         self.menu_ret = None
 
         import threading
-        self.to_user = threading.Event()
+        self.is_waiting_user = threading.Event()
         self.menu_thread = None
 
         import queue
         self.key_queue = queue.Queue()
         self.patch('iroiro.lib_tui.getch', self.mock_getch)
 
+    def tearDown(self):
+        self.eq(self.menu_thread, None)
+
     def mock_getch(self, *args, **kwargs):
-        self.to_user.set()
+        self.is_waiting_user.set()
         ret = self.key_queue.get()
+        if isinstance(ret, Exception):
+            raise ret
+        if isinstance(ret, type) and issubclass(ret, Exception):
+            raise ret()
         return ret
 
     def start_menu(self, *args, **kwargs):
+        self.eq(self.menu_thread, None)
+        self.is_waiting_user.clear()
         def menu_runner(*args, **kwargs):
             try:
                 self.menu_ret = self.menu.interact(*args, **kwargs)
             finally:
-                self.to_user.set()
-
+                self.menu_thread = None
+                self.is_waiting_user.set()
         import threading
         self.menu_thread = threading.Thread(target=menu_runner, args=args, kwargs=kwargs)
         self.menu_thread.daemon = True
         self.menu_thread.start()
-        self.to_user.wait()
+        self.is_waiting_user.wait()
 
     def feedkey(self, key):
-        self.to_user.clear()
+        menu_thread = self.menu_thread
+        self.ne(menu_thread, None)
+        self.is_waiting_user.clear()
         self.key_queue.put(key)
-        self.to_user.wait()
+        if isinstance(key, EOFError):
+            menu_thread.join()
+        self.is_waiting_user.wait()
 
 
 class TestBasicMenu(TestMenuFixture):
-    def test_menu_default_key_handlers(self):
+    def test_reuse_menu(self):
         import iroiro
-
         self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
         self.start_menu()
         self.eq(self.terminal.lines, [
@@ -558,8 +570,38 @@ class TestBasicMenu(TestMenuFixture):
             '> Yes',
             '  no',
             ])
+        self.feedkey('q')
 
-        # Enter
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            ])
+        self.feedkey('q')
+
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            'Do you like iroiro?',
+            '> Yes',
+            '  no',
+            ])
+        self.feedkey('q')
+
+    def test_menu_default_key_handler_enter(self):
+        import iroiro
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
+        self.start_menu()
+
         self.feedkey(iroiro.KEY_ENTER)
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
@@ -569,15 +611,11 @@ class TestBasicMenu(TestMenuFixture):
             ])
         self.eq(self.menu.selected.text, 'Yes')
 
-        self.terminal.reset()
+    def test_menu_default_key_handler_q(self):
+        import iroiro
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
         self.start_menu()
-        self.eq(self.terminal.lines, [
-            'Do you like iroiro?',
-            '> Yes',
-            '  no',
-            ])
 
-        # q
         self.feedkey('q')
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
@@ -587,13 +625,10 @@ class TestBasicMenu(TestMenuFixture):
             ])
         self.eq(self.menu.selected, None)
 
-        self.terminal.reset()
+    def test_menu_default_key_handler_up_down(self):
+        import iroiro
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
         self.start_menu()
-        self.eq(self.terminal.lines, [
-            'Do you like iroiro?',
-            '> Yes',
-            '  no',
-            ])
 
         self.feedkey(iroiro.KEY_DOWN)
         self.eq(self.terminal.lines, [
@@ -627,7 +662,7 @@ class TestBasicMenu(TestMenuFixture):
 
 
 class TestSingleSelectMenu(TestMenuFixture):
-    def test_menu_render(self):
+    def test_menu_default_key_handler_space(self):
         import iroiro
         self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
         self.start_menu()
@@ -636,6 +671,7 @@ class TestSingleSelectMenu(TestMenuFixture):
             '> ( ) Yes',
             '  ( ) no',
             ])
+        self.eq(self.menu.selected, None)
 
         self.feedkey(' ')
         self.eq(self.terminal.lines, [
@@ -643,6 +679,7 @@ class TestSingleSelectMenu(TestMenuFixture):
             '> (*) Yes',
             '  ( ) no',
             ])
+        self.eq(self.menu.selected, 'Yes')
 
         self.feedkey(iroiro.KEY_DOWN)
         self.eq(self.terminal.lines, [
@@ -650,6 +687,7 @@ class TestSingleSelectMenu(TestMenuFixture):
             '  (*) Yes',
             '> ( ) no',
             ])
+        self.eq(self.menu.selected, 'Yes')
 
         self.feedkey(' ')
         self.eq(self.terminal.lines, [
@@ -657,6 +695,7 @@ class TestSingleSelectMenu(TestMenuFixture):
             '  ( ) Yes',
             '> (*) no',
             ])
+        self.eq(self.menu.selected, 'no')
 
         self.feedkey(' ')
         self.eq(self.terminal.lines, [
@@ -664,10 +703,13 @@ class TestSingleSelectMenu(TestMenuFixture):
             '  ( ) Yes',
             '> ( ) no',
             ])
+        self.eq(self.menu.selected, None)
+
+        self.feedkey(EOFError)
 
 
 class TestMultiSelectMenu(TestMenuFixture):
-    def test_menu_render(self):
+    def test_menu_default_key_handlers(self):
         import iroiro
         self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]')
         self.start_menu()
@@ -676,6 +718,7 @@ class TestMultiSelectMenu(TestMenuFixture):
             '> [ ] Yes',
             '  [ ] no',
             ])
+        self.eq(self.menu.selected, [])
 
         self.feedkey(' ')
         self.eq(self.terminal.lines, [
@@ -683,6 +726,7 @@ class TestMultiSelectMenu(TestMenuFixture):
             '> [*] Yes',
             '  [ ] no',
             ])
+        self.eq(self.menu.selected, ['Yes'])
 
         self.feedkey(iroiro.KEY_DOWN)
         self.eq(self.terminal.lines, [
@@ -690,6 +734,7 @@ class TestMultiSelectMenu(TestMenuFixture):
             '  [*] Yes',
             '> [ ] no',
             ])
+        self.eq(self.menu.selected, ['Yes'])
 
         self.feedkey(' ')
         self.eq(self.terminal.lines, [
@@ -697,6 +742,7 @@ class TestMultiSelectMenu(TestMenuFixture):
             '  [*] Yes',
             '> [*] no',
             ])
+        self.eq(self.menu.selected, ['Yes', 'no'])
 
         self.feedkey(iroiro.KEY_UP)
         self.feedkey(' ')
@@ -705,3 +751,6 @@ class TestMultiSelectMenu(TestMenuFixture):
             '> [ ] Yes',
             '  [*] no',
             ])
+        self.eq(self.menu.selected, ['no'])
+
+        self.feedkey(EOFError)

@@ -1032,13 +1032,13 @@ class Menu:
             box = None
         elif checkbox in ('()', 'single', 'radio'):
             check = '*'
-            box = checkbox
+            box = '()'
         elif checkbox.startswith('(') and checkbox.endswith(')'):
             check = checkbox[1:-1]
             box = '()'
         elif checkbox in ('[]', 'multi', 'multiple', 'checkbox'):
             check = '*'
-            box = checkbox
+            box = '[]'
         elif checkbox.startswith('[') and checkbox.endswith(']'):
             check = checkbox[1:-1]
             box = '[]'
@@ -1170,7 +1170,7 @@ class Menu:
         selected_items = [item for item in self if item.selected and not item.meta]
         if self.box == '[]':
             return selected_items
-        elif self.box == '()' or not self.box:
+        else:
             if selected_items:
                 return selected_items[0]
 
