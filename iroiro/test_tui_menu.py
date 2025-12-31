@@ -31,79 +31,79 @@ class TestMenuCursor(TestCase):
         self.menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
 
     def test_repr(self):
-        c = self.menu.cursor
-        self.eq(repr(self.menu.cursor), f'MenuCursor(index={c.index}, wrap={c.wrap})')
+        cursor = self.menu.cursor
+        self.eq(repr(self.menu.cursor), f'MenuCursor(index={cursor.index}, wrap={cursor.wrap})')
 
     def test_str(self):
         self.eq(str(self.menu.cursor), '>')
 
     def test_add_sub_to(self):
-        c = self.menu.cursor
-        self.eq(c, 0)
+        cursor = self.menu.cursor
+        self.eq(cursor, 0)
 
-        c += 1
-        self.eq(c, 1)
+        cursor += 1
+        self.eq(cursor, 1)
 
-        c += 1
-        self.eq(c, 2)
+        cursor += 1
+        self.eq(cursor, 2)
 
-        c += 10
-        self.eq(c, 2)
+        cursor += 10
+        self.eq(cursor, 2)
 
-        c -= 100
-        self.eq(c, 0)
+        cursor -= 100
+        self.eq(cursor, 0)
 
-        c.to(1 + c)
-        self.eq(c, 1)
+        cursor.to(1 + cursor)
+        self.eq(cursor, 1)
 
-        c.to(1 - c)
-        self.eq(c, 0)
+        cursor.to(1 - cursor)
+        self.eq(cursor, 0)
 
-        c.to(1)
-        self.ne(c, 0)
-        self.gt(c, 0)
-        self.ge(c, 0)
-        self.ge(c, 1)
-        self.eq(c, 1)
-        self.le(c, 1)
-        self.le(c, 2)
-        self.lt(c, 2)
-        self.ne(c, 2)
+        cursor.to(1)
+        self.ne(cursor, 0)
+        self.gt(cursor, 0)
+        self.ge(cursor, 0)
+        self.ge(cursor, 1)
+        self.eq(cursor, 1)
+        self.le(cursor, 1)
+        self.le(cursor, 2)
+        self.lt(cursor, 2)
+        self.ne(cursor, 2)
 
-        c.up()
-        self.eq(c, 0)
+        cursor.up()
+        self.eq(cursor, 0)
 
-        c.down()
-        c.down()
-        self.eq(c, 2)
+        cursor.down()
+        cursor.down()
+        self.eq(cursor, 2)
 
-        c.to(self.menu[1])
-        self.ne(c, self.menu[0])
-        self.gt(c, self.menu[0])
-        self.ge(c, self.menu[0])
-        self.ge(c, self.menu[1])
-        self.eq(c, self.menu[1])
-        self.le(c, self.menu[1])
-        self.le(c, self.menu[2])
-        self.lt(c, self.menu[2])
-        self.ne(c, self.menu[2])
-        self.eq(c.text, 'Option 2')
+        cursor.to(self.menu[1])
+        self.ne(cursor, self.menu[0])
+        self.gt(cursor, self.menu[0])
+        self.ge(cursor, self.menu[0])
+        self.ge(cursor, self.menu[1])
+        self.eq(cursor, self.menu[1])
+        self.le(cursor, self.menu[1])
+        self.le(cursor, self.menu[2])
+        self.lt(cursor, self.menu[2])
+        self.ne(cursor, self.menu[2])
+        self.eq(cursor.text, 'Option 2')
 
     def test_up_down_wrap(self):
-        c = self.menu.cursor
+        cursor = self.menu.cursor
 
-        c.wrap = True
-        c.to(31)
-        self.eq(c, 1)
+        cursor.wrap = True
+        cursor.to(31)
+        self.eq(cursor, 1)
 
-        c.down()
-        self.eq(c, 2)
+        cursor.down()
+        self.eq(cursor, 2)
 
-        c.down()
-        self.eq(c, 0)
+        cursor.down()
+        self.eq(cursor, 0)
 
-        c.up()
-        self.eq(c, 2)
+        cursor.up()
+        self.eq(cursor, 2)
 
     def test_to_diff_menu(self):
         import iroiro
@@ -113,40 +113,45 @@ class TestMenuCursor(TestCase):
             self.menu.cursor.to(other_menu[1])
 
     def test_attr(self):
-        c = self.menu.cursor
+        cursor = self.menu.cursor
 
-        c.to(1)
-        self.eq(c.text, 'Option 2')
+        cursor.to(1)
+        self.eq(cursor.text, 'Option 2')
 
         with self.raises(AttributeError):
-            c.bau
+            cursor.bau
 
-    def test_relay(self):
-        c = self.menu.cursor
+    def test_attr_relay(self):
+        cursor = self.menu.cursor
         with self.raises(AttributeError):
-            c.wrong_attr = 3
+            cursor.wrong_attr = 3
 
-        c.to(self.menu[0])
-        self.eq(c.text, self.menu[0].text)
-        c.text = 'wah'
+        cursor.to(self.menu[0])
+
+        self.eq(cursor.text, self.menu[0].text)
+
+        cursor.text = 'wah'
         self.eq(self.menu[0].text, 'wah')
 
-    def test_relay_select_unselect_toggle(self):
-        c = self.menu.cursor
-        c.to(self.menu[0])
+        self.menu[0].text = 'iroiro'
+        self.eq(cursor.text, 'iroiro')
 
-        c.select()
+    def test_relay_select_unselect_toggle(self):
+        cursor = self.menu.cursor
+        cursor.to(self.menu[0])
+
+        cursor.select()
         self.true(self.menu[0].selected)
 
-        c.unselect()
+        cursor.unselect()
         self.false(self.menu[0].selected)
 
-        c.toggle()
+        cursor.toggle()
         self.true(self.menu[0].selected)
 
     def test_feedkey(self):
-        c = self.menu.cursor
-        c.to(self.menu[0])
+        cursor = self.menu.cursor
+        cursor.to(self.menu[0])
 
         import queue
         q = queue.Queue()
@@ -155,7 +160,7 @@ class TestMenuCursor(TestCase):
             q.put((item, key))
             return 42
         self.menu[0].bind('k', foo)
-        self.eq(c.feedkey('k'), 42)
+        self.eq(cursor.feedkey('k'), 42)
         self.eq(q.get(), (self.menu[0], 'k'))
 
 
