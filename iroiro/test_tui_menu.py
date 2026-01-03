@@ -793,3 +793,63 @@ class TestMenuFormatting(TestMenuFixture):
             ])
 
         self.feedkey(EOFError)
+
+    def test_menu_custom_cursor(self):
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], cursor='哇')
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '哇 Yes',
+            '   no',
+            ])
+        self.feedkey(EOFError)
+
+    def test_menu_custom_format_string(self):
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]',
+                                format='{box[0]}{box[1]} {check} {item.text} {cursor}')
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '[]   Yes >',
+            '[]   no',
+            ])
+
+        self.feedkey(iroiro.KEY_SPACE)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '[] * Yes >',
+            '[]   no',
+            ])
+
+        self.feedkey(iroiro.KEY_DOWN)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '[] * Yes',
+            '[]   no >',
+            ])
+
+        self.feedkey(EOFError)
+
+    def test_menu_custom_format_callable(self):
+        def format(menu, cursor, item, check, box):
+            return f'{cursor} {box[0]}{(item.index + 5) if item.selected else " "}{box[1]} {item.text}'
+
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]',
+                                format=format)
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> [ ] Yes',
+            '  [ ] no',
+            ])
+
+        self.feedkey(iroiro.KEY_SPACE)
+        self.feedkey(iroiro.KEY_DOWN)
+        self.feedkey(iroiro.KEY_SPACE)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  [5] Yes',
+            '> [6] no',
+            ])
+
+        self.feedkey(EOFError)
