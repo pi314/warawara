@@ -853,3 +853,29 @@ class TestMenuFormatting(TestMenuFixture):
             ])
 
         self.feedkey(EOFError)
+
+
+class TestMenuItemAccess(TestMenuFixture):
+    def test_menu_getitem(self):
+        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no', 'surely yes'])
+        self.eq(menu[0], 'Yes')
+        self.eq(menu[1], 'no')
+        self.eq(menu[2], 'surely yes')
+
+        menu.cursor = 0
+        self.eq(menu[menu.cursor], 'Yes')
+
+        menu.cursor += 1
+        self.eq(menu[menu.cursor], 'no')
+
+        menu.cursor += 1
+        self.eq(menu[menu.cursor], 'surely yes')
+
+        other_menu = iroiro.Menu('other menu', ['unrelated', 'menu'])
+
+        with self.raises(ValueError):
+            menu[other_menu.cursor]
+
+    def test_menu_first_last(self):
+        self.eq(menu.first, 'Yes')
+        self.eq(menu.last, 'surely yes')
