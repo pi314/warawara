@@ -495,7 +495,7 @@ class TestMenuFixture(TestCase):
         from contextlib import nullcontext
         self.patch('iroiro.lib_tui.HijackStdio', nullcontext)
 
-        self.menu = None
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'yes yes', 'surely yes'])
         self.menu_ret = None
 
         import threading
@@ -545,12 +545,12 @@ class TestMenuFixture(TestCase):
 
 class TestMenuRender(TestMenuFixture):
     def test_reuse_menu(self):
-        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
         self.start_menu()
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '> Yes',
-            '  no',
+            '  yes yes',
+            '  surely yes',
             ])
         self.feedkey('q')
 
@@ -558,10 +558,12 @@ class TestMenuRender(TestMenuFixture):
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '> Yes',
-            '  no',
+            '  yes yes',
+            '  surely yes',
             'Do you like iroiro?',
             '> Yes',
-            '  no',
+            '  yes yes',
+            '  surely yes',
             ])
         self.feedkey('q')
 
@@ -569,77 +571,83 @@ class TestMenuRender(TestMenuFixture):
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '> Yes',
-            '  no',
+            '  yes yes',
+            '  surely yes',
             'Do you like iroiro?',
             '> Yes',
-            '  no',
+            '  yes yes',
+            '  surely yes',
             'Do you like iroiro?',
             '> Yes',
-            '  no',
+            '  yes yes',
+            '  surely yes',
             ])
         self.feedkey('q')
 
 
 class TestMenuDefaultKeyHandler(TestMenuFixture):
     def test_basic_menu_default_key_handler_enter(self):
-        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
         self.start_menu()
 
         self.feedkey(iroiro.KEY_ENTER)
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '> Yes',
-            '  no',
+            '  yes yes',
+            '  surely yes',
             '',
             ])
         self.eq(self.menu.selected.text, 'Yes')
 
     def test_basic_menu_default_key_handler_q(self):
-        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
         self.start_menu()
 
         self.feedkey('q')
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '> Yes',
-            '  no',
+            '  yes yes',
+            '  surely yes',
             '',
             ])
         self.eq(self.menu.selected, None)
 
     def test_basic_menu_default_key_handler_up_down(self):
-        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
         self.start_menu()
 
         self.feedkey(iroiro.KEY_DOWN)
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '  Yes',
-            '> no',
+            '> yes yes',
+            '  surely yes',
             ])
 
         self.feedkey(iroiro.KEY_UP)
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '> Yes',
-            '  no',
+            '  yes yes',
+            '  surely yes',
             ])
 
         self.feedkey(iroiro.KEY_DOWN)
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '  Yes',
-            '> no',
+            '> yes yes',
+            '  surely yes',
             ])
 
         self.feedkey(iroiro.KEY_ENTER)
         self.eq(self.terminal.lines, [
             'Do you like iroiro?',
             '  Yes',
-            '> no',
+            '> yes yes',
+            '  surely yes',
             '',
             ])
-        self.eq(self.menu.selected.text, 'no')
+        self.eq(self.menu.selected.text, 'yes yes')
 
     def test_single_select_menu_default_key_handler_space(self):
         self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
@@ -857,16 +865,16 @@ class TestMenuFormatting(TestMenuFixture):
 
 class TestMenuItemAccess(TestMenuFixture):
     def test_menu_getitem(self):
-        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no', 'surely yes'])
+        menu = self.menu
         self.eq(menu[0], 'Yes')
-        self.eq(menu[1], 'no')
+        self.eq(menu[1], 'yes yes')
         self.eq(menu[2], 'surely yes')
 
         menu.cursor = 0
         self.eq(menu[menu.cursor], 'Yes')
 
         menu.cursor += 1
-        self.eq(menu[menu.cursor], 'no')
+        self.eq(menu[menu.cursor], 'yes yes')
 
         menu.cursor += 1
         self.eq(menu[menu.cursor], 'surely yes')
@@ -877,5 +885,6 @@ class TestMenuItemAccess(TestMenuFixture):
             menu[other_menu.cursor]
 
     def test_menu_first_last(self):
+        menu = self.menu
         self.eq(menu.first, 'Yes')
         self.eq(menu.last, 'surely yes')
