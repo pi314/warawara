@@ -888,3 +888,28 @@ class TestMenuItemAccess(TestMenuFixture):
         menu = self.menu
         self.eq(menu.first, 'Yes')
         self.eq(menu.last, 'surely yes')
+
+    def test_menu_index(self):
+        menu = self.menu
+        items = (menu[0],
+                 menu[1],
+                 menu[2],)
+        self.eq(menu.index(menu[0]), 0)
+        self.eq(menu.index(menu[1]), 1)
+        self.eq(menu.index(menu[2]), 2)
+
+        self.eq(menu.index('Yes'), 0)
+        self.eq(menu.index('yes yes'), 1)
+        self.eq(menu.index('surely yes'), 2)
+
+        menu.cursor = 0
+        self.eq(menu.index(menu.cursor), 0)
+
+        menu.cursor = 1
+        self.eq(menu.index(menu.cursor), 1)
+
+        menu.cursor = 2
+        self.eq(menu.index(menu.cursor), 2)
+
+    def test_menu_index_with_invalid_obj(self):
+        self.eq(self.menu.index(self.menu), -1)

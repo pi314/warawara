@@ -1175,9 +1175,9 @@ class Menu:
             if selected_items:
                 return selected_items[0]
 
-    def index(self, item):
-        for index, i in enumerate(self.options):
-            if item is i:
+    def index(self, value):
+        for index, item in enumerate(self.options):
+            if item is value or item.text == value:
                 return index
         return -1
 
