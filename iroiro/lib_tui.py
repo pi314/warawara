@@ -1099,6 +1099,13 @@ class Menu:
             idx = idx.index
         return self.options[idx]
 
+    def __setitem__(self, idx, value):
+        if isinstance(idx, (MenuItem, MenuCursor)):
+            if idx.menu is not self:
+                raise ValueError('MenuCursor is from different Menu')
+            idx = idx.index
+        self.options[idx].text = str(value)
+
     def Thread(self, target=None, name=None, args=(), kwargs={}):
         return MenuThread(menu=self, target=target, name=name, args=args, kwargs=kwargs)
 

@@ -863,7 +863,7 @@ class TestMenuFormatting(TestMenuFixture):
         self.feedkey(EOFError)
 
 
-class TestMenuItemAccess(TestMenuFixture):
+class TestMenuItemManiputation(TestMenuFixture):
     def test_menu_getitem(self):
         menu = self.menu
         self.eq(menu[0], 'Yes')
@@ -880,9 +880,25 @@ class TestMenuItemAccess(TestMenuFixture):
         self.eq(menu[menu.cursor], 'surely yes')
 
         other_menu = iroiro.Menu('other menu', ['unrelated', 'menu'])
-
         with self.raises(ValueError):
             menu[other_menu.cursor]
+
+    def test_menu_setitem(self):
+        menu = self.menu
+        self.eq(menu[1], 'yes yes')
+
+        menu[1] = 'yes yes yes'
+        self.eq(menu[1], 'yes yes yes')
+
+        menu.cursor = 2
+        self.eq(menu[menu.cursor], 'surely yes')
+
+        menu[menu.cursor] = 'of course yes'
+        self.eq(menu[2], 'of course yes')
+
+        other_menu = iroiro.Menu('other menu', ['unrelated', 'menu'])
+        with self.raises(ValueError):
+            menu[other_menu.cursor] = 'ValueError'
 
     def test_menu_first_last(self):
         menu = self.menu
@@ -913,3 +929,18 @@ class TestMenuItemAccess(TestMenuFixture):
 
     def test_menu_index_with_invalid_obj(self):
         self.eq(self.menu.index(self.menu), -1)
+
+    def test_menu_insert(self):
+        ...
+
+    def test_menu_append(self):
+        ...
+
+    def test_menu_extend(self):
+        ...
+
+    def test_menu_swap(self):
+        ...
+
+    def test_menu_moveto(self):
+        ...
