@@ -1109,6 +1109,12 @@ class Menu:
     def Thread(self, target=None, name=None, args=(), kwargs={}):
         return MenuThread(menu=self, target=target, name=name, args=args, kwargs=kwargs)
 
+    def Item(self, text='', cursor=None, checkbox=None, meta=False, onkey=None):
+        ret = MenuItem(menu=self, meta=meta, text=text, cursor=cursor, checkbox=checkbox)
+        if onkey:
+            ret.onkey += onkey
+        return ret
+
     def notify_start(self, thread):
         self._threads.append(thread)
 
@@ -1476,7 +1482,7 @@ class MenuItem(MenuItemRef):
 
     @onkey.setter
     def onkey(self, value):
-        self._onkey.clear()
+        self._onkey = MenuKeyHandler(self)
         self._onkey += value
 
     @property
@@ -1648,8 +1654,17 @@ class MenuKeyHandler:
         self.handlers = {None: self.MenuKeySubHandlerList()}
 
     def __iadd__(self, other):
-        if isinstance(other, (list, tuple, UserList)):
-            return self.bind(*other)
+        if isinstance(other, MenuKeyHandler):
+            # Unpack the MenuKeyHandler
+            for key in other.handlers.keys():
+                for handler in other.handlers[key]:
+                    self.bind(key, handler)
+            return self
+
+        elif isinstance(other, (list, tuple, UserList)):
+            self.bind(*other)
+            return self
+
         else:
             return self.bind(other)
 

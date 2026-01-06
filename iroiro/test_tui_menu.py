@@ -452,6 +452,19 @@ class TestMenuItem(TestCase):
         self.eq(self.menu[0].feedkey('a'), None)
         self.eq(self.menu[0].feedkey('b'), 'b')
 
+    def test_proxy_class(self):
+        def foo(item, key):
+            print('foo', item, key)
+            return 'k'
+        item = self.menu.Item(text='wah', checkbox='[]')
+        item.onkey += ('a', foo)
+        self.eq(item.onkey['a'], [foo])
+        self.eq(item.menu, self.menu)
+        self.eq(item.text, 'wah')
+        self.eq(item.check, '*')
+        self.eq(item.box, '[]')
+        self.eq(item.feedkey('a'), 'k')
+
 
 class TestMenuThread(TestCase):
     def test_menu_thread(self):
@@ -883,7 +896,7 @@ class TestMenuItemManiputation(TestMenuFixture):
         with self.raises(ValueError):
             menu[other_menu.cursor]
 
-    def test_menu_setitem(self):
+    def test_menu_setitem_str(self):
         menu = self.menu
         self.eq(menu[1], 'yes yes')
 
