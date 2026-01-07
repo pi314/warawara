@@ -244,7 +244,15 @@ class TestMenuKeyHandler(TestCase):
         handler.bind({'f': foo, 'b': [bar, baz]})
         self.eq(handler['f'], [foo])
         self.eq(handler['b'], [bar, baz])
-        handler.unbind([foo, bar, baz])
+
+        # Unbind with a specified mapping
+        handler.unbind({'f': foo})
+        self.eq(handler['f'], [])
+        self.eq(handler['b'], [bar, baz])
+
+        handler.unbind({'b': [bar, baz]})
+        self.eq(handler['f'], [])
+        self.eq(handler['b'], [])
 
         # __iadd__
         handler += foo

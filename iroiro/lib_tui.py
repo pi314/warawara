@@ -1738,9 +1738,17 @@ class MenuKeyHandler:
         return self
 
     def unbind(self, *args):
-        if len(args) == 1 and isinstance(args[0], (tuple, list, UserList)):
-            self.unbind(*args[0])
-            return self
+        if len(args) == 1:
+            if isinstance(args[0], (dict, UserDict)):
+                for key, handlers in args[0].items():
+                    if callable(handlers):
+                        handlers = [handlers]
+                    for h in handlers:
+                        self.unbind(key, h)
+                return self
+
+            if isinstance(args[0], (tuple, list, UserList)):
+                return self.unbind(*args[0])
 
         key_list = [arg for arg in args if not callable(arg)] or self.handlers.keys()
         handler_list = [arg for arg in args if callable(arg)]
