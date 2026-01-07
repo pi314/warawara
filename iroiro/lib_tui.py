@@ -1,7 +1,7 @@
 import sys
 import builtins
 
-from collections import UserList
+from collections import UserList, UserDict
 
 from .lib_threading import Lock
 from .lib_itertools import zip_longest
@@ -1661,8 +1661,8 @@ class MenuKeyHandler:
                     self.bind(key, handler)
             return self
 
-        elif isinstance(other, (list, tuple, UserList)):
-            self.bind(*other)
+        elif isinstance(other, (list, tuple, dict, UserList, UserDict)):
+            self.bind(other)
             return self
 
         else:
@@ -1692,6 +1692,18 @@ class MenuKeyHandler:
         return self.bind(*args)
 
     def bind(self, *args):
+        if len(args) == 1:
+            if isinstance(args[0], (dict, UserDict)):
+                for key, handlers in args[0].items():
+                    if callable(handlers):
+                        handlers = [handlers]
+                    for h in handlers:
+                        self.bind(key, h)
+                return self
+
+            if isinstance(args[0], (tuple, list, UserList)):
+                return self.bind(*args[0])
+
         key_list = [arg for arg in args if not callable(arg)] or [None]
         handler_list = [arg for arg in args if callable(arg)]
 
@@ -1726,6 +1738,10 @@ class MenuKeyHandler:
         return self
 
     def unbind(self, *args):
+        if len(args) == 1 and isinstance(args[0], (tuple, list, UserList)):
+            self.unbind(*args[0])
+            return self
+
         key_list = [arg for arg in args if not callable(arg)] or self.handlers.keys()
         handler_list = [arg for arg in args if callable(arg)]
 

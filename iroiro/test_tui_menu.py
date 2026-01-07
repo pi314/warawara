@@ -174,14 +174,12 @@ class TestMenuKeyHandler(TestCase):
 
     def test_bool(self):
         handler = iroiro.tui.MenuKeyHandler(self.menu)
-        print(handler.handlers)
         self.false(handler)
         handler.bind(lambda: None)
         self.true(handler)
 
     def test_bind_without_handler(self):
         handler = iroiro.tui.MenuKeyHandler(self.menu)
-
         with self.raises(ValueError):
             handler.bind('a', 'b', 'c')
 
@@ -207,27 +205,54 @@ class TestMenuKeyHandler(TestCase):
 
         def foo(menu, key):
             pass
-
         def bar(menu, key):
             pass
-
         def baz(menu, key):
             pass
 
-        handler.bind(foo, bar)
-        self.eq(handler[None], [foo, bar])
+        # Pre-condition
+        self.false(handler)
 
-        handler(baz)
+        # Bind single handler
+        handler.bind(foo)
+        self.eq(handler[None], [foo])
+
+        # Bind multiple handlers
+        handler.bind(bar, baz)
         self.eq(handler[None], [foo, bar, baz])
 
+        # Unbind multiple handlers
         handler.unbind(foo, bar, baz)
         self.eq(handler[None], [])
 
+        # Bind multiple handlers packed in a tuple
+        handler.bind((foo, bar, baz))
+        self.eq(handler[None], [foo, bar, baz])
+        handler.unbind((foo, bar, baz))
+
+        # Bind multiple handlers packed in a list
+        handler.bind([foo, bar, baz])
+        self.eq(handler[None], [foo, bar, baz])
+        handler.unbind([foo, bar, baz])
+
+        # Bind multiple handlers packed in a dict
+        handler.bind({'k': [foo, bar, baz]})
+        self.eq(handler['k'], [foo, bar, baz])
+        handler.unbind([foo, bar, baz])
+
+        # Bind with a specified mapping
+        handler.bind({'f': foo, 'b': [bar, baz]})
+        self.eq(handler['f'], [foo])
+        self.eq(handler['b'], [bar, baz])
+        handler.unbind([foo, bar, baz])
+
+        # __iadd__
         handler += foo
         self.eq(handler[None], [foo])
         handler += (bar, baz)
         self.eq(handler[None], [foo, bar, baz])
 
+        # __isub__
         handler -= bar
         self.eq(handler[None], [foo, baz])
         handler -= (baz, foo)
@@ -454,7 +479,6 @@ class TestMenuItem(TestCase):
 
     def test_proxy_class(self):
         def foo(item, key):
-            print('foo', item, key)
             return 'k'
         item = self.menu.Item(text='wah', checkbox='[]')
         item.onkey += ('a', foo)
@@ -920,9 +944,6 @@ class TestMenuItemManiputation(TestMenuFixture):
 
     def test_menu_index(self):
         menu = self.menu
-        items = (menu[0],
-                 menu[1],
-                 menu[2],)
         self.eq(menu.index(menu[0]), 0)
         self.eq(menu.index(menu[1]), 1)
         self.eq(menu.index(menu[2]), 2)
@@ -944,7 +965,18 @@ class TestMenuItemManiputation(TestMenuFixture):
         self.eq(self.menu.index(self.menu), -1)
 
     def test_menu_insert(self):
-        ...
+        menu = self.menu
+        def foo(item, key):
+            return key.upper()
+        menu.insert(1, text='text', onkey={'k': foo})
+
+        self.eq(menu[0].text, 'Yes')
+        self.eq(menu[1].text, 'text')
+        self.eq(menu[2].text, 'yes yes')
+        self.eq(menu[3].text, 'surely yes')
+
+        menu.cursor = 1
+        self.eq(menu.feedkey('k'), 'K')
 
     def test_menu_append(self):
         ...
