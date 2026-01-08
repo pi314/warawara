@@ -1227,8 +1227,7 @@ class Menu:
         if not isinstance(item, MenuItem):
             raise TypeError('item should be a MenuItem')
 
-        if isinstance(item, (MenuItem, MenuCursor)):
-            item = item.index
+        item = item.index
         if isinstance(to, (MenuItem, MenuCursor)):
             to = to.index
 
@@ -1240,7 +1239,6 @@ class Menu:
                     [self.options[item]] +
                     self.options[to+1:]
                     )
-            return
 
         if item > to: # move up
             self.options = (
@@ -1250,7 +1248,6 @@ class Menu:
                     self.options[to+1:item] +
                     self.options[item+1:]
                     )
-            return
 
     def bind(self, *args, **kwargs):
         return self._onkey.bind(*args, **kwargs)

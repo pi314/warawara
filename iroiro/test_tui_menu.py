@@ -1045,19 +1045,33 @@ class TestMenuItemManiputation(TestMenuFixture):
         self.eq(menu[3], 'text1')
         self.eq(menu[4], 'text2')
 
-        menu[1].moveto(menu[3])
+        menu[1].moveto(3)
         self.eq(menu[0], 'Yes')
         self.eq(menu[1], 'surely yes')
         self.eq(menu[2], 'text1')
         self.eq(menu[3], 'yes yes')
         self.eq(menu[4], 'text2')
 
+        menu[3].moveto(menu[0])
+        self.eq(menu[0], 'yes yes')
+        self.eq(menu[1], 'Yes')
+        self.eq(menu[2], 'surely yes')
+        self.eq(menu[3], 'text1')
+        self.eq(menu[4], 'text2')
+
         menu.moveto(menu[2], 4)
-        self.eq(menu[0], 'Yes')
-        self.eq(menu[1], 'surely yes')
-        self.eq(menu[2], 'yes yes')
+        self.eq(menu[0], 'yes yes')
+        self.eq(menu[1], 'Yes')
+        self.eq(menu[2], 'text1')
         self.eq(menu[3], 'text2')
-        self.eq(menu[4], 'text1')
+        self.eq(menu[4], 'surely yes')
+
+        menu.moveto(menu[4], 0)
+        self.eq(menu[0], 'surely yes')
+        self.eq(menu[1], 'yes yes')
+        self.eq(menu[2], 'Yes')
+        self.eq(menu[3], 'text1')
+        self.eq(menu[4], 'text2')
 
         with self.raises(TypeError):
             menu.moveto(1, 2)
