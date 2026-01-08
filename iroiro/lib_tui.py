@@ -1152,7 +1152,7 @@ class Menu:
 
     @onkey.setter
     def onkey(self, value):
-        self._onkey.clear()
+        self._onkey = MenuKeyHandler(self)
         self._onkey += value
 
     @property
