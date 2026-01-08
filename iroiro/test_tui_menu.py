@@ -977,23 +977,87 @@ class TestMenuItemManiputation(TestMenuFixture):
         def foo(item, key):
             return key.upper()
         menu.insert(1, text='text', onkey={'k': foo})
+        menu.insert(1, text='text2')
 
         self.eq(menu[0].text, 'Yes')
-        self.eq(menu[1].text, 'text')
-        self.eq(menu[2].text, 'yes yes')
-        self.eq(menu[3].text, 'surely yes')
+        self.eq(menu[1].text, 'text2')
+        self.eq(menu[2].text, 'text')
+        self.eq(menu[3].text, 'yes yes')
+        self.eq(menu[4].text, 'surely yes')
 
-        menu.cursor = 1
+        menu.cursor = 2
         self.eq(menu.feedkey('k'), 'K')
 
     def test_menu_append(self):
-        ...
+        menu = self.menu
+        def foo(item, key):
+            return key.upper()
+        menu.append(text='text', onkey={'k': foo})
+        menu.append(text='text2')
+
+        self.eq(menu[0].text, 'Yes')
+        self.eq(menu[1].text, 'yes yes')
+        self.eq(menu[2].text, 'surely yes')
+        self.eq(menu[3].text, 'text')
+        self.eq(menu[4].text, 'text2')
+
+        menu.cursor = 3
+        self.eq(menu.feedkey('k'), 'K')
 
     def test_menu_extend(self):
-        ...
+        menu = self.menu
+        def foo(item, key):
+            return key.upper()
+        menu.extend(['text'], onkey={'k': foo})
+        menu.extend(['text2'])
+
+        self.eq(menu[0].text, 'Yes')
+        self.eq(menu[1].text, 'yes yes')
+        self.eq(menu[2].text, 'surely yes')
+        self.eq(menu[3].text, 'text')
+        self.eq(menu[4].text, 'text2')
+
+        menu.cursor = 3
+        self.eq(menu.feedkey('k'), 'K')
 
     def test_menu_swap(self):
-        ...
+        menu = self.menu
+        self.eq(menu[0], 'Yes')
+        self.eq(menu[1], 'yes yes')
+        self.eq(menu[2], 'surely yes')
+
+        menu.swap(0, 1)
+        self.eq(menu[0], 'yes yes')
+        self.eq(menu[1], 'Yes')
+        self.eq(menu[2], 'surely yes')
+
+        menu.swap(menu.cursor, menu[1])
+        self.eq(menu[0], 'Yes')
+        self.eq(menu[1], 'yes yes')
+        self.eq(menu[2], 'surely yes')
 
     def test_menu_moveto(self):
-        ...
+        menu = self.menu
+        menu.extend(['text1', 'text2'])
+        self.eq(menu[0], 'Yes')
+        self.eq(menu[1], 'yes yes')
+        self.eq(menu[2], 'surely yes')
+        self.eq(menu[3], 'text1')
+        self.eq(menu[4], 'text2')
+
+        menu[1].moveto(menu[3])
+        self.eq(menu[0], 'Yes')
+        self.eq(menu[1], 'surely yes')
+        self.eq(menu[2], 'text1')
+        self.eq(menu[3], 'yes yes')
+        self.eq(menu[4], 'text2')
+
+        menu.moveto(menu[2], 4)
+        self.eq(menu[0], 'Yes')
+        self.eq(menu[1], 'surely yes')
+        self.eq(menu[2], 'yes yes')
+        self.eq(menu[3], 'text2')
+        self.eq(menu[4], 'text1')
+
+        with self.raises(TypeError):
+            menu.moveto(1, 2)
