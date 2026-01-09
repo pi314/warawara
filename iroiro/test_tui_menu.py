@@ -561,6 +561,8 @@ class TestMenuFixture(TestCase):
             raise ret
         if isinstance(ret, type) and issubclass(ret, Exception):
             raise ret()
+        if callable(ret):
+            return ret()
         return ret
 
     def start_menu(self, *args, **kwargs):
@@ -588,7 +590,26 @@ class TestMenuFixture(TestCase):
         self.is_waiting_user.wait()
 
 
-class TestMenuRender(TestMenuFixture):
+class TestMenuBasicRendering(TestMenuFixture):
+    def test_basic_menu(self):
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            ])
+        self.feedkey(EOFError)
+
+    def test_menu_without_title(self):
+        self.menu = iroiro.Menu(['option1', 'option2'])
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            '> option1',
+            '  option2',
+            ])
+        self.feedkey(EOFError)
+
     def test_reuse_menu(self):
         self.start_menu()
         self.eq(self.terminal.lines, [
@@ -908,7 +929,7 @@ class TestMenuFormatting(TestMenuFixture):
         self.feedkey(EOFError)
 
 
-class TestMenuItemManiputation(TestMenuFixture):
+class TestMenuItemManipulation(TestMenuFixture):
     def test_menu_getitem(self):
         menu = self.menu
         self.eq(menu[0], 'Yes')

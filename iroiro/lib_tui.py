@@ -4,7 +4,7 @@ import builtins
 from collections import UserList, UserDict
 
 from .lib_threading import Lock
-from .lib_itertools import zip_longest
+from .lib_itertools import zip_longest, is_iterable
 
 from .internal_utils import exporter
 export, __all__ = exporter()
@@ -1048,10 +1048,16 @@ class Menu:
 
         return check, box
 
-    def __init__(self, title, options, *, message=None,
+    def __init__(self, title, options=None, *, message=None,
                  max_height=None, wrap=False,
                  format=None, cursor='>', checkbox=None,
                  onkey=None, term_cursor_invisible=None):
+        if options is None:
+            title, options = None, title
+
+        if not is_iterable(options):
+            raise TypeError('options should be a iterable')
+
         self.pager = Pager(max_height=max_height)
 
         self.title = title
@@ -1336,7 +1342,7 @@ class Menu:
 
         self.pager.clear()
 
-        if self.title:
+        if self.title is not None:
             self.pager.header.extend(self.title.split('\n'))
 
         def pad(s):
@@ -1362,7 +1368,7 @@ class Menu:
                     )
 
         if self.message is not None:
-            self.pager.footer.append(self.message)
+            self.pager.footer.append(self.message.split('\n'))
 
         self.pager.render()
 
@@ -1390,9 +1396,7 @@ class Menu:
         finally:
             self._active = False
             self.refresh(force=True)
-            tui_print()
-            if self.term_cursor_invisible:
-                tui_print('\033[?25h', end='')
+            tui_print('\033[?25h' if self.term_cursor_invisible else '')
 
     def interact(self, *, suppress=(EOFError, KeyboardInterrupt, BlockingIOError)):
         if not sys.stdout.isatty():
