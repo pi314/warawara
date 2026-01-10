@@ -590,6 +590,52 @@ class TestMenuFixture(TestCase):
         self.is_waiting_user.wait()
 
 
+class TestMenuAttributes(TestMenuFixture):
+    def test_menu_option_type_error(self):
+        with self.raises(TypeError):
+            menu = iroiro.Menu(3)
+        with self.raises(TypeError):
+            menu = iroiro.Menu('probably typo')
+
+    def test_menu_without_title(self):
+        menu = iroiro.Menu(['option1', 'option2'])
+        self.eq(menu.title, None)
+        self.eq(menu[0].text, 'option1')
+        self.eq(menu[1].text, 'option2')
+
+        menu = iroiro.Menu(options=['option1', 'option2'])
+        self.eq(menu.title, None)
+        self.eq(menu[0].text, 'option1')
+        self.eq(menu[1].text, 'option2')
+
+    def test_menu_with_message(self):
+        menu = iroiro.Menu(['option1', 'option2'], message='message1')
+        self.eq(menu.message, 'message1')
+        menu.message = 'message2'
+        self.eq(menu.message, 'message2')
+
+    def test_menu_wrap(self):
+        menu = iroiro.Menu(['option1'], wrap=True)
+        self.true(menu.wrap)
+        self.true(menu.cursor.wrap)
+
+        menu.wrap = False
+        self.false(menu.wrap)
+        self.false(menu.cursor.wrap)
+
+    def test_menu_max_height(self):
+        menu = iroiro.Menu(['option1'])
+        self.eq(menu.max_height, None)
+
+        menu = iroiro.Menu(['option1'], max_height=42)
+        self.eq(menu.max_height, 42)
+        self.eq(menu.pager.max_height, 42)
+
+        menu.max_height = 53
+        self.eq(menu.max_height, 53)
+        self.eq(menu.pager.max_height, 53)
+
+
 class TestMenuBasicRendering(TestMenuFixture):
     def test_basic_menu(self):
         self.start_menu()

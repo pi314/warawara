@@ -1048,15 +1048,15 @@ class Menu:
 
         return check, box
 
-    def __init__(self, title, options=None, *, message=None,
+    def __init__(self, title=None, options=None, *, message=None,
                  max_height=None, wrap=False,
                  format=None, cursor='>', checkbox=None,
                  onkey=None, term_cursor_invisible=None):
         if options is None:
-            title, options = None, title
+            options, title = title, None
 
-        if not is_iterable(options):
-            raise TypeError('options should be a iterable')
+        if not options or not is_iterable(options) or isinstance(options, str):
+            raise TypeError('options should be a non-empty iterable')
 
         self.pager = Pager(max_height=max_height)
 
