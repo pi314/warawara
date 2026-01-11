@@ -851,6 +851,109 @@ class TestMenuDefaultKeyHandler(TestMenuFixture):
         self.feedkey(EOFError)
 
 
+class TestMenuKeyBinding(TestMenuFixture):
+    def test_menu_init_with_key_handler(self):
+        def foo(menu):
+            menu.quit()
+        self.menu = iroiro.Menu('Do you like iroiro?',
+                                ['Yes', 'yes yes', 'surely yes'],
+                                onkey={'a': foo})
+        self.start_menu()
+        self.feedkey(iroiro.KEY_ENTER)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            ])
+
+        self.feedkey('a')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            '',
+            ])
+        self.eq(self.menu.selected, None)
+
+    def test_menu_bind_unbind_key_handler(self):
+        menu = self.menu
+        self.false(menu.onkey)
+        menu.bind('k', menu.cursor.up)
+        menu.bind('j', menu.cursor.down)
+        self.true(menu.onkey)
+
+        self.start_menu()
+        self.eq(menu.onkey[iroiro.KEY_ENTER], [])
+        self.eq(menu.onkey['q'], [])
+        self.eq(menu.onkey['k'], [menu.cursor.up])
+        self.eq(menu.onkey['j'], [menu.cursor.down])
+
+        self.feedkey('a')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            ])
+
+        self.feedkey('j')
+        self.feedkey('j')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  Yes',
+            '  yes yes',
+            '> surely yes',
+            ])
+
+        self.feedkey('k')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  Yes',
+            '> yes yes',
+            '  surely yes',
+            ])
+
+        menu.unbind('k')
+        self.eq(menu.onkey['k'], [])
+
+        self.feedkey('k')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  Yes',
+            '> yes yes',
+            '  surely yes',
+            ])
+
+        self.feedkey(EOFError)
+
+    def test_menu_overwrite_key_handler(self):
+        menu = self.menu
+        menu.onkey = menu.cursor.down
+
+        self.start_menu()
+        self.eq(menu.onkey[iroiro.KEY_ENTER], [])
+        self.eq(menu.onkey['q'], [])
+        self.eq(menu.onkey[None], [menu.cursor.down])
+
+        self.feedkey('a')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  Yes',
+            '> yes yes',
+            '  surely yes',
+            ])
+        self.feedkey('q')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  Yes',
+            '  yes yes',
+            '> surely yes',
+            ])
+        self.feedkey(EOFError)
+
+
 class TestMenuFormatting(TestMenuFixture):
     def test_menu_builtin_checkbox_types(self):
         menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
