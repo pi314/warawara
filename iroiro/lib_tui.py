@@ -1362,7 +1362,7 @@ class Menu:
                     )
 
         if self.message is not None:
-            self.pager.footer.append(self.message.split('\n'))
+            self.pager.footer.extend(self.message.split('\n'))
 
         self.pager.render()
 

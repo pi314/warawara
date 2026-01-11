@@ -16,7 +16,7 @@ def main():
     menu = iroiro.Menu('title', iroiro.natsorted(os.listdir()), checkbox='[*]', format=format, max_height=20, message='', term_cursor_invisible=True)
 
     def pager_info(key):
-        menu.message = 'key={} cursor={} grab={} text=[{}] visible={} scroll={} height={}'.format(
+        menu.message = 'key={} cursor={} grab={} text=[{}]\nvisible={} scroll={} height={}'.format(
                 key, repr(menu.cursor), menu.data.grabbing, menu.cursor.text,
                 menu.pager[int(menu.cursor)].visible, menu.pager.scroll, menu.pager.height)
 
