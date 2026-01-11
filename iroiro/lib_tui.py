@@ -1061,7 +1061,7 @@ class Menu:
         self.pager = Pager(max_height=max_height)
 
         self.title = title
-        self.options = [MenuItem(self, False, opt, None, None) for opt in options]
+        self.options = [self.Item(meta=False, text=opt, cursor=None, checkbox=None) for opt in options]
         self.message = message
         self.data = MenuData()
 
@@ -1201,25 +1201,19 @@ class Menu:
         return -1
 
     def insert(self, index, text='', cursor=None, checkbox=None, meta=False, onkey=None):
-        ret = MenuItem(self, meta, text, cursor, checkbox)
+        ret = self.Item(meta=meta, text=text, cursor=cursor, checkbox=checkbox, onkey=onkey)
         self.options.insert(index, ret)
-        if onkey:
-            ret.onkey(onkey)
         return ret
 
     def append(self, text='', cursor=None, checkbox=None, meta=False, onkey=None):
-        ret = MenuItem(self, meta, text, cursor, checkbox)
+        ret = self.Item(meta=meta, text=text, cursor=cursor, checkbox=checkbox, onkey=onkey)
         self.options.append(ret)
-        if onkey:
-            ret.onkey(onkey)
         return ret
 
     def extend(self, options, cursor=None, checkbox=None, meta=False, onkey=None):
-        ret = [MenuItem(self, meta, text, cursor, checkbox) for text in options]
+        ret = [self.Item(meta=meta, text=text, cursor=cursor, checkbox=checkbox, onkey=onkey)
+               for text in options]
         self.options.extend(ret)
-        if onkey:
-            for i in ret:
-                i.onkey(onkey)
         return ret
 
     def swap(self, a, b):
@@ -1456,7 +1450,7 @@ class MenuItemRef:
 
 
 class MenuItem(MenuItemRef):
-    def __init__(self, menu, meta, text, cursor, checkbox):
+    def __init__(self, *, menu, meta, text, cursor, checkbox):
         self.menu = menu
         self.meta = meta
         self.text = str(text)
