@@ -497,6 +497,17 @@ class TestMenuItem(TestCase):
         self.eq(item.box, '[]')
         self.eq(item.feedkey('a'), 'k')
 
+    def test_meta_item(self):
+        item = self.menu.Item(text='wah', meta=True)
+        self.eq(item.menu, self.menu)
+        self.eq(item.text, 'wah')
+        self.eq(item.check, '*')
+        self.eq(item.box, '{}')
+
+        item = self.menu.Item(text='wah', meta=True, checkbox='[+]')
+        self.eq(item.check, '+')
+        self.eq(item.box, '[]')
+
 
 class TestMenuThread(TestCase):
     def test_menu_thread(self):
