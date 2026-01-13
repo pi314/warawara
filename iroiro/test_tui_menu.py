@@ -1256,3 +1256,21 @@ class TestMenuRendering(TestMenuFixture):
             '  surely yes',
             ])
         self.feedkey('q')
+
+    def test_menu_term_cursor_invisible(self):
+        self.true(self.terminal.cursor.visible)
+
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'yes yes', 'surely yes'],
+                                term_cursor_invisible=True)
+        self.start_menu()
+        self.false(self.terminal.cursor.visible)
+
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            ])
+        self.feedkey(EOFError)
+
+        self.true(self.terminal.cursor.visible)
