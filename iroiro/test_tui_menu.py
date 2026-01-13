@@ -647,67 +647,6 @@ class TestMenuAttributes(TestMenuFixture):
         self.eq(menu.pager.max_height, 53)
 
 
-class TestMenuBasicRendering(TestMenuFixture):
-    def test_basic_menu(self):
-        self.start_menu()
-        self.eq(self.terminal.lines, [
-            'Do you like iroiro?',
-            '> Yes',
-            '  yes yes',
-            '  surely yes',
-            ])
-        self.feedkey(EOFError)
-
-    def test_menu_without_title(self):
-        self.menu = iroiro.Menu(['option1', 'option2'])
-        self.start_menu()
-        self.eq(self.terminal.lines, [
-            '> option1',
-            '  option2',
-            ])
-        self.feedkey(EOFError)
-
-    def test_reuse_menu(self):
-        self.start_menu()
-        self.eq(self.terminal.lines, [
-            'Do you like iroiro?',
-            '> Yes',
-            '  yes yes',
-            '  surely yes',
-            ])
-        self.feedkey('q')
-
-        self.start_menu()
-        self.eq(self.terminal.lines, [
-            'Do you like iroiro?',
-            '> Yes',
-            '  yes yes',
-            '  surely yes',
-            'Do you like iroiro?',
-            '> Yes',
-            '  yes yes',
-            '  surely yes',
-            ])
-        self.feedkey('q')
-
-        self.start_menu()
-        self.eq(self.terminal.lines, [
-            'Do you like iroiro?',
-            '> Yes',
-            '  yes yes',
-            '  surely yes',
-            'Do you like iroiro?',
-            '> Yes',
-            '  yes yes',
-            '  surely yes',
-            'Do you like iroiro?',
-            '> Yes',
-            '  yes yes',
-            '  surely yes',
-            ])
-        self.feedkey('q')
-
-
 class TestMenuDefaultKeyHandler(TestMenuFixture):
     def test_basic_menu_default_key_handler_enter(self):
         self.start_menu()
@@ -1256,3 +1195,64 @@ class TestMenuItemManipulation(TestMenuFixture):
 
         with self.raises(TypeError):
             menu.moveto(1, 2)
+
+
+class TestMenuRendering(TestMenuFixture):
+    def test_basic_menu(self):
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            ])
+        self.feedkey(EOFError)
+
+    def test_menu_without_title(self):
+        self.menu = iroiro.Menu(['option1', 'option2'])
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            '> option1',
+            '  option2',
+            ])
+        self.feedkey(EOFError)
+
+    def test_reuse_menu(self):
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            ])
+        self.feedkey('q')
+
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            ])
+        self.feedkey('q')
+
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            'Do you like iroiro?',
+            '> Yes',
+            '  yes yes',
+            '  surely yes',
+            ])
+        self.feedkey('q')
