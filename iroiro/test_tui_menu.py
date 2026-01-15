@@ -711,6 +711,31 @@ class TestMenuDefaultKeyHandler(TestMenuFixture):
             ])
         self.eq(self.menu.selected.text, 'yes yes')
 
+    def test_single_select_menu_default_key_handler_enter(self):
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> ( ) Yes',
+            '  ( ) no',
+            ])
+        self.eq(self.menu.selected, None)
+
+        self.feedkey(iroiro.KEY_ENTER)
+        self.eq(self.menu.selected, None)
+
+        self.terminal.reset()
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
+        self.start_menu()
+        self.feedkey(iroiro.KEY_DOWN)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  ( ) Yes',
+            '> ( ) no',
+            ])
+        self.feedkey(iroiro.KEY_ENTER)
+        self.eq(self.menu.selected, None)
+
     def test_single_select_menu_default_key_handler_space(self):
         self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
         self.start_menu()
@@ -754,6 +779,31 @@ class TestMenuDefaultKeyHandler(TestMenuFixture):
         self.eq(self.menu.selected, None)
 
         self.feedkey(EOFError)
+
+    def test_multi_select_menu_default_key_handler_enter(self):
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]')
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> [ ] Yes',
+            '  [ ] no',
+            ])
+        self.eq(self.menu.selected, [])
+
+        self.feedkey(iroiro.KEY_ENTER)
+        self.eq(self.menu.selected, [])
+
+        self.terminal.reset()
+        self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]')
+        self.start_menu()
+        self.feedkey(iroiro.KEY_DOWN)
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  [ ] Yes',
+            '> [ ] no',
+            ])
+        self.feedkey(iroiro.KEY_ENTER)
+        self.eq(self.menu.selected, [])
 
     def test_multi_select_menu_default_key_handler_space(self):
         self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]')
