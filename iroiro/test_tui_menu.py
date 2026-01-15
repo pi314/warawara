@@ -1246,6 +1246,21 @@ class TestMenuItemManipulation(TestMenuFixture):
         with self.raises(TypeError):
             menu.moveto(1, 2)
 
+    def test_basic_menu_select_all(self):
+        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'yes yes', 'surely yes'])
+        menu.select_all()
+        self.eq(menu.selected, None)
+
+    def test_single_menu_select_all(self):
+        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
+        menu.select_all()
+        self.eq(menu.selected, None)
+
+    def test_multi_select_menu_select_all(self):
+        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]')
+        menu.select_all()
+        self.eq(menu.selected, ['Yes', 'no'])
+
 
 class TestMenuRendering(TestMenuFixture):
     def test_basic_menu(self):
