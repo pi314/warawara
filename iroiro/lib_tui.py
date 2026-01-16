@@ -1292,12 +1292,7 @@ class Menu:
             return ret
         return self.onkey.handle(key)
 
-    def scroll_to_contain(self, index):
-        if isinstance(index, (MenuItem, MenuCursor)):
-            index = index.index
-        else:
-            index = index
-
+    def scroll_to_cursor(self):
         try:
             if self.pager[int(self.cursor)].visible:
                 return
@@ -1574,7 +1569,7 @@ class MenuCursor(MenuItemRef):
 
     def to(self, value):
         self.index = self.cal_index(value)
-        self.menu.scroll_to_contain(self)
+        self.menu.scroll_to_cursor()
 
     def up(self, count=1):
         self -= count
