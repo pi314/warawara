@@ -1264,27 +1264,55 @@ class Menu:
         raise Menu.GiveUpSelection()
 
     def select(self, item):
-        if self.box == '()':
-            self.unselect_all()
-        item.selected = True
+        if item.selected:
+            return
+
+        ok = None
+        if callable(item.onselect):
+            ok = item.onselect(item=item)
+        if ok is not None and not ok:
+            return False
+
+        if not item.meta:
+            if self.box == '()':
+                self.unselect_all()
+            item._selected = True
+        return True
 
     def select_all(self):
-        if self.box == '[]':
-            for item in self.options:
-                item.selected = True
+        if self.box != '[]':
+            return False
+
+        res = []
+        for item in self.options:
+            if not item.meta:
+                res.append(item.select())
+        return any(filter(lambda x: x is not None, res))
 
     def unselect(self, item):
-        item.selected = False
+        if not item.selected:
+            return
+
+        ok = None
+        if callable(item.onunselect):
+            ok = item.onunselect(item=item)
+        if ok is not None and not ok:
+            return False
+
+        item._selected = False
+        return True
 
     def unselect_all(self):
+        res = []
         for item in self.options:
-            item.selected = False
+            res.append(item.unselect())
+        return any(filter(lambda x: x is not None, res))
 
     def toggle(self, item):
         if item.selected:
-            item.unselect()
+            return item.unselect()
         else:
-            item.select()
+            return item.select()
 
     def feedkey(self, key):
         ret = self[self.cursor].onkey.handle(key)
@@ -1402,10 +1430,7 @@ class Menu:
                         self.onkey(KEY_ENTER, self.done)
                     else:
                         def select_if_didnt(menu):
-                            if not menu.cursor.selected:
-                                menu.cursor.select()
-                            else:
-                                menu.done()
+                            menu.cursor.select() or menu.done()
                         self.onkey(KEY_ENTER, select_if_didnt)
                     self.onkey('q', self.quit)
 
@@ -1455,9 +1480,9 @@ class MenuItemRef:
 class MenuItem(MenuItemRef):
     def __init__(self, *, menu, meta, text, cursor, checkbox):
         self.menu = menu
-        self.meta = meta
+        self.meta = bool(meta)
         self.text = str(text)
-        self.selected = False
+        self._selected = False
         self.data = MenuData()
         self.format = None
 
@@ -1470,9 +1495,11 @@ class MenuItem(MenuItemRef):
                 self.box = '{}'
 
         self._onkey = MenuKeyHandler(self)
+        self.onselect = None
+        self.onunselect = None
 
     def __repr__(self):
-        return f'MenuItem(index={self.index}, text={repr(self.text)})'
+        return f'MenuItem(index={self.index}, selected={self.selected}, text={repr(self.text)})'
 
     @property
     def onkey(self):
@@ -1487,6 +1514,18 @@ class MenuItem(MenuItemRef):
     def index(self):
         return self.menu.index(self)
 
+    @property
+    def selected(self):
+        return self._selected and not self.meta
+
+    @selected.setter
+    def selected(self, value):
+        if value:
+            self.select()
+        else:
+            self.unselect()
+        return self.selected
+
     def bind(self, *args, **kwargs):
         return self._onkey.bind(*args, **kwargs)
 
@@ -1494,13 +1533,13 @@ class MenuItem(MenuItemRef):
         return self._onkey.unbind(*args, **kwargs)
 
     def select(self):
-        self.menu.select(self)
+        return self.menu.select(self)
 
     def unselect(self):
-        self.menu.unselect(self)
+        return self.menu.unselect(self)
 
     def toggle(self):
-        self.menu.toggle(self)
+        return self.menu.toggle(self)
 
     def moveto(self, where):
         self.menu.moveto(self, where)
@@ -1586,13 +1625,13 @@ class MenuCursor(MenuItemRef):
         self += count
 
     def select(self):
-        self.item.select()
+        return self.item.select()
 
     def unselect(self):
-        self.item.unselect()
+        return self.item.unselect()
 
     def toggle(self):
-        self.item.toggle()
+        return self.item.toggle()
 
     def feedkey(self, key):
         return self.item.feedkey(key)

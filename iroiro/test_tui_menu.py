@@ -441,7 +441,7 @@ class TestMenuItem(TestCase):
         self.menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
 
     def test_repr(self):
-        self.eq(repr(self.menu[0]), f"MenuItem(index=0, text='Option 1')")
+        self.eq(repr(self.menu[0]), f"MenuItem(index=0, selected=False, text='Option 1')")
 
     def test_index(self):
         for i in range(len(self.menu)):

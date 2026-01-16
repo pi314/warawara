@@ -1,4 +1,5 @@
 import sys
+import time
 
 import iroiro
 
@@ -105,33 +106,39 @@ def main():
     menu.onkey(onkey, onkey_vim, onkey_resize)
     menu.onkey('q', menu.quit)
 
-    def index(item, key):
+    def index(menu, key):
+        item = menu.cursor.item
         if key == 'i':
             menu.message = f'index={item.index}'
             return False
         elif key == 'space':
             item.toggle()
-            import time
-            if not item.data.thread:
-                def task():
-                    limit = 5
-                    item.data.start = time.time()
-                    while (time.time() - item.data.start) < limit:
-                        item.data.ind = f'({int((limit + item.data.start - time.time()) * 1000) / 1000})'
-                        time.sleep(0.0005)
-                        item.menu.refresh()
-                        if not menu.active:
-                            break
-                    del item.data.thread
-                    del item.data.ind
-                    item.menu.refresh()
-                item.data.thread = menu.Thread(target=task)
-                item.data.thread.start()
-            else:
+
+    def onselect(item):
+        if not item.data.thread and not item.meta:
+            def task():
+                limit = 5
                 item.data.start = time.time()
+                while (time.time() - item.data.start) < limit:
+                    item.data.ind = f'({int((limit + item.data.start - time.time()) * 1000) / 1000})'
+                    time.sleep(0.0005)
+                    item.menu.refresh()
+                    if not menu.active:
+                        break
+                del item.data.thread
+                del item.data.ind
+                item.menu.refresh()
+            item.data.thread = menu.Thread(target=task)
+            item.data.thread.start()
+        else:
+            item.data.start = time.time()
+
+    # for item in menu:
+    #     item.onkey('i', 'space', index)
+    menu.onkey(iroiro.KEY_SPACE, index)
 
     for item in menu:
-        item.onkey('i', 'space', index)
+        item.onselect = onselect
 
     select_all = menu.append('Select all', meta=True)
     def check(*args, **kwargs):
@@ -142,17 +149,19 @@ def main():
         else:
             return '+'
     select_all.check = check
-    def select_and_trigger_all(item, key):
+    def select_one_by_one(item):
         # item.menu.select_all()
         def task():
             import time
             for item in menu:
                 if not item.meta:
-                    item.feedkey(iroiro.KEY_SPACE)
+                    item.select()
                     item.menu.refresh()
                     time.sleep(0.05)
+            item.selected = True
         item.menu.Thread(target=task).start()
-    select_all.onkey(iroiro.KEY_SPACE, select_and_trigger_all)
+    # select_all.onkey(iroiro.KEY_SPACE, select_one_by_one)
+    select_all.onselect = select_one_by_one
 
     unselect_all = menu.append('Unselect all', meta=True)
     def check(item):
@@ -177,16 +186,20 @@ def main():
     done.onkey(iroiro.KEY_ENTER, enter)
 
     def menu_enter(menu, key):
-        if menu.cursor.meta:
-            return menu.cursor.feedkey(iroiro.KEY_SPACE)
-        elif menu.cursor.selected:
+        # if menu.cursor.meta:
+        #     return menu.cursor.feedkey(iroiro.KEY_SPACE)
+        if menu.cursor.selected:
             menu.done()
         else:
             menu.cursor.select()
     menu.onkey(iroiro.KEY_ENTER, menu_enter)
 
     ret = menu.interact()
-    print(ret)
+    if isinstance(ret, list):
+        for item in ret:
+            print(item)
+    else:
+        print(ret)
 
 
 if __name__ == '__main__':
