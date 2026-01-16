@@ -64,10 +64,16 @@ class TestCase(unittest.TestCase):
 
         else:
             from difflib import SequenceMatcher
-            m = SequenceMatcher(None, first, second, False)
+            try:
+                m = SequenceMatcher(None, first, second, False)
+                opcodes = m.get_opcodes()
+            except TypeError:
+                m = SequenceMatcher(None, [repr(i) for i in first], [repr(i) for i in second], False)
+                opcodes = m.get_opcodes()
+
             msg = ['Lists not equal:']
             msg.append('[')
-            for tag, i1, i2, j1, j2 in m.get_opcodes():
+            for tag, i1, i2, j1, j2 in opcodes:
                 if tag == 'equal':
                     ops = ((' ', first[i1:i2]),)
                 elif tag == 'insert':

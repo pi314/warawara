@@ -73,6 +73,20 @@ class TestTestCase(TestCase):
   4,
 ]''')
 
+    def test_list_of_list_diff_msg(self):
+        try:
+            self.eq([1, [2], 3], [1, [2, 3], 4])
+        except AssertionError as e:
+            self.eq(str(e),
+'''Lists not equal:
+[
+  1,
+- [2],
+- 3,
++ [2, 3],
++ 4,
+]''')
+
 
 class TestRunInThread(TestCase):
     def test_run_in_thread(self):
