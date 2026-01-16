@@ -1398,7 +1398,15 @@ class Menu:
                     self.onkey(KEY_UP, self.cursor.up)
                     self.onkey(KEY_DOWN, self.cursor.down)
                     self.onkey(KEY_SPACE, self.cursor.toggle)
-                    self.onkey(KEY_ENTER, self.done)
+                    if not self.box:
+                        self.onkey(KEY_ENTER, self.done)
+                    else:
+                        def select_if_didnt(menu):
+                            if not menu.cursor.selected:
+                                menu.cursor.select()
+                            else:
+                                menu.done()
+                        self.onkey(KEY_ENTER, select_if_didnt)
                     self.onkey('q', self.quit)
 
                 return self.interact_loop()
