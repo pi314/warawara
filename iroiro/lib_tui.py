@@ -1495,8 +1495,19 @@ class MenuItem(MenuItemRef):
                 self.box = '{}'
 
         self._onkey = MenuKeyHandler(self)
+        self._onevent = MenuEventDispatcher()
         self.onselect = None
         self.onunselect = None
+
+        # self.onevent
+        # self.onevent('select', handler)
+        # self.onevent = ('select', handler)
+        # self.onevent.select = handler
+        # self.onevent['select'] = handler
+        # self.onevent['select'](handler)
+
+        # self.on # alias to self.onevent
+        # self.onselect # alias to self.onevent['select']
 
     def __repr__(self):
         return f'MenuItem(index={self.index}, selected={self.selected}, text={repr(self.text)})'
@@ -1509,6 +1520,16 @@ class MenuItem(MenuItemRef):
     def onkey(self, value):
         self._onkey = MenuKeyHandler(self)
         self._onkey += value
+
+    @property
+    def onevent(self):
+        return self._onevent
+
+    @onevent.setter
+    def onevent(self, value):
+        self._onevent.clear()
+        self._onevent[value[0]] = value[1]
+        return self._onevent
 
     @property
     def index(self):
@@ -1679,8 +1700,8 @@ class MenuKeyHandler:
             self.data = (self - other).data
             return self
 
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, target):
+        self.target = target
         self.clear()
         self.MenuKeySubHandlerList = self.__class__.MenuKeySubHandlerList
 
@@ -1751,9 +1772,9 @@ class MenuKeyHandler:
             key = key_alias_table.get(key, key)
 
             for handler in handler_list:
-                if isinstance(self.parent, Menu):
+                if isinstance(self.target, Menu):
                     ok_args = ['key', 'menu']
-                elif isinstance(self.parent, MenuItem):
+                elif isinstance(self.target, MenuItem):
                     ok_args = ['key', 'item']
                 else:
                     ok_args = ['key']
@@ -1814,12 +1835,62 @@ class MenuKeyHandler:
 
             if 'key' in sig:
                 kwargs['key'] = key
-            if isinstance(self.parent, Menu) and 'menu' in sig:
-                kwargs['menu'] = self.parent
-            if isinstance(self.parent, MenuItem) and 'item' in sig:
-                kwargs['item'] = self.parent
+            if isinstance(self.target, Menu) and 'menu' in sig:
+                kwargs['menu'] = self.target
+            if isinstance(self.target, MenuItem) and 'item' in sig:
+                kwargs['item'] = self.target
 
             ret = handler(**kwargs)
 
             if ret:
                 return ret
+
+
+class MenuEventDispatcher(UserDict):
+    def __init__(self):
+        pass
+
+    def __call__(self, event, handler):
+        self.bind(event, handler)
+
+    def __getattr__(self, event):
+        return self[event]
+
+    def __setattr__(self, event, handler):
+        self[event] = handler
+        return self[event]
+
+    def __getitem__(self, event):
+        return self.data.get(event, MenuEventHandler())
+
+    def __setitem__(self, event, handler):
+        if not handler:
+            del self.data[event]
+        else:
+            self.data[event] = handler
+
+    def bind(self, event, handler):
+        ...
+
+    def unbind(self, event):
+        ...
+
+    def handle(self):
+        ...
+
+    def emit(self, event, item):
+        ...
+
+
+class MenuEventHandler:
+    def __init__(self):
+        self.handler = None
+
+    def __bool__(self):
+        return bool(self.handler)
+
+    def __call__(self, handler):
+        self.handler = handler
+
+    def __eq__(self, other):
+        return self.handler == other
