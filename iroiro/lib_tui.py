@@ -1851,10 +1851,13 @@ class MenuKeyHandler:
 
 class MenuEventDispatcher(UserDict):
     def __init__(self):
-        pass
+        self.handler = None
 
-    def __call__(self, event, handler):
-        self[event] = handler
+    def __call__(self, event, handler=None):
+        if callable(event) and handler is None:
+            self.handler = handler
+        else:
+            self[event] = handler
 
     def __getattr__(self, event):
         return self[event]
@@ -1871,6 +1874,8 @@ class MenuEventDispatcher(UserDict):
     def __setitem__(self, event, handler):
         if not handler:
             del self.data[event]
+        elif event is None:
+            self.handler = handler
         else:
             self.data[event] = MenuEventHandler(handler)
         return self[event]
