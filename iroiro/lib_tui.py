@@ -1500,14 +1500,19 @@ class MenuItem(MenuItemRef):
         self.onunselect = None
 
         # self.onevent
+        # self.onevent = handler
+        # self.onevent(handler)
         # self.onevent('select', handler)
         # self.onevent = ('select', handler)
         # self.onevent.select = handler
         # self.onevent['select'] = handler
-        # self.onevent['select'](handler)
+        # self.onevent['select'](handler) # dont care
 
         # self.on # alias to self.onevent
+
         # self.onselect # alias to self.onevent['select']
+        # self.onselect = handler
+        # self.onselect(handler)
 
     def __repr__(self):
         return f'MenuItem(index={self.index}, selected={self.selected}, text={repr(self.text)})'
@@ -1527,9 +1532,7 @@ class MenuItem(MenuItemRef):
 
     @onevent.setter
     def onevent(self, value):
-        self._onevent.clear()
-        self._onevent[value[0]] = value[1]
-        return self._onevent
+        self._onevent.set(value)
 
     @property
     def index(self):
@@ -1851,7 +1854,7 @@ class MenuEventDispatcher(UserDict):
         pass
 
     def __call__(self, event, handler):
-        self.bind(event, handler)
+        self[event] = handler
 
     def __getattr__(self, event):
         return self[event]
@@ -1861,21 +1864,25 @@ class MenuEventDispatcher(UserDict):
         return self[event]
 
     def __getitem__(self, event):
-        return self.data.get(event, MenuEventHandler())
+        if event not in self.data:
+            self.data[event] = MenuEventHandler()
+        return self.data[event]
 
     def __setitem__(self, event, handler):
         if not handler:
             del self.data[event]
         else:
-            self.data[event] = handler
+            self.data[event] = MenuEventHandler(handler)
+        return self[event]
 
-    def bind(self, event, handler):
-        ...
+    def set(self, value):
+        self.clear()
+        if callable(value):
+            self[None] = value
+        else:
+            self[value[0]] = value[1]
 
-    def unbind(self, event):
-        ...
-
-    def handle(self):
+    def handle(self, event, item):
         ...
 
     def emit(self, event, item):
@@ -1883,7 +1890,7 @@ class MenuEventDispatcher(UserDict):
 
 
 class MenuEventHandler:
-    def __init__(self):
+    def __init__(self, handler=None):
         self.handler = None
 
     def __bool__(self):
