@@ -1851,7 +1851,7 @@ class MenuKeyHandler:
 
 class MenuEventDispatcher(UserDict):
     def __init__(self):
-        self.handler = None
+        super().__setattr__('handler', None)
 
     def __call__(self, event, handler=None):
         if callable(event) and handler is None:
