@@ -1079,8 +1079,7 @@ class Menu:
             self.format = '{cursor} {item.text}'
 
         self._onkey = MenuKeyHandler(self)
-        if onkey:
-            self._onkey += onkey
+        self.onkey = onkey
 
         self.cursor_symbol = cursor
         self._cursor = MenuCursor(self, wrap=wrap)
@@ -1158,8 +1157,7 @@ class Menu:
 
     @onkey.setter
     def onkey(self, value):
-        self._onkey = MenuKeyHandler(self)
-        self._onkey += value
+        self._onkey.set_to(value)
 
     @property
     def first(self):
@@ -1523,8 +1521,7 @@ class MenuItem(MenuItemRef):
 
     @onkey.setter
     def onkey(self, value):
-        self._onkey = MenuKeyHandler(self)
-        self._onkey += value
+        self._onkey.set_to(value)
 
     @property
     def onevent(self):
@@ -1751,6 +1748,13 @@ class MenuKeyHandler:
 
     def __call__(self, *args):
         return self.bind(*args)
+
+    def set_to(self, value):
+        if value is self:
+            return
+        self.clear()
+        if value is not None:
+            self += value
 
     def bind(self, *args):
         if len(args) == 1:

@@ -254,11 +254,22 @@ class TestMenuKeyHandler(TestCase):
         self.eq(handler['f'], [])
         self.eq(handler['b'], [])
 
-        # __iadd__
+        # __iadd__ single function
         handler += foo
         self.eq(handler[None], [foo])
+
+        # __iadd__ multiple functions packed in a tuple
         handler += (bar, baz)
         self.eq(handler[None], [foo, bar, baz])
+        handler.unbind(foo, bar, baz)
+
+        # __iadd__ a MenuKeyHandler
+        h2 = iroiro.tui.MenuKeyHandler(self.menu)
+        h2 += (bar, foo)
+        handler += h2
+        self.eq(handler[None], [bar, foo])
+        handler.unbind(foo, bar, baz)
+        handler.bind(foo, bar, baz)
 
         # __isub__
         handler -= bar
