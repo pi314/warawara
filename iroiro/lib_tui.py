@@ -1507,7 +1507,9 @@ class MenuItem(MenuItemRef):
 
     @onkey.setter
     def onkey(self, value):
-        self._onkey = MenuKeyHandler(self)
+        if self._onkey is value:
+            return
+        self._onkey.clear()
         self._onkey += value
 
     @property
