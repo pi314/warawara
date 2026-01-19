@@ -114,7 +114,7 @@ def main():
         elif key == 'space':
             item.toggle()
 
-    def onselect(item):
+    def onselect(event, item):
         if not item.data.thread and not item.meta:
             def task():
                 limit = 5
@@ -149,7 +149,7 @@ def main():
         else:
             return '+'
     select_all.check = check
-    def select_one_by_one(item):
+    def select_one_by_one(event, item):
         # item.menu.select_all()
         def task():
             import time

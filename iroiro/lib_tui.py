@@ -1265,9 +1265,7 @@ class Menu:
         if item.selected:
             return
 
-        ok = None
-        if callable(item.onselect):
-            ok = item.onselect(item=item)
+        ok = item.onevent.emit(event='select', item=item)
         if ok is not None and not ok:
             return False
 
@@ -1494,7 +1492,6 @@ class MenuItem(MenuItemRef):
 
         self._onkey = MenuKeyHandler(self)
         self._onevent = MenuEventDispatcher()
-        self.onselect = None
         self.onunselect = None
 
         # self.onevent
@@ -1530,6 +1527,14 @@ class MenuItem(MenuItemRef):
     @onevent.setter
     def onevent(self, value):
         self._onevent.set(value)
+
+    @property
+    def onselect(self):
+        return self.onevent['select']
+
+    @onselect.setter
+    def onselect(self, value):
+        return self.onselect.set_to(value)
 
     @property
     def index(self):
@@ -1853,13 +1858,13 @@ class MenuKeyHandler:
                 return ret
 
 
-class MenuEventDispatcher(UserDict):
+class MenuEventDispatcher:
     def __init__(self):
-        super().__setattr__('handler', None)
+        super().__setattr__('handlers', {})
 
     def __call__(self, event, handler=None):
         if callable(event) and handler is None:
-            self.handler = handler
+            self[None] = handler
         else:
             self[event] = handler
 
@@ -1871,31 +1876,37 @@ class MenuEventDispatcher(UserDict):
         return self[event]
 
     def __getitem__(self, event):
-        if event not in self.data:
-            self.data[event] = MenuEventHandler()
-        return self.data[event]
+        if event not in self.handlers:
+            self.handlers[event] = MenuEventHandler()
+        return self.handlers[event]
 
     def __setitem__(self, event, handler):
         if not handler:
-            del self.data[event]
-        elif event is None:
-            self.handler = handler
+            del self.handlers[event]
         else:
-            self.data[event] = MenuEventHandler(handler)
+            self.handlers[event].set_to(handler)
         return self[event]
 
-    def set(self, value):
+    def set_to(self, value):
+        if value is self:
+            return
+
         self.clear()
-        if callable(value):
+        if not value:
+            return
+
+        elif callable(value):
             self[None] = value
         else:
             self[value[0]] = value[1]
 
     def handle(self, event, item):
-        ...
+        handler = self.handlers.get(event, None)
+        if callable(handler):
+            return handler.handler(event=event, item=item)
 
     def emit(self, event, item):
-        ...
+        self.handle(event, item)
 
 
 class MenuEventHandler:
@@ -1910,3 +1921,8 @@ class MenuEventHandler:
 
     def __eq__(self, other):
         return self.handler == other
+
+    def set_to(self, value):
+        if value is self:
+            return
+        self.handler = value
