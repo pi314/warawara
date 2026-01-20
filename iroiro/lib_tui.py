@@ -1289,9 +1289,7 @@ class Menu:
         if not item.selected:
             return
 
-        ok = None
-        if callable(item.onunselect):
-            ok = item.onunselect(item=item)
+        ok = item.onevent.emit(event='unselect', item=item)
         if ok is not None and not ok:
             return False
 
@@ -1492,7 +1490,6 @@ class MenuItem(MenuItemRef):
 
         self._onkey = MenuKeyHandler(self)
         self._onevent = MenuEventDispatcher()
-        self.onunselect = None
 
         # self.onevent
         # self.onevent = handler
@@ -1535,6 +1532,14 @@ class MenuItem(MenuItemRef):
     @onselect.setter
     def onselect(self, value):
         return self.onselect.set_to(value)
+
+    @property
+    def onunselect(self):
+        return self.onevent['unselect']
+
+    @onunselect.setter
+    def onunselect(self, value):
+        return self.onunselect.set_to(value)
 
     @property
     def index(self):
@@ -1906,7 +1911,7 @@ class MenuEventDispatcher:
             return handler.handler(event=event, item=item)
 
     def emit(self, event, item):
-        self.handle(event, item)
+        return self.handle(event, item)
 
 
 class MenuEventHandler:

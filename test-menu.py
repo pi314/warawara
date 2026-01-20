@@ -140,6 +140,9 @@ def main():
     for item in menu:
         item.onselect = onselect
 
+    menu[0].onunselect(lambda event, item: False)
+    menu[1].onunselect(lambda event, item: False)
+
     select_all = menu.append('Select all', meta=True)
     def check(*args, **kwargs):
         if all(item.selected for item in menu if not item.meta):
