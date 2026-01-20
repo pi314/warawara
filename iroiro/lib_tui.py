@@ -24,6 +24,16 @@ tui_flush = builtin_flush
 tui_input = builtin_input
 
 
+def getter(func):
+    return property(func)
+
+
+def setter(func):
+    import inspect
+    frame = inspect.stack()[1]
+    return frame[0].f_locals[func.__name__].setter(func)
+
+
 @export
 class ResourceError(RuntimeError):
     pass
@@ -735,19 +745,19 @@ class Pager:
     def term_width(self):
         return self.term_size.columns
 
-    @property
+    @getter
     def max_height(self):
         return self._max_height
 
-    @max_height.setter
+    @setter
     def max_height(self, value):
         self._max_height = max(value or 0, 0)
 
-    @property
+    @getter
     def max_width(self):
         return self._max_width
 
-    @max_width.setter
+    @setter
     def max_width(self, value):
         self._max_width = max(value, 0)
 
@@ -881,12 +891,12 @@ class Pager:
     def end(self):
         return len(self.body) - 1
 
-    @property
+    @getter
     def scroll(self):
         self.scroll = self._scroll
         return self._scroll
 
-    @scroll.setter
+    @setter
     def scroll(self, value):
         self._scroll = value
 
@@ -1127,35 +1137,35 @@ class Menu:
     def active(self):
         return self._active
 
-    @property
+    @getter
     def wrap(self):
         return self.cursor.wrap
 
-    @wrap.setter
+    @setter
     def wrap(self, value):
         self.cursor.wrap = value
 
-    @property
+    @getter
     def max_height(self):
         return self.pager.max_height
 
-    @max_height.setter
+    @setter
     def max_height(self, value):
         self.pager.max_height = value
 
-    @property
+    @getter
     def cursor(self):
         return self._cursor
 
-    @cursor.setter
+    @setter
     def cursor(self, value):
         self._cursor.to(value)
 
-    @property
+    @getter
     def onkey(self):
         return self._onkey
 
-    @onkey.setter
+    @setter
     def onkey(self, value):
         self._onkey.set_to(value)
 
@@ -1509,35 +1519,35 @@ class MenuItem(MenuItemRef):
     def __repr__(self):
         return f'MenuItem(index={self.index}, selected={self.selected}, text={repr(self.text)})'
 
-    @property
+    @getter
     def onkey(self):
         return self._onkey
 
-    @onkey.setter
+    @setter
     def onkey(self, value):
         self._onkey.set_to(value)
 
-    @property
+    @getter
     def onevent(self):
         return self._onevent
 
-    @onevent.setter
+    @setter
     def onevent(self, value):
         self._onevent.set(value)
 
-    @property
+    @getter
     def onselect(self):
         return self.onevent['select']
 
-    @onselect.setter
+    @setter
     def onselect(self, value):
         return self.onselect.set_to(value)
 
-    @property
+    @getter
     def onunselect(self):
         return self.onevent['unselect']
 
-    @onunselect.setter
+    @setter
     def onunselect(self, value):
         return self.onunselect.set_to(value)
 
@@ -1545,11 +1555,11 @@ class MenuItem(MenuItemRef):
     def index(self):
         return self.menu.index(self)
 
-    @property
+    @getter
     def selected(self):
         return self._selected and not self.meta
 
-    @selected.setter
+    @setter
     def selected(self, value):
         if value:
             self.select()
