@@ -14,7 +14,7 @@ def main():
         if menu.data.grabbing and menu.cursor == item:
             return f'{cursor}{box[0]}{check}{box[1]} {item.text}{ind}'
         return f'{cursor} {box[0]}{check}{box[1]} {item.text}{ind}'
-    menu = iroiro.Menu('title', iroiro.natsorted(os.listdir()), checkbox='[*]', format=format, max_height=20, message='', term_cursor_invisible=True)
+    menu = iroiro.Menu('title', ['unselectable', 'un-unselectable'] + iroiro.natsorted(os.listdir()), checkbox='[*]', format=format, max_height=20, message='', term_cursor_invisible=True)
 
     def pager_info(key):
         menu.message = 'key={} cursor={} grab={} text=[{}]\nvisible={} scroll={} height={}'.format(
@@ -140,7 +140,7 @@ def main():
     for item in menu:
         item.onselect = onselect
 
-    menu[0].onunselect(lambda event, item: False)
+    menu[0].onselect(lambda event, item: False)
     menu[1].onunselect(lambda event, item: False)
 
     select_all = menu.append('Select all', meta=True)
@@ -208,16 +208,16 @@ def main():
 if __name__ == '__main__':
     menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
 
-    ret = menu.interact()
-    print(ret)
-    if ret in (None, 'no'):
-        sys.exit(1)
-
-    print()
-    ret = menu.interact()
-    print(ret)
-    if ret in (None, 'no'):
-        sys.exit(1)
+    # ret = menu.interact()
+    # print(ret)
+    # if ret in (None, 'no'):
+    #     sys.exit(1)
+    #
+    # print()
+    # ret = menu.interact()
+    # print(ret)
+    # if ret in (None, 'no'):
+    #     sys.exit(1)
 
     print()
     main()

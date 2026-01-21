@@ -1,5 +1,6 @@
 import sys
 import builtins
+import queue
 
 from collections import UserList, UserDict
 
@@ -1090,6 +1091,8 @@ class Menu:
 
         self._onkey = MenuKeyHandler(self)
         self.onkey = onkey
+        self._event_queue = queue.Queue()
+        self._onevent = MenuEventDispatcher(self)
 
         self.cursor_symbol = cursor
         self._cursor = MenuCursor(self, wrap=wrap)
@@ -1168,6 +1171,22 @@ class Menu:
     @setter
     def onkey(self, value):
         self._onkey.set_to(value)
+
+    @getter
+    def onevent(self):
+        return self._onevent
+
+    @setter
+    def onevent(self, value):
+        self._onevent.set_to(value)
+
+    @getter
+    def onsubmit(self):
+        return self.onevent['submit']
+
+    @setter
+    def onsubmit(self, value):
+        self.onsubmit.set_to(value)
 
     @property
     def first(self):
@@ -1499,7 +1518,7 @@ class MenuItem(MenuItemRef):
                 self.box = '{}'
 
         self._onkey = MenuKeyHandler(self)
-        self._onevent = MenuEventDispatcher()
+        self._onevent = MenuEventDispatcher(self)
 
         # self.onevent
         # self.onevent = handler
@@ -1533,7 +1552,7 @@ class MenuItem(MenuItemRef):
 
     @setter
     def onevent(self, value):
-        self._onevent.set(value)
+        self._onevent.set_to(value)
 
     @getter
     def onselect(self):
@@ -1874,7 +1893,8 @@ class MenuKeyHandler:
 
 
 class MenuEventDispatcher:
-    def __init__(self):
+    def __init__(self, target):
+        super().__setattr__('target', target)
         super().__setattr__('handlers', {})
 
     def __call__(self, event, handler=None):
