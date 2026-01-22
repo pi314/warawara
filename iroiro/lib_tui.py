@@ -1,6 +1,5 @@
 import sys
 import builtins
-import queue
 
 from collections import UserList, UserDict
 
@@ -1091,7 +1090,6 @@ class Menu:
 
         self._onkey = MenuKeyHandler(self)
         self.onkey = onkey
-        self._event_queue = queue.Queue()
         self._onevent = MenuEventDispatcher(self)
 
         self.cursor_symbol = cursor
