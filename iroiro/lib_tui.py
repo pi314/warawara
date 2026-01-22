@@ -1280,9 +1280,14 @@ class Menu:
     def unbind(self, *args, **kwargs):
         return self._onkey.unbind(*args, **kwargs)
 
-    def done(self, **kwargs):
+    def submit(self, **kwargs):
         if not self.box:
             self.cursor.select()
+
+        ok = self.onevent.handle(event='submit', target=self)
+        if ok is not None and not ok:
+            return False
+
         raise Menu.DoneSelection()
 
     def quit(self, **kwargs):
@@ -1292,7 +1297,7 @@ class Menu:
         if item.selected:
             return
 
-        ok = item.onevent.emit(event='select', item=item)
+        ok = item.onevent.handle(event='select', target=item)
         if ok is not None and not ok:
             return False
 
@@ -1316,7 +1321,7 @@ class Menu:
         if not item.selected:
             return
 
-        ok = item.onevent.emit(event='unselect', item=item)
+        ok = item.onevent.handle(event='unselect', target=item)
         if ok is not None and not ok:
             return False
 
@@ -1448,10 +1453,10 @@ class Menu:
                     self.onkey(KEY_DOWN, self.cursor.down)
                     self.onkey(KEY_SPACE, self.cursor.toggle)
                     if not self.box:
-                        self.onkey(KEY_ENTER, self.done)
+                        self.onkey(KEY_ENTER, self.submit)
                     else:
                         def select_if_didnt(menu):
-                            menu.cursor.select() or menu.done()
+                            menu.cursor.select() or menu.submit()
                         self.onkey(KEY_ENTER, select_if_didnt)
                     self.onkey('q', self.quit)
 
@@ -1933,10 +1938,18 @@ class MenuEventDispatcher:
         else:
             self[value[0]] = value[1]
 
-    def handle(self, event, item):
+    def handle(self, event, target):
         handler = self.handlers.get(event, None)
         if callable(handler):
-            return handler.handler(event=event, item=item)
+            kwargs = {}
+            kwargs['event'] = event
+
+            if isinstance(target, Menu):
+                kwargs['menu'] = target
+            if isinstance(target, MenuItem):
+                kwargs['item'] = target
+
+            return handler.handler(**kwargs)
 
     def emit(self, event, item):
         return self.handle(event, item)

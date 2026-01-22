@@ -179,23 +179,31 @@ def main():
 
     def enter(item, key):
         item.menu.message = 'enter'
-        item.menu.done()
-    done = menu.append('Done', meta=True)
+        item.menu.submit()
+    submit = menu.append('Submit', meta=True)
     def format_done(menu, cursor, item, check, box):
         if menu.data.grabbing and menu.cursor == item:
             return f'{cursor}{item.text}'
         return f'{cursor} {item.text}'
-    done.format = format_done
-    done.onkey(iroiro.KEY_ENTER, enter)
+    submit.format = format_done
+    submit.onkey(iroiro.KEY_ENTER, enter)
 
     def menu_enter(menu, key):
         # if menu.cursor.meta:
         #     return menu.cursor.feedkey(iroiro.KEY_SPACE)
         if menu.cursor.selected:
-            menu.done()
+            menu.submit()
         else:
             menu.cursor.select()
     menu.onkey(iroiro.KEY_ENTER, menu_enter)
+
+    i = 0
+    def onsubmit(event, menu):
+        nonlocal i
+        i += 1
+        if i < 2:
+            return False
+    menu.onsubmit(onsubmit)
 
     ret = menu.interact()
     if isinstance(ret, list):
