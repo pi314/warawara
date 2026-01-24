@@ -1136,6 +1136,9 @@ class Menu:
             ret.onkey += onkey
         return ret
 
+    def emit(self, event, **kwargs):
+        self.onevent.emit(event=event, menu=self, **kwargs)
+
     def notify_start(self, thread):
         self._threads.append(thread)
 
@@ -1506,6 +1509,9 @@ class MenuItemRef:
 
     def __ge__(self, other):
         return self.__cmp__(other) >= 0
+
+    def emit(self, event, **kwargs):
+        self.onevent.emit(event=event, item=self, **kwargs)
 
 
 class MenuItem(MenuItemRef):
@@ -1924,7 +1930,7 @@ class MenuEventDispatcher:
         if not handler:
             del self.handlers[event]
         else:
-            self.handlers[event].set_to(handler)
+            self[event].set_to(handler)
         return self[event]
 
     def set_to(self, value):
@@ -1953,8 +1959,8 @@ class MenuEventDispatcher:
             kwargs['event'] = event
         return handler(**kwargs)
 
-    def emit(self, event, item):
-        return self.handle(event, item)
+    def emit(self, event, **kwargs):
+        return self.handle(event, **kwargs)
 
 
 class MenuEventHandler:
