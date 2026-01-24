@@ -207,6 +207,10 @@ def main():
 
     i = 0
     def onsubmit(event, menu):
+        if menu.data.grabbing:
+            menu.data.grabbing.emit('ungrab')
+            return False
+
         nonlocal i
         i += 1
         if i < 2:

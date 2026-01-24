@@ -1968,9 +1968,8 @@ class MenuEventDispatcher:
         sig = inspect.signature(handler).parameters
         if 'event' in sig:
             kwargs['event'] = event
-        for key, value in kwargs.items():
-            if key not in sig:
-                del kwargs[key]
+        for key in [key for key in kwargs.keys() if key not in sig]:
+            del kwargs[key]
         return handler(**kwargs)
 
     def emit(self, event, **kwargs):
