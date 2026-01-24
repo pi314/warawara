@@ -137,15 +137,16 @@ def main():
     #     item.onkey('i', 'space', index)
     menu.onkey(iroiro.KEY_SPACE, index)
 
+    for item in menu:
+        item.onselect = onselect
+
     def ongrab(item):
         menu.data.grabbing = menu[menu.cursor]
     def onungrab(item):
         if menu.data.grabbing is item:
             menu.data.grabbing = None
-    for item in menu:
-        item.onselect = onselect
-        item.onevent('grab', ongrab)
-        item.onevent('ungrab', onungrab)
+    menu.onevent('grab', ongrab)
+    menu.onevent('ungrab', onungrab)
 
     menu[0].onselect(lambda event, item: False)
     menu[1].onunselect(lambda event, item: False)

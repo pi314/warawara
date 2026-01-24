@@ -1947,16 +1947,30 @@ class MenuEventDispatcher:
             self[value[0]] = value[1]
 
     def handle(self, event, **kwargs):
-        handler = self.handlers.get(event, None)
+        if isinstance(self.target, Menu):
+            targets = [self.target]
+        elif isinstance(self.target, MenuItem):
+            targets = [self.target, self.target.menu]
+        else:
+            raise TypeError('target should be a Menu or a MenuItem')
+
+        for t in targets:
+            handler = t.onevent.handlers.get(event, None)
+            if not handler:
+                continue
+            handler = handler.handler
+            if not callable(handler):
+                continue
         if not handler:
             return
-        handler = handler.handler
-        if not callable(handler):
-            return
+
         import inspect
         sig = inspect.signature(handler).parameters
         if 'event' in sig:
             kwargs['event'] = event
+        for key, value in kwargs.items():
+            if key not in sig:
+                del kwargs[key]
         return handler(**kwargs)
 
     def emit(self, event, **kwargs):
