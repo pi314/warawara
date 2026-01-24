@@ -1289,7 +1289,7 @@ class Menu:
         if not self.box:
             self.cursor.select()
 
-        ok = self.onevent.handle(event='submit', target=self)
+        ok = self.onevent.handle(event='submit', menu=self)
         if ok is not None and not ok:
             return False
 
@@ -1302,7 +1302,7 @@ class Menu:
         if item.selected:
             return
 
-        ok = item.onevent.handle(event='select', target=item)
+        ok = item.onevent.handle(event='select', item=item)
         if ok is not None and not ok:
             return False
 
@@ -1326,7 +1326,7 @@ class Menu:
         if not item.selected:
             return
 
-        ok = item.onevent.handle(event='unselect', target=item)
+        ok = item.onevent.handle(event='unselect', item=item)
         if ok is not None and not ok:
             return False
 
@@ -1940,18 +1940,18 @@ class MenuEventDispatcher:
         else:
             self[value[0]] = value[1]
 
-    def handle(self, event, target):
+    def handle(self, event, **kwargs):
         handler = self.handlers.get(event, None)
-        if callable(handler):
-            kwargs = {}
+        if not handler:
+            return
+        handler = handler.handler
+        if not callable(handler):
+            return
+        import inspect
+        sig = inspect.signature(handler).parameters
+        if 'event' in sig:
             kwargs['event'] = event
-
-            if isinstance(target, Menu):
-                kwargs['menu'] = target
-            if isinstance(target, MenuItem):
-                kwargs['item'] = target
-
-            return handler.handler(**kwargs)
+        return handler(**kwargs)
 
     def emit(self, event, item):
         return self.handle(event, item)
@@ -1973,4 +1973,6 @@ class MenuEventHandler:
     def set_to(self, value):
         if value is self:
             return
+        if value is not None and not callable(value):
+            raise ValueError('Event handler should be a callable')
         self.handler = value
