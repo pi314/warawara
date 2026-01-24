@@ -185,19 +185,19 @@ class TestMenuKeyHandler(TestCase):
 
     def test_bind_with_wrong_signature(self):
         handler = iroiro.tui.MenuKeyHandler(self.menu)
-        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+        with self.raises(iroiro.SignatureError):
             handler.bind('k', lambda item, key: 'k')
-        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+        with self.raises(iroiro.SignatureError):
             handler.bind('k', lambda hello, key: 'k')
-        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+        with self.raises(iroiro.SignatureError):
             handler.bind('k', lambda key, hello: 'k')
 
         handler = iroiro.tui.MenuKeyHandler(self.menu[0])
-        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+        with self.raises(iroiro.SignatureError):
             handler.bind('k', lambda menu, key: 'k')
-        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+        with self.raises(iroiro.SignatureError):
             handler.bind('k', lambda hello, key: 'k')
-        with self.raises(iroiro.tui.MenuKeyHandler.SignatureError):
+        with self.raises(iroiro.SignatureError):
             handler.bind('k', lambda key, hello: 'k')
 
     def test_bind_unbind_handler(self):

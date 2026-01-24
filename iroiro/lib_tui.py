@@ -40,6 +40,11 @@ class ResourceError(RuntimeError):
 
 
 @export
+class SignatureError(ValueError):
+    pass
+
+
+@export
 def charwidth(c):
     if not c.isprintable():
         return 0
@@ -1701,9 +1706,6 @@ class MenuCursor(MenuItemRef):
 
 
 class MenuKeyHandler:
-    class SignatureError(ValueError):
-        pass
-
     class MenuKeySubHandlerList(UserList):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -1835,7 +1837,7 @@ class MenuKeyHandler:
                             value.kind not in (value.VAR_POSITIONAL, value.VAR_KEYWORD) and
                             key not in ok_args)
                 if nok_args:
-                    raise self.__class__.SignatureError(f'Unreachable parameters: {",".join(nok_args)}')
+                    raise SignatureError(f'Unreachable parameters: {",".join(nok_args)}')
 
                 if key not in self.handlers:
                     self.handlers[key] = self.MenuKeySubHandlerList()
