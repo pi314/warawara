@@ -1421,6 +1421,7 @@ class Menu:
         if self.message is not None:
             self.pager.footer.extend(self.message.split('\n'))
 
+        self.scroll_to_cursor()
         self.pager.render()
 
     def refresh(self, force=False):
