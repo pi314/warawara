@@ -148,6 +148,10 @@ def main():
     menu.onevent('grab', ongrab)
     menu.onevent('ungrab', onungrab)
 
+    def onquit(menu):
+        menu.message = 'bye'
+    menu.onquit = onquit
+
     menu[0].onselect(lambda event, item: False)
     menu[1].onunselect(lambda event, item: False)
 

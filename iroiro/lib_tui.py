@@ -1194,6 +1194,14 @@ class Menu:
     def onsubmit(self, value):
         self.onsubmit.set_to(value)
 
+    @getter
+    def onquit(self):
+        return self.onevent['quit']
+
+    @setter
+    def onquit(self, value):
+        self.onquit.set_to(value)
+
     @property
     def first(self):
         return self.options[0]
@@ -1299,6 +1307,7 @@ class Menu:
         raise Menu.DoneSelection()
 
     def quit(self, **kwargs):
+        self.onevent.handle(event='quit', menu=self)
         raise Menu.GiveUpSelection()
 
     def select(self, item):
