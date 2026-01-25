@@ -209,6 +209,7 @@ def main():
     def onsubmit(event, menu):
         if menu.data.grabbing:
             menu.data.grabbing.emit('ungrab')
+            menu.message = 'try again'
             return False
 
         nonlocal i

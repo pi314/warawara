@@ -1955,6 +1955,7 @@ class MenuEventDispatcher:
         else:
             raise TypeError('target should be a Menu or a MenuItem')
 
+        handler = None
         for t in targets:
             handler = t.onevent.handlers.get(event, None)
             if not handler:
@@ -1962,6 +1963,9 @@ class MenuEventDispatcher:
             handler = handler.handler
             if not callable(handler):
                 continue
+
+            break
+
         if not handler:
             return
 
