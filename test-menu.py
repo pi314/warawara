@@ -132,6 +132,7 @@ def main():
             item.data.thread.start()
         else:
             item.data.start = time.time()
+        return True
 
     # for item in menu:
     #     item.onkey('i', 'space', index)
@@ -219,7 +220,9 @@ def main():
         nonlocal i
         i += 1
         if i < 2:
+            menu.message = 'try again'
             return False
+        menu.message = 'bau'
     menu.onsubmit(onsubmit)
 
     ret = menu.interact()

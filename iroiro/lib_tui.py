@@ -1964,27 +1964,15 @@ class MenuEventDispatcher:
         else:
             raise TypeError('target should be a Menu or a MenuItem')
 
-        handler = None
         for t in targets:
             handler = t.onevent.handlers.get(event, None)
             if not handler:
                 continue
-            handler = handler.handler
-            if not callable(handler):
-                continue
 
-            break
-
-        if not handler:
-            return
-
-        import inspect
-        sig = inspect.signature(handler).parameters
-        if 'event' in sig:
             kwargs['event'] = event
-        for key in [key for key in kwargs.keys() if key not in sig]:
-            del kwargs[key]
-        return handler(**kwargs)
+            ret = handler.handle(**kwargs)
+            if ret is not None:
+                return ret
 
     def emit(self, event, **kwargs):
         return self.handle(event, **kwargs)
@@ -2009,3 +1997,11 @@ class MenuEventHandler:
         if value is not None and not callable(value):
             raise ValueError('Event handler should be a callable')
         self.handler = value
+
+    def handle(self, **kwargs):
+        import inspect
+        sig = inspect.signature(self.handler).parameters
+        for key in [key for key in kwargs.keys() if key not in sig]:
+            del kwargs[key]
+        if callable(self.handler):
+            return self.handler(**kwargs)
