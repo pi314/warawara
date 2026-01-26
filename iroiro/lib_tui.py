@@ -1915,6 +1915,9 @@ class MenuKeyHandler:
 
 class MenuEventDispatcher:
     def __init__(self, target):
+        if not isinstance(target, (Menu, MenuItem)):
+            raise TypeError('target should be a Menu or a MenuItem')
+
         super().__setattr__('target', target)
         super().__setattr__('handlers', {})
 
@@ -1959,10 +1962,8 @@ class MenuEventDispatcher:
     def handle(self, event, **kwargs):
         if isinstance(self.target, Menu):
             targets = [self.target]
-        elif isinstance(self.target, MenuItem):
-            targets = [self.target, self.target.menu]
         else:
-            raise TypeError('target should be a Menu or a MenuItem')
+            targets = [self.target, self.target.menu]
 
         for t in targets:
             handler = t.onevent.handlers.get(event, None)
@@ -1979,7 +1980,7 @@ class MenuEventDispatcher:
 
 
 class MenuEventHandler:
-    def __init__(self, handler=None):
+    def __init__(self):
         self.handler = None
 
     def __bool__(self):
