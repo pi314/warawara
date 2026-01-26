@@ -24,8 +24,23 @@ tui_flush = builtin_flush
 tui_input = builtin_input
 
 
+def getter(func):
+    return property(func)
+
+
+def setter(func):
+    import inspect
+    frame = inspect.stack()[1]
+    return frame[0].f_locals[func.__name__].setter(func)
+
+
 @export
 class ResourceError(RuntimeError):
+    pass
+
+
+@export
+class SignatureError(ValueError):
     pass
 
 
@@ -735,19 +750,19 @@ class Pager:
     def term_width(self):
         return self.term_size.columns
 
-    @property
+    @getter
     def max_height(self):
         return self._max_height
 
-    @max_height.setter
+    @setter
     def max_height(self, value):
         self._max_height = max(value or 0, 0)
 
-    @property
+    @getter
     def max_width(self):
         return self._max_width
 
-    @max_width.setter
+    @setter
     def max_width(self, value):
         self._max_width = max(value, 0)
 
@@ -881,12 +896,12 @@ class Pager:
     def end(self):
         return len(self.body) - 1
 
-    @property
+    @getter
     def scroll(self):
         self.scroll = self._scroll
         return self._scroll
 
-    @scroll.setter
+    @setter
     def scroll(self, value):
         self._scroll = value
 
@@ -1080,6 +1095,7 @@ class Menu:
 
         self._onkey = MenuKeyHandler(self)
         self.onkey = onkey
+        self._onevent = MenuEventDispatcher(self)
 
         self.cursor_symbol = cursor
         self._cursor = MenuCursor(self, wrap=wrap)
@@ -1120,6 +1136,9 @@ class Menu:
             ret.onkey += onkey
         return ret
 
+    def emit(self, event, **kwargs):
+        self.onevent.emit(event=event, menu=self, **kwargs)
+
     def notify_start(self, thread):
         self._threads.append(thread)
 
@@ -1127,37 +1146,61 @@ class Menu:
     def active(self):
         return self._active
 
-    @property
+    @getter
     def wrap(self):
         return self.cursor.wrap
 
-    @wrap.setter
+    @setter
     def wrap(self, value):
         self.cursor.wrap = value
 
-    @property
+    @getter
     def max_height(self):
         return self.pager.max_height
 
-    @max_height.setter
+    @setter
     def max_height(self, value):
         self.pager.max_height = value
 
-    @property
+    @getter
     def cursor(self):
         return self._cursor
 
-    @cursor.setter
+    @setter
     def cursor(self, value):
         self._cursor.to(value)
 
-    @property
+    @getter
     def onkey(self):
         return self._onkey
 
-    @onkey.setter
+    @setter
     def onkey(self, value):
         self._onkey.set_to(value)
+
+    @getter
+    def onevent(self):
+        return self._onevent
+
+    @setter
+    def onevent(self, value):
+        self._onevent.set_to(value)
+
+    @getter
+    def onsubmit(self):
+        return self.onevent['submit']
+
+    @setter
+    def onsubmit(self, value):
+        self.onsubmit.set_to(value)
+
+    @getter
+    def onquit(self):
+        return self.onevent['quit']
+
+    @setter
+    def onquit(self, value):
+        self.onquit.set_to(value)
 
     @property
     def first(self):
@@ -1253,21 +1296,25 @@ class Menu:
     def unbind(self, *args, **kwargs):
         return self._onkey.unbind(*args, **kwargs)
 
-    def done(self, **kwargs):
+    def submit(self, **kwargs):
         if not self.box:
             self.cursor.select()
+
+        ok = self.onevent.handle(event='submit', menu=self)
+        if ok is not None and not ok:
+            return False
+
         raise Menu.DoneSelection()
 
     def quit(self, **kwargs):
+        self.onevent.handle(event='quit', menu=self)
         raise Menu.GiveUpSelection()
 
     def select(self, item):
         if item.selected:
             return
 
-        ok = None
-        if callable(item.onselect):
-            ok = item.onselect(item=item)
+        ok = item.onevent.handle(event='select', item=item)
         if ok is not None and not ok:
             return False
 
@@ -1291,9 +1338,7 @@ class Menu:
         if not item.selected:
             return
 
-        ok = None
-        if callable(item.onunselect):
-            ok = item.onunselect(item=item)
+        ok = item.onevent.handle(event='unselect', item=item)
         if ok is not None and not ok:
             return False
 
@@ -1385,6 +1430,7 @@ class Menu:
         if self.message is not None:
             self.pager.footer.extend(self.message.split('\n'))
 
+        self.scroll_to_cursor()
         self.pager.render()
 
     def refresh(self, force=False):
@@ -1425,10 +1471,10 @@ class Menu:
                     self.onkey(KEY_DOWN, self.cursor.down)
                     self.onkey(KEY_SPACE, self.cursor.toggle)
                     if not self.box:
-                        self.onkey(KEY_ENTER, self.done)
+                        self.onkey(KEY_ENTER, self.submit)
                     else:
                         def select_if_didnt(menu):
-                            menu.cursor.select() or menu.done()
+                            menu.cursor.select() or menu.submit()
                         self.onkey(KEY_ENTER, select_if_didnt)
                     self.onkey('q', self.quit)
 
@@ -1474,6 +1520,9 @@ class MenuItemRef:
     def __ge__(self, other):
         return self.__cmp__(other) >= 0
 
+    def emit(self, event, **kwargs):
+        self.onevent.emit(event=event, item=self, **kwargs)
+
 
 class MenuItem(MenuItemRef):
     def __init__(self, *, menu, meta, text, cursor, checkbox):
@@ -1493,29 +1542,67 @@ class MenuItem(MenuItemRef):
                 self.box = '{}'
 
         self._onkey = MenuKeyHandler(self)
-        self.onselect = None
-        self.onunselect = None
+        self._onevent = MenuEventDispatcher(self)
+
+        # self.onevent
+        # self.onevent = handler
+        # self.onevent(handler)
+        # self.onevent('select', handler)
+        # self.onevent = ('select', handler)
+        # self.onevent.select = handler
+        # self.onevent['select'] = handler
+        # self.onevent['select'](handler) # dont care
+
+        # self.on # alias to self.onevent
+
+        # self.onselect # alias to self.onevent['select']
+        # self.onselect = handler
+        # self.onselect(handler)
 
     def __repr__(self):
         return f'MenuItem(index={self.index}, selected={self.selected}, text={repr(self.text)})'
 
-    @property
+    @getter
     def onkey(self):
         return self._onkey
 
-    @onkey.setter
+    @setter
     def onkey(self, value):
         self._onkey.set_to(value)
+
+    @getter
+    def onevent(self):
+        return self._onevent
+
+    @setter
+    def onevent(self, value):
+        self._onevent.set_to(value)
+
+    @getter
+    def onselect(self):
+        return self.onevent['select']
+
+    @setter
+    def onselect(self, value):
+        return self.onselect.set_to(value)
+
+    @getter
+    def onunselect(self):
+        return self.onevent['unselect']
+
+    @setter
+    def onunselect(self, value):
+        return self.onunselect.set_to(value)
 
     @property
     def index(self):
         return self.menu.index(self)
 
-    @property
+    @getter
     def selected(self):
         return self._selected and not self.meta
 
-    @selected.setter
+    @setter
     def selected(self, value):
         if value:
             self.select()
@@ -1635,9 +1722,6 @@ class MenuCursor(MenuItemRef):
 
 
 class MenuKeyHandler:
-    class SignatureError(ValueError):
-        pass
-
     class MenuKeySubHandlerList(UserList):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -1676,8 +1760,8 @@ class MenuKeyHandler:
             self.data = (self - other).data
             return self
 
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, target):
+        self.target = target
         self.clear()
         self.MenuKeySubHandlerList = self.__class__.MenuKeySubHandlerList
 
@@ -1755,9 +1839,9 @@ class MenuKeyHandler:
             key = key_alias_table.get(key, key)
 
             for handler in handler_list:
-                if isinstance(self.parent, Menu):
+                if isinstance(self.target, Menu):
                     ok_args = ['key', 'menu']
-                elif isinstance(self.parent, MenuItem):
+                elif isinstance(self.target, MenuItem):
                     ok_args = ['key', 'item']
                 else:
                     ok_args = ['key']
@@ -1769,7 +1853,7 @@ class MenuKeyHandler:
                             value.kind not in (value.VAR_POSITIONAL, value.VAR_KEYWORD) and
                             key not in ok_args)
                 if nok_args:
-                    raise self.__class__.SignatureError(f'Unreachable parameters: {",".join(nok_args)}')
+                    raise SignatureError(f'Unreachable parameters: {",".join(nok_args)}')
 
                 if key not in self.handlers:
                     self.handlers[key] = self.MenuKeySubHandlerList()
@@ -1818,12 +1902,107 @@ class MenuKeyHandler:
 
             if 'key' in sig:
                 kwargs['key'] = key
-            if isinstance(self.parent, Menu) and 'menu' in sig:
-                kwargs['menu'] = self.parent
-            if isinstance(self.parent, MenuItem) and 'item' in sig:
-                kwargs['item'] = self.parent
+            if isinstance(self.target, Menu) and 'menu' in sig:
+                kwargs['menu'] = self.target
+            if isinstance(self.target, MenuItem) and 'item' in sig:
+                kwargs['item'] = self.target
 
             ret = handler(**kwargs)
 
             if ret:
                 return ret
+
+
+class MenuEventDispatcher:
+    def __init__(self, target):
+        if not isinstance(target, (Menu, MenuItem)):
+            raise TypeError('target should be a Menu or a MenuItem')
+
+        super().__setattr__('target', target)
+        super().__setattr__('handlers', {})
+
+    def __call__(self, event, handler=None):
+        if callable(event) and handler is None:
+            self[None] = handler
+        else:
+            self[event] = handler
+
+    def __getattr__(self, event):
+        return self[event]
+
+    def __setattr__(self, event, handler):
+        self[event] = handler
+        return self[event]
+
+    def __getitem__(self, event):
+        if event not in self.handlers:
+            self.handlers[event] = MenuEventHandler()
+        return self.handlers[event]
+
+    def __setitem__(self, event, handler):
+        if not handler:
+            del self.handlers[event]
+        else:
+            self[event].set_to(handler)
+        return self[event]
+
+    def set_to(self, value):
+        if value is self:
+            return
+
+        self.clear()
+        if not value:
+            return
+
+        elif callable(value):
+            self[None] = value
+        else:
+            self[value[0]] = value[1]
+
+    def handle(self, event, **kwargs):
+        if isinstance(self.target, Menu):
+            targets = [self.target]
+        else:
+            targets = [self.target, self.target.menu]
+
+        for t in targets:
+            handler = t.onevent.handlers.get(event, None)
+            if not handler:
+                continue
+
+            kwargs['event'] = event
+            ret = handler.handle(**kwargs)
+            if ret is not None:
+                return ret
+
+    def emit(self, event, **kwargs):
+        return self.handle(event, **kwargs)
+
+
+class MenuEventHandler:
+    def __init__(self):
+        self.handler = None
+
+    def __bool__(self):
+        return bool(self.handler)
+
+    def __call__(self, handler):
+        self.handler = handler
+
+    def __eq__(self, other):
+        return self.handler == other
+
+    def set_to(self, value):
+        if value is self:
+            return
+        if value is not None and not callable(value):
+            raise ValueError('Event handler should be a callable')
+        self.handler = value
+
+    def handle(self, **kwargs):
+        import inspect
+        sig = inspect.signature(self.handler).parameters
+        for key in [key for key in kwargs.keys() if key not in sig]:
+            del kwargs[key]
+        if callable(self.handler):
+            return self.handler(**kwargs)

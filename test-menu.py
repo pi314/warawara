@@ -14,7 +14,7 @@ def main():
         if menu.data.grabbing and menu.cursor == item:
             return f'{cursor}{box[0]}{check}{box[1]} {item.text}{ind}'
         return f'{cursor} {box[0]}{check}{box[1]} {item.text}{ind}'
-    menu = iroiro.Menu('title', iroiro.natsorted(os.listdir()), checkbox='[*]', format=format, max_height=20, message='', term_cursor_invisible=True)
+    menu = iroiro.Menu('title', ['unselectable', 'un-unselectable'] + iroiro.natsorted(os.listdir()), checkbox='[*]', format=format, max_height=20, message='', term_cursor_invisible=True)
 
     def pager_info(key):
         menu.message = 'key={} cursor={} grab={} text=[{}]\nvisible={} scroll={} height={}'.format(
@@ -87,9 +87,9 @@ def main():
             menu.message = '[' + repr(key) + ']'
 
     def grab(menu, key):
-        menu.data.grabbing = menu[menu.cursor]
+        menu[menu.cursor].emit('grab')
     def ungrab(menu, key):
-        menu.data.grabbing = None
+        menu[menu.cursor].emit('ungrab')
     def up(menu, key):
         menu.cursor.up()
         if menu.data.grabbing:
@@ -114,7 +114,7 @@ def main():
         elif key == 'space':
             item.toggle()
 
-    def onselect(item):
+    def onselect(event, item):
         if not item.data.thread and not item.meta:
             def task():
                 limit = 5
@@ -132,6 +132,7 @@ def main():
             item.data.thread.start()
         else:
             item.data.start = time.time()
+        return True
 
     # for item in menu:
     #     item.onkey('i', 'space', index)
@@ -139,6 +140,21 @@ def main():
 
     for item in menu:
         item.onselect = onselect
+
+    def ongrab(item):
+        menu.data.grabbing = menu[menu.cursor]
+    def onungrab(item):
+        if menu.data.grabbing is item:
+            menu.data.grabbing = None
+    menu.onevent('grab', ongrab)
+    menu.onevent('ungrab', onungrab)
+
+    def onquit(menu):
+        menu.message = 'bye'
+    menu.onquit = onquit
+
+    menu[0].onselect(lambda event, item: False)
+    menu[1].onunselect(lambda event, item: False)
 
     select_all = menu.append('Select all', meta=True)
     def check(*args, **kwargs):
@@ -149,7 +165,7 @@ def main():
         else:
             return '+'
     select_all.check = check
-    def select_one_by_one(item):
+    def select_one_by_one(event, item):
         # item.menu.select_all()
         def task():
             import time
@@ -176,23 +192,38 @@ def main():
 
     def enter(item, key):
         item.menu.message = 'enter'
-        item.menu.done()
-    done = menu.append('Done', meta=True)
+        item.menu.submit()
+    submit = menu.append('Submit', meta=True)
     def format_done(menu, cursor, item, check, box):
         if menu.data.grabbing and menu.cursor == item:
             return f'{cursor}{item.text}'
         return f'{cursor} {item.text}'
-    done.format = format_done
-    done.onkey(iroiro.KEY_ENTER, enter)
+    submit.format = format_done
+    submit.onkey(iroiro.KEY_ENTER, enter)
 
     def menu_enter(menu, key):
         # if menu.cursor.meta:
         #     return menu.cursor.feedkey(iroiro.KEY_SPACE)
         if menu.cursor.selected:
-            menu.done()
+            menu.submit()
         else:
             menu.cursor.select()
     menu.onkey(iroiro.KEY_ENTER, menu_enter)
+
+    i = 0
+    def onsubmit(event, menu):
+        if menu.data.grabbing:
+            menu.data.grabbing.emit('ungrab')
+            menu.message = 'try again'
+            return False
+
+        nonlocal i
+        i += 1
+        if i < 2:
+            menu.message = 'try again'
+            return False
+        menu.message = 'bau'
+    menu.onsubmit(onsubmit)
 
     ret = menu.interact()
     if isinstance(ret, list):
@@ -205,16 +236,16 @@ def main():
 if __name__ == '__main__':
     menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='()')
 
-    ret = menu.interact()
-    print(ret)
-    if ret in (None, 'no'):
-        sys.exit(1)
-
-    print()
-    ret = menu.interact()
-    print(ret)
-    if ret in (None, 'no'):
-        sys.exit(1)
+    # ret = menu.interact()
+    # print(ret)
+    # if ret in (None, 'no'):
+    #     sys.exit(1)
+    #
+    # print()
+    # ret = menu.interact()
+    # print(ret)
+    # if ret in (None, 'no'):
+    #     sys.exit(1)
 
     print()
     main()
