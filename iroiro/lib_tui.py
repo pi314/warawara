@@ -1960,20 +1960,15 @@ class MenuEventDispatcher:
             self[value[0]] = value[1]
 
     def handle(self, event, **kwargs):
-        if isinstance(self.target, Menu):
-            targets = [self.target]
-        else:
-            targets = [self.target, self.target.menu]
-
-        for t in targets:
-            handler = t.onevent.handlers.get(event, None)
-            if not handler:
-                continue
-
+        handler = self.handlers.get(event, None)
+        if handler:
             kwargs['event'] = event
             ret = handler.handle(**kwargs)
             if ret is not None:
                 return ret
+
+        if isinstance(self.target, MenuItem):
+            return self.target.menu.emit(event, **kwargs)
 
     def emit(self, event, **kwargs):
         return self.handle(event, **kwargs)
