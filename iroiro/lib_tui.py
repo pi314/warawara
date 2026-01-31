@@ -1935,13 +1935,15 @@ class MenuEventDispatcher:
         return self[event]
 
     def __getitem__(self, event):
-        if event not in self.handlers:
-            self.handlers[event] = MenuEventHandler()
-        return self.handlers[event]
+        return self.handlers.get(event, MenuEventHandlerInstaller(self, event))
 
     def __setitem__(self, event, handler):
-        if not handler:
+        if handler is None:
             del self.handlers[event]
+        elif isinstance(handler, MenuEventHandler):
+            if event not in self.handlers:
+                self.handlers[event] = MenuEventHandler()
+            self.handlers[event].set_to(handler)
         else:
             self[event].set_to(handler)
         return self[event]
@@ -1974,9 +1976,21 @@ class MenuEventDispatcher:
         return self.handle(event, **kwargs)
 
 
+class MenuEventHandlerInstaller:
+    def __init__(self, dispatcher, event):
+        self.dispatcher = dispatcher
+        self.event = event
+
+    def __call__(self, handler):
+        self.set_to(handler)
+
+    def set_to(self, value):
+        self.dispatcher[self.event] = MenuEventHandler(value)
+
+
 class MenuEventHandler:
-    def __init__(self):
-        self.handler = None
+    def __init__(self, handler=None):
+        self.set_to(handler)
 
     def __bool__(self):
         return bool(self.handler)
@@ -1990,6 +2004,8 @@ class MenuEventHandler:
     def set_to(self, value):
         if value is self:
             return
+        if isinstance(value, MenuEventHandler):
+            value = value.handler
         if value is not None and not callable(value):
             raise ValueError('Event handler should be a callable')
         self.handler = value
