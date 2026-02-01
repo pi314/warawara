@@ -1414,3 +1414,9 @@ class TestMenuRendering(TestMenuFixture):
         self.feedkey(EOFError)
 
         self.true(self.terminal.cursor.visible)
+
+
+class TestMenuEvent(TestCase):
+    def test_menu_onevent_attr(self):
+        menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
+        self.eq(menu.onsubmit, menu.onevent['submit'])

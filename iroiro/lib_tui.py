@@ -1544,21 +1544,6 @@ class MenuItem(MenuItemRef):
         self._onkey = MenuKeyHandler(self)
         self._onevent = MenuEventDispatcher(self)
 
-        # self.onevent
-        # self.onevent = handler
-        # self.onevent(handler)
-        # self.onevent('select', handler)
-        # self.onevent = ('select', handler)
-        # self.onevent.select = handler
-        # self.onevent['select'] = handler
-        # self.onevent['select'](handler) # dont care
-
-        # self.on # alias to self.onevent
-
-        # self.onselect # alias to self.onevent['select']
-        # self.onselect = handler
-        # self.onselect(handler)
-
     def __repr__(self):
         return f'MenuItem(index={self.index}, selected={self.selected}, text={repr(self.text)})'
 
@@ -1920,6 +1905,7 @@ class MenuEventDispatcher:
 
         super().__setattr__('target', target)
         super().__setattr__('handlers', {})
+        super().__setattr__('installers', {})
 
     def __call__(self, event, handler=None):
         if callable(event) and handler is None:
@@ -1935,18 +1921,31 @@ class MenuEventDispatcher:
         return self[event]
 
     def __getitem__(self, event):
-        return self.handlers.get(event, MenuEventHandlerInstaller(self, event))
+        if event in self.handlers:
+            return self.handlers[event]
+        if event not in self.installers:
+            self.installers[event] = MenuEventHandlerInstaller(self, event)
+        return self.installers[event]
 
     def __setitem__(self, event, handler):
+        self.bind(event, handler)
+
+    def bind(self, event, handler):
         if handler is None:
-            del self.handlers[event]
-        elif isinstance(handler, MenuEventHandler):
+            self.unbind(event)
+        elif isinstance(handler, MenuEventHandlerInstaller):
             if event not in self.handlers:
                 self.handlers[event] = MenuEventHandler()
-            self.handlers[event].set_to(handler)
+            self.handlers[event].set_to(handler.handler)
+            del self.installers[event]
         else:
             self[event].set_to(handler)
-        return self[event]
+        return self
+
+    def unbind(self, event):
+        if event in self.handlers:
+            del self.handlers[event]
+        return self
 
     def set_to(self, value):
         if value is self:
@@ -1980,12 +1979,14 @@ class MenuEventHandlerInstaller:
     def __init__(self, dispatcher, event):
         self.dispatcher = dispatcher
         self.event = event
+        self.handler = None
 
     def __call__(self, handler):
         self.set_to(handler)
 
-    def set_to(self, value):
-        self.dispatcher[self.event] = MenuEventHandler(value)
+    def set_to(self, handler):
+        self.handler = handler
+        self.dispatcher.bind(self.event, self)
 
 
 class MenuEventHandler:
