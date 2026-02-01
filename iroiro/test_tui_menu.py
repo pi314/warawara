@@ -1435,3 +1435,13 @@ class TestMenuEvent(TestCase):
         menu.onquit = foo
         self.eq(menu.onquit, foo)
         self.eq(menu.onquit, menu.onevent['quit'])
+
+        self.eq(menu.onselect, None)
+        menu.onselect = foo
+        self.eq(menu.onselect, foo)
+        self.eq(menu.onselect, menu.onevent['select'])
+
+        self.eq(menu.onunselect, None)
+        menu.onunselect = foo
+        self.eq(menu.onunselect, foo)
+        self.eq(menu.onunselect, menu.onevent['unselect'])

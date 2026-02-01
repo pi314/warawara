@@ -1202,6 +1202,22 @@ class Menu:
     def onquit(self, value):
         self.onquit.set_to(value)
 
+    @getter
+    def onselect(self):
+        return self.onevent['select']
+
+    @setter
+    def onselect(self, value):
+        self.onselect.set_to(value)
+
+    @getter
+    def onunselect(self):
+        return self.onevent['unselect']
+
+    @setter
+    def onunselect(self, value):
+        return self.onunselect.set_to(value)
+
     @property
     def first(self):
         return self.options[0]
