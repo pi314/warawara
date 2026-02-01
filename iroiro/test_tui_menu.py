@@ -1417,6 +1417,21 @@ class TestMenuRendering(TestMenuFixture):
 
 
 class TestMenuEvent(TestCase):
-    def test_menu_onevent_attr(self):
+    def test_menu_onevent_attrs(self):
         menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
+        def foo():
+            pass
+
+        self.false(menu.onevent)
+        menu.onevent = foo
+        self.true(menu.onevent)
+
+        self.eq(menu.onsubmit, None)
+        menu.onsubmit = foo
+        self.eq(menu.onsubmit, foo)
         self.eq(menu.onsubmit, menu.onevent['submit'])
+
+        self.eq(menu.onquit, None)
+        menu.onquit = foo
+        self.eq(menu.onquit, foo)
+        self.eq(menu.onquit, menu.onevent['quit'])

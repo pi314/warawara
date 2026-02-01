@@ -1751,7 +1751,7 @@ class MenuKeyHandler:
         self.MenuKeySubHandlerList = self.__class__.MenuKeySubHandlerList
 
     def __bool__(self):
-        return any(h for k, h in self.handlers.items())
+        return any(h for e, h in self.handlers.items())
 
     def clear(self):
         self.handlers = {None: self.MenuKeySubHandlerList()}
@@ -1907,6 +1907,9 @@ class MenuEventDispatcher:
         super().__setattr__('handlers', {})
         super().__setattr__('installers', {})
 
+    def __bool__(self):
+        return any(h for e, h in self.handlers.items())
+
     def __call__(self, event, handler=None):
         if callable(event) and handler is None:
             self[None] = handler
@@ -1929,6 +1932,9 @@ class MenuEventDispatcher:
 
     def __setitem__(self, event, handler):
         self.bind(event, handler)
+
+    def clear(self):
+        self.handlers.clear()
 
     def bind(self, event, handler):
         if handler is None:
@@ -1980,6 +1986,9 @@ class MenuEventHandlerInstaller:
         self.dispatcher = dispatcher
         self.event = event
         self.handler = None
+
+    def __eq__(self, value):
+        return self.handler == value
 
     def __call__(self, handler):
         self.set_to(handler)
