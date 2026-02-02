@@ -31,11 +31,14 @@ class Checkpoint:
     def is_set(self):
         return self.checkpoint.is_set()
 
-    def check(self, is_set=True):
+    def verify(self, is_set=True):
         self.testcase.eq(
                 self.checkpoint.is_set(),
                 is_set,
                 'Checkpoint was' + (' ' if self.checkpoint.is_set() else ' not ') + 'set')
+
+    def check(self, *args, **kwargs):
+        self.verify(*args, **kwargs)
 
     def __bool__(self):
         return self.is_set()

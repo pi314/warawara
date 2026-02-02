@@ -1445,3 +1445,44 @@ class TestMenuEvent(TestCase):
         menu.onunselect = foo
         self.eq(menu.onunselect, foo)
         self.eq(menu.onunselect, menu.onevent['unselect'])
+
+    def test_menu_event_bubbling(self):
+        menu = iroiro.Menu('title', ['Neutral', 'Block', 'Reject'])
+
+        checkpoint_item = self.checkpoint()
+        def item_onselect(item):
+            checkpoint_item.set()
+            if item == 'Block':
+                return True
+            if item == 'Reject':
+                return False
+        for item in menu:
+            item.onselect(item_onselect)
+
+        checkpoint_menu = self.checkpoint()
+        def menu_onselect(menu):
+            checkpoint_menu.set()
+        menu.onselect(menu_onselect)
+
+        # Event bubble to menu
+        menu[0].select()
+        checkpoint_item.verify()
+        checkpoint_menu.verify()
+
+        checkpoint_item.clear()
+        checkpoint_menu.clear()
+
+        # Event blocked by item level onselect and select succ
+        menu[1].select()
+        self.true(menu[1].selected)
+        checkpoint_item.verify()
+        checkpoint_menu.verify(False)
+
+        checkpoint_item.clear()
+        checkpoint_menu.clear()
+
+        # Event blocked by item level onselect and select fail
+        menu[2].select()
+        self.false(menu[2].selected)
+        checkpoint_item.verify()
+        checkpoint_menu.verify(False)

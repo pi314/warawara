@@ -1187,22 +1187,6 @@ class Menu:
         self._onevent.set_to(value)
 
     @getter
-    def onsubmit(self):
-        return self.onevent['submit']
-
-    @setter
-    def onsubmit(self, value):
-        self.onsubmit.set_to(value)
-
-    @getter
-    def onquit(self):
-        return self.onevent['quit']
-
-    @setter
-    def onquit(self, value):
-        self.onquit.set_to(value)
-
-    @getter
     def onselect(self):
         return self.onevent['select']
 
@@ -1217,6 +1201,22 @@ class Menu:
     @setter
     def onunselect(self, value):
         return self.onunselect.set_to(value)
+
+    @getter
+    def onsubmit(self):
+        return self.onevent['submit']
+
+    @setter
+    def onsubmit(self, value):
+        self.onsubmit.set_to(value)
+
+    @getter
+    def onquit(self):
+        return self.onevent['quit']
+
+    @setter
+    def onquit(self, value):
+        self.onquit.set_to(value)
 
     @property
     def first(self):
@@ -1312,7 +1312,7 @@ class Menu:
     def unbind(self, *args, **kwargs):
         return self._onkey.unbind(*args, **kwargs)
 
-    def submit(self, **kwargs):
+    def submit(self):
         if not self.box:
             self.cursor.select()
 
@@ -1322,7 +1322,7 @@ class Menu:
 
         raise Menu.DoneSelection()
 
-    def quit(self, **kwargs):
+    def quit(self):
         self.onevent.handle(event='quit', menu=self)
         raise Menu.GiveUpSelection()
 
@@ -1985,8 +1985,7 @@ class MenuEventDispatcher:
     def handle(self, event, **kwargs):
         handler = self.handlers.get(event, None)
         if handler:
-            kwargs['event'] = event
-            ret = handler.handle(**kwargs)
+            ret = handler.handle(event=event, **kwargs)
             if ret is not None:
                 return ret
 
