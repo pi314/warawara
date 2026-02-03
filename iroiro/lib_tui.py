@@ -5,6 +5,7 @@ from collections import UserList, UserDict
 
 from .lib_threading import Lock
 from .lib_itertools import zip_longest, is_iterable
+from .lib_lang import getter, setter
 
 from .internal_utils import exporter
 export, __all__ = exporter()
@@ -22,16 +23,6 @@ builtin_input = input
 tui_print = builtin_print
 tui_flush = builtin_flush
 tui_input = builtin_input
-
-
-def getter(func):
-    return property(func)
-
-
-def setter(func):
-    import inspect
-    frame = inspect.stack()[1]
-    return frame[0].f_locals[func.__name__].setter(func)
 
 
 @export
