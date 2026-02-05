@@ -1446,9 +1446,10 @@ class TestMenuEvent(TestCase):
         self.eq(menu.onunselect, foo)
         self.eq(menu.onunselect, menu.onevent['unselect'])
 
-    def test_menu_event_bubbling(self):
-        menu = iroiro.Menu('title', ['Neutral', 'Block', 'Reject'])
+    def test_menu_event_bubbling_onselect(self):
+        menu = iroiro.Menu('title', ['Through', 'Block', 'Reject'])
 
+        # item onselect handler
         checkpoint_item = self.checkpoint()
         def item_onselect(item):
             checkpoint_item.set()
@@ -1459,6 +1460,7 @@ class TestMenuEvent(TestCase):
         for item in menu:
             item.onselect(item_onselect)
 
+        # menu onselect handler
         checkpoint_menu = self.checkpoint()
         def menu_onselect(menu):
             checkpoint_menu.set()
@@ -1484,5 +1486,51 @@ class TestMenuEvent(TestCase):
         # Event blocked by item level onselect and select fail
         menu[2].select()
         self.false(menu[2].selected)
+        checkpoint_item.verify()
+        checkpoint_menu.verify(False)
+
+    def test_menu_event_bubbling_onunselect(self):
+        menu = iroiro.Menu('title', ['Through', 'Block', 'Reject'])
+
+        # item onunselect handler
+        checkpoint_item = self.checkpoint()
+        def item_onunselect(item):
+            checkpoint_item.set()
+            if item == 'Block':
+                return True
+            if item == 'Reject':
+                return False
+        for item in menu:
+            item.onunselect(item_onunselect)
+
+        # menu onunselect handler
+        checkpoint_menu = self.checkpoint()
+        def menu_onunselect(menu):
+            checkpoint_menu.set()
+        menu.onunselect(menu_onunselect)
+
+        for item in menu:
+            item.select()
+
+        # Event bubble to menu
+        menu[0].unselect()
+        checkpoint_item.verify()
+        checkpoint_menu.verify()
+
+        checkpoint_item.clear()
+        checkpoint_menu.clear()
+
+        # Event blocked by item level onunselect and unselect succ
+        menu[1].unselect()
+        self.false(menu[1].selected)
+        checkpoint_item.verify()
+        checkpoint_menu.verify(False)
+
+        checkpoint_item.clear()
+        checkpoint_menu.clear()
+
+        # Event blocked by item level onunselect and unselect fail
+        menu[2].unselect()
+        self.true(menu[2].selected)
         checkpoint_item.verify()
         checkpoint_menu.verify(False)
