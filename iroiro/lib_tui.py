@@ -6,6 +6,7 @@ from collections import UserList, UserDict
 from .lib_threading import Lock
 from .lib_itertools import zip_longest, is_iterable
 from .lib_lang import getter, setter
+from .lib_lang import ResourceError, SignatureError
 
 from .internal_utils import exporter
 export, __all__ = exporter()
@@ -23,16 +24,6 @@ builtin_input = input
 tui_print = builtin_print
 tui_flush = builtin_flush
 tui_input = builtin_input
-
-
-@export
-class ResourceError(RuntimeError):
-    pass
-
-
-@export
-class SignatureError(ValueError):
-    pass
 
 
 @export
