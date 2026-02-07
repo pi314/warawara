@@ -1417,7 +1417,7 @@ class TestMenuRendering(TestMenuFixture):
 
 
 class TestMenuEvent(TestCase):
-    def test_menu_onevent_attrs(self):
+    def test_menu_menu_onevent_attrs(self):
         menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
         def foo():
             pass
@@ -1445,6 +1445,25 @@ class TestMenuEvent(TestCase):
         menu.onunselect = foo
         self.eq(menu.onunselect, foo)
         self.eq(menu.onunselect, menu.onevent['unselect'])
+
+    def test_menu_item_onevent_attrs(self):
+        menu = iroiro.Menu('title', ['item1', 'item2', 'item3'])
+        def foo():
+            pass
+
+        self.false(menu[0].onevent)
+        menu[0].onevent = foo
+        self.true(menu[0].onevent)
+
+        self.eq(menu[1].onselect, None)
+        menu[1].onselect = foo
+        self.eq(menu[1].onselect, foo)
+        self.eq(menu[1].onselect, menu[1].onevent['select'])
+
+        self.eq(menu[2].onunselect, None)
+        menu[2].onunselect = foo
+        self.eq(menu[2].onunselect, foo)
+        self.eq(menu[2].onunselect, menu[2].onevent['unselect'])
 
     def test_menu_event_bubbling_onselect(self):
         menu = iroiro.Menu('title', ['through', 'block', 'reject'], checkbox='[]')
@@ -1575,3 +1594,66 @@ class TestMenuEvent(TestCase):
         with self.raises(iroiro.Menu.GiveUpSelection):
             menu.quit()
         checkpoint_menu.verify()
+
+    def test_menu_event_bubbling_user_defined_event(self):
+        menu = iroiro.Menu('title', ['skipped', 'through', 'block', 'reject'], checkbox='[]')
+
+        # item oniroiro handler
+        checkpoint_item = self.checkpoint()
+        expect_kwargs = {}
+        expect_item = None
+        def item_oniroiro(event, item, **kwargs):
+            self.eq(expect_kwargs, kwargs)
+            checkpoint_item.set()
+            if item == 'block':
+                return True
+            if item == 'reject':
+                return False
+        for item in menu[1:]:
+            item.onevent('iroiro', item_oniroiro)
+
+        # menu oniroiro handler
+        checkpoint_menu = self.checkpoint()
+        def menu_oniroiro(event, menu, item, **kwargs):
+            self.eq(expect_item, item)
+            self.eq(expect_kwargs, kwargs)
+            checkpoint_menu.set()
+        menu.onevent('iroiro', menu_oniroiro)
+
+        # Event bubble to menu
+        expect_kwargs = {'key': 'value'}
+        expect_item = menu[0]
+        menu[0].emit('iroiro', key='value')
+        checkpoint_item.verify(False)
+        checkpoint_menu.verify()
+        checkpoint_item.clear()
+        checkpoint_menu.clear()
+
+        # Event bubble to menu
+        expect_kwargs = {'key': 'value2'}
+        expect_item = menu[1]
+        ret = menu[1].emit('iroiro', key='value2')
+        checkpoint_item.verify()
+        checkpoint_menu.verify()
+        checkpoint_item.clear()
+        checkpoint_menu.clear()
+
+        # Event blocked
+        expect_kwargs = {'key': 'value3'}
+        expect_item = menu[2]
+        ret = menu[2].emit('iroiro', key='value3')
+        self.eq(ret, True)
+        checkpoint_item.verify()
+        checkpoint_menu.verify(False)
+        checkpoint_item.clear()
+        checkpoint_menu.clear()
+
+        # Event blocked
+        expect_kwargs = {'key': 'value4'}
+        expect_item = menu[3]
+        ret = menu[3].emit('iroiro', key='value4')
+        self.eq(ret, False)
+        checkpoint_item.verify()
+        checkpoint_menu.verify(False)
+        checkpoint_item.clear()
+        checkpoint_menu.clear()

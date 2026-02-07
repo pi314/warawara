@@ -1119,7 +1119,7 @@ class Menu:
         return ret
 
     def emit(self, event, **kwargs):
-        self.onevent.emit(event=event, menu=self, **kwargs)
+        return self.onevent.emit(event=event, menu=self, **kwargs)
 
     def notify_start(self, thread):
         self._threads.append(thread)
@@ -1519,7 +1519,7 @@ class MenuItemRef:
         return self.__cmp__(other) >= 0
 
     def emit(self, event, **kwargs):
-        self.onevent.emit(event=event, item=self, **kwargs)
+        return self.onevent.emit(event=event, item=self, **kwargs)
 
 
 class MenuItem(MenuItemRef):
@@ -2020,7 +2020,8 @@ class MenuEventHandler:
     def handle(self, **kwargs):
         import inspect
         sig = inspect.signature(self.handler).parameters
-        for key in [key for key in kwargs.keys() if key not in sig]:
-            del kwargs[key]
+        if not any(True for param in sig.values() if param.kind == param.VAR_KEYWORD):
+            for key in [key for key in kwargs.keys() if key not in sig]:
+                del kwargs[key]
         if callable(self.handler):
             return self.handler(**kwargs)
