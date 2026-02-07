@@ -1537,3 +1537,41 @@ class TestMenuEvent(TestCase):
         self.true(menu[2].selected)
         checkpoint_item.verify()
         checkpoint_menu.verify(False)
+
+    def test_menu_event_bubbling_onsubmit(self):
+        menu = iroiro.Menu('title', ['item', 'key'], checkbox='[]')
+
+        # menu onsubmit handler
+        checkpoint_menu = self.checkpoint()
+        def menu_onsubmit(menu):
+            checkpoint_menu.set()
+            if not menu[1].selected:
+                return False
+        menu.onsubmit(menu_onsubmit)
+
+        # Submit rejected
+        self.eq(menu.submit(), False)
+        checkpoint_menu.verify()
+        checkpoint_menu.clear()
+
+        # Submit accepted
+        with self.raises(iroiro.Menu.DoneSelection):
+            menu[1].select()
+            menu.submit()
+        checkpoint_menu.verify()
+        checkpoint_menu.clear()
+
+    def test_menu_event_bubbling_onquit(self):
+        menu = iroiro.Menu('title', ['item', 'key'], checkbox='[]')
+
+        # menu onquit handler
+        checkpoint_menu = self.checkpoint()
+        def menu_onquit(menu):
+            checkpoint_menu.set()
+            return False
+        menu.onquit(menu_onquit)
+
+        # Quit is not stoppable
+        with self.raises(iroiro.Menu.GiveUpSelection):
+            menu.quit()
+        checkpoint_menu.verify()
