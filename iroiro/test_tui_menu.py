@@ -1664,7 +1664,7 @@ class TestMenuEvent(TestCase):
 
 
 class TestMenuScolling(TestMenuFixture):
-    def test_menu_limited_height(self):
+    def test_menu_with_limited_height(self):
         self.menu = iroiro.Menu('Do you like iroiro?', [f'item{i}' for i in range(10)], max_height=6)
         self.start_menu()
 
@@ -1681,7 +1681,7 @@ class TestMenuScolling(TestMenuFixture):
 
         self.feedkey(EOFError)
 
-    def test_menu_scroll_to_bottom(self):
+    def test_menu_scroll_pull_window(self):
         self.menu = iroiro.Menu('Do you like iroiro?', [f'item{i}' for i in range(10)], max_height=6)
         self.menu.onkey('g', lambda menu: menu.cursor.to(menu.first))
         self.menu.onkey('H', lambda menu: menu.cursor.to(menu.top))
@@ -1747,5 +1747,97 @@ class TestMenuScolling(TestMenuFixture):
             ])
         self.eq(self.menu.top, 'item0')
         self.eq(self.menu.bottom, 'item4')
+
+        self.feedkey(EOFError)
+
+    def test_menu_scroll_pull_cursor(self):
+        self.menu = iroiro.Menu('Do you like iroiro?', [f'item{i}' for i in range(10)], max_height=6)
+        self.menu.onkey('e', lambda menu: menu.scroll())
+        self.menu.onkey('y', lambda menu: menu.scroll(-1))
+        self.menu.onkey('G', lambda menu: menu.cursor.to(menu.last))
+        self.start_menu()
+
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> item0',
+            '  item1',
+            '  item2',
+            '  item3',
+            '  item4',
+            ])
+        self.eq(self.menu.top, 'item0')
+        self.eq(self.menu.bottom, 'item4')
+
+        self.feedkey('e')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> item1',
+            '  item2',
+            '  item3',
+            '  item4',
+            '  item5',
+            ])
+        self.eq(self.menu.top, 'item1')
+        self.eq(self.menu.bottom, 'item5')
+
+        self.feedkey('e')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> item2',
+            '  item3',
+            '  item4',
+            '  item5',
+            '  item6',
+            ])
+        self.eq(self.menu.top, 'item2')
+        self.eq(self.menu.bottom, 'item6')
+
+        self.feedkey('y')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  item1',
+            '> item2',
+            '  item3',
+            '  item4',
+            '  item5',
+            ])
+        self.eq(self.menu.top, 'item1')
+        self.eq(self.menu.bottom, 'item5')
+
+        self.feedkey('G')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  item5',
+            '  item6',
+            '  item7',
+            '  item8',
+            '> item9',
+            ])
+        self.eq(self.menu.top, 'item5')
+        self.eq(self.menu.bottom, 'item9')
+
+        self.feedkey('y')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  item4',
+            '  item5',
+            '  item6',
+            '  item7',
+            '> item8',
+            ])
+        self.eq(self.menu.top, 'item4')
+        self.eq(self.menu.bottom, 'item8')
+
+        self.feedkey('y')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  item3',
+            '  item4',
+            '  item5',
+            '  item6',
+            '> item7',
+            ])
+        self.eq(self.menu.top, 'item3')
+        self.eq(self.menu.bottom, 'item7')
 
         self.feedkey(EOFError)
