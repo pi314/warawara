@@ -467,6 +467,10 @@ class TestMenuItem(TestCase):
         self.eq(i.selected, False)
         i.toggle()
         self.eq(i.selected, True)
+        i.selected = False
+        self.eq(i.selected, False)
+        i.selected = True
+        self.eq(i.selected, True)
 
     def test_moveto(self):
         i = self.menu[1]
