@@ -36,6 +36,7 @@ class Checkpoint:
                 self.checkpoint.is_set(),
                 is_set,
                 'Checkpoint was' + (' ' if self.checkpoint.is_set() else ' not ') + 'set')
+        self.checkpoint.clear()
 
     def check(self, *args, **kwargs):
         self.verify(*args, **kwargs)

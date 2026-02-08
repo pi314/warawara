@@ -119,20 +119,29 @@ class TestRunInThread(TestCase):
 
 class TestCheckPoint(TestCase):
     def test_checkpoint(self):
-        Checkpoint = iro.Checkpoint
+        checkpoint = self.checkpoint()
 
-        checkpoint = Checkpoint(self)
-
-        self.false(checkpoint)
+        # Test a set checkpoint
         checkpoint.set()
-        checkpoint.check()
-        checkpoint.check(True)
         self.true(checkpoint)
 
+        # Test an unset checkpoint
         checkpoint.clear()
-        checkpoint.check(False)
         self.false(checkpoint)
 
+        # Verify a checkpoint, which resets it
+        checkpoint.set()
+        checkpoint.verify(True)
+        checkpoint.verify(False)
+        checkpoint.verify(False)
+
+        # Verify a checkpoint is reusable
+        checkpoint.set()
+        checkpoint.verify(True)
+        checkpoint.verify(False)
+        checkpoint.verify(False)
+
+        # Test a checkpoint with thread
         def set_checkpoint():
             checkpoint.wait()
 
