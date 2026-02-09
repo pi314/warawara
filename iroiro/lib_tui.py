@@ -1987,7 +1987,7 @@ class MenuEventHandlerInstaller:
         self.handler = None
 
     def __repr__(self):
-        return f'MenuEventHandlerInstaller({repr(self.event)})'
+        return f'MenuEventHandlerInstaller(event={repr(self.event)})'
 
     def __eq__(self, value):
         return self.handler == value
@@ -2028,5 +2028,4 @@ class MenuEventHandler:
         if not any(True for param in sig.values() if param.kind == param.VAR_KEYWORD):
             for key in [key for key in kwargs.keys() if key not in sig]:
                 del kwargs[key]
-        if callable(self.handler):
-            return self.handler(**kwargs)
+        return self.handler(**kwargs)

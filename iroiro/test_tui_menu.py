@@ -1442,6 +1442,10 @@ class TestMenuEventDispatcher(TestCase):
         ed = iroiro.tui.MenuEventDispatcher(self.menu)
         self.false(ed)
 
+    def test_event_handler_installer_repr(self):
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        self.eq(repr(ed.iroiro), "MenuEventHandlerInstaller(event='iroiro')")
+
     def test_bind_unbind_default_handler_by_call(self):
         ed = iroiro.tui.MenuEventDispatcher(self.menu)
         ed(self.foo)
@@ -1515,6 +1519,55 @@ class TestMenuEventDispatcher(TestCase):
 
         ed.unbind('iroiro')
         self.eq(ed.iroiro, None)
+
+
+class TestMenuEventHandler(TestCase):
+    def setUp(self):
+        self.menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
+        self.ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        def foo(): pass
+        def bar(): pass
+        self.foo = foo
+        self.bar = bar
+
+    def test_bool_and_eq(self):
+        eh = iroiro.tui.MenuEventHandler()
+        self.false(eh)
+        self.eq(eh, None)
+
+        eh = iroiro.tui.MenuEventHandler(self.foo)
+        self.true(eh)
+        self.eq(eh, self.foo)
+
+    def test_set_event_handler_by_call(self):
+        eh = iroiro.tui.MenuEventHandler()
+        eh(self.foo)
+        self.eq(eh, self.foo)
+
+        eh(None)
+        self.eq(eh, None)
+
+    def test_set_to(self):
+        eh = iroiro.tui.MenuEventHandler()
+
+        eh.set_to(self.foo)
+        self.eq(eh, self.foo)
+
+        eh.set_to(eh)
+        self.eq(eh, self.foo)
+
+        eh.set_to(None)
+        self.eq(eh, None)
+
+        with self.raises(ValueError):
+            eh.set_to(42)
+
+        eh.set_to(self.bar)
+        self.eq(eh, self.bar)
+
+        eh2 = iroiro.tui.MenuEventHandler(self.foo)
+        eh.set_to(eh2)
+        self.eq(eh, self.foo)
 
 
 class TestMenuEvent(TestCase):
