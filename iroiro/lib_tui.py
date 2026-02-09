@@ -1905,14 +1905,18 @@ class MenuEventDispatcher:
         super().__setattr__('handlers', {})
         super().__setattr__('installers', {})
 
+    def __eq__(self, other):
+        if tuple(self.handlers.keys()) == (None,):
+            return self.handlers[None] == other
+        return False
+
     def __bool__(self):
         return any(h for e, h in self.handlers.items())
 
     def __call__(self, event, handler=None):
         if callable(event) and handler is None:
-            self[None] = handler
-        else:
-            self[event] = handler
+            event, handler = None, event
+        self[event] = handler
 
     def __getattr__(self, event):
         return self[event]
@@ -1938,8 +1942,7 @@ class MenuEventDispatcher:
         if handler is None:
             self.unbind(event)
         elif isinstance(handler, MenuEventHandlerInstaller):
-            if event not in self.handlers:
-                self.handlers[event] = MenuEventHandler()
+            self.handlers[event] = MenuEventHandler()
             self.handlers[event].set_to(handler.handler)
             del self.installers[event]
         else:
@@ -1958,7 +1961,6 @@ class MenuEventDispatcher:
         self.clear()
         if not value:
             return
-
         elif callable(value):
             self[None] = value
         else:
@@ -1983,6 +1985,9 @@ class MenuEventHandlerInstaller:
         self.dispatcher = dispatcher
         self.event = event
         self.handler = None
+
+    def __repr__(self):
+        return f'MenuEventHandlerInstaller({repr(self.event)})'
 
     def __eq__(self, value):
         return self.handler == value

@@ -1420,6 +1420,103 @@ class TestMenuRendering(TestMenuFixture):
         self.true(self.terminal.cursor.visible)
 
 
+class TestMenuEventDispatcher(TestCase):
+    def setUp(self):
+        self.menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
+        def foo(): pass
+        def bar(): pass
+        self.foo = foo
+        self.bar = bar
+
+    def test_bind_to_wrong_target(self):
+        with self.raises(TypeError):
+            iroiro.tui.MenuEventDispatcher(iroiro)
+
+    def test_bound_target(self):
+        menu = self.menu
+        self.true(menu.onevent.target is menu)
+        item = self.menu[0]
+        self.true(item.onevent.target is item)
+
+    def test_initial_empty(self):
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        self.false(ed)
+
+    def test_bind_unbind_default_handler_by_call(self):
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        ed(self.foo)
+        self.true(ed)
+        self.eq(ed[None], self.foo)
+
+        ed(None)
+        self.false(ed)
+        self.eq(ed[None], None)
+
+    def test_bool_and_eq(self):
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        self.false(ed)
+
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        ed.set_to(self.foo)
+        self.true(ed)
+        self.eq(ed, self.foo)
+
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        ed.set_to(('iroiro', self.bar))
+        self.true(ed)
+        self.ne(ed, self.foo)
+        self.ne(ed, self.bar)
+
+    def test_bind_unbind_handler_by_set_to(self):
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+
+        # Bind default handler
+        ed.set_to(self.bar)
+        self.eq(ed[None], self.bar)
+
+        # Unbind default handler
+        ed.set_to(None)
+        self.eq(ed[None], None)
+
+        # Bind event handler
+        ed.set_to(('iroiro', self.bar))
+        self.eq(ed.iroiro, self.bar)
+
+        # Short circuit prevention
+        ed.set_to(ed)
+        self.eq(ed.iroiro, self.bar)
+
+    def test_bind_unbind_by_call(self):
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        ed('iroiro', self.foo)
+        self.eq(ed['iroiro'], self.foo)
+
+        ed('iroiro', None)
+        self.eq(ed['iroiro'], None)
+
+    def test_bind_unbind_by_setattr_getattr(self):
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        ed.iroiro = self.bar
+        self.eq(ed.iroiro, self.bar)
+
+        ed.iroiro = None
+        self.eq(ed.iroiro, None)
+
+    def test_bind_unbind_by_bind_unbind(self):
+        ed = iroiro.tui.MenuEventDispatcher(self.menu)
+        ed.bind('iroiro', self.foo)
+        self.eq(ed.iroiro, self.foo)
+
+        ed.bind('iroiro', self.bar)
+        self.eq(ed.iroiro, self.bar)
+
+        ed.unbind('iroiro')
+        self.eq(ed.iroiro, None)
+
+        ed.unbind('iroiro')
+        self.eq(ed.iroiro, None)
+
+
 class TestMenuEvent(TestCase):
     def test_menu_menu_onevent_attrs(self):
         menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
