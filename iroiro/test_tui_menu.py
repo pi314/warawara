@@ -554,6 +554,12 @@ class TestMenuStdoutNotTTY(TestCase):
             menu.interact()
 
 
+class TestIdleMenuRendering(TestCase):
+    def test_idle_menu_rendering(self):
+        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'])
+        menu.do_render()
+
+
 class TestMenuFixture(TestCase):
     def setUp(self):
         from .lib_test_utils import FakeTerminal
