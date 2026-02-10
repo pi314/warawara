@@ -1814,6 +1814,11 @@ class TestMenuEvent(TestCase):
 
 
 class TestMenuScolling(TestMenuFixture):
+    def test_menu_top_bottom_none(self):
+        self.menu = iroiro.Menu('Do you like iroiro?', options=['item1'])
+        self.eq(self.menu.top, None)
+        self.eq(self.menu.bottom, None)
+
     def test_menu_with_limited_height(self):
         self.menu = iroiro.Menu('Do you like iroiro?', [f'item{i}' for i in range(10)], max_height=6)
         self.start_menu()
