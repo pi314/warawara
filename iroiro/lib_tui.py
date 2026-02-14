@@ -1024,21 +1024,25 @@ class Menu:
 
     @staticmethod
     def parse_checkbox(checkbox):
+        if checkbox in ('()', 'single', 'radio'):
+            checkbox = '(*)'
+        elif checkbox in ('[]', 'multi', 'multiple', 'checkbox'):
+            checkbox = '[*]'
+        elif checkbox in ('{}', 'meta'):
+            checkbox = '{*}'
+
         if not checkbox:
             check = None
             box = None
-        elif checkbox in ('()', 'single', 'radio'):
-            check = '*'
-            box = '()'
         elif checkbox.startswith('(') and checkbox.endswith(')'):
             check = checkbox[1:-1]
             box = '()'
-        elif checkbox in ('[]', 'multi', 'multiple', 'checkbox'):
-            check = '*'
-            box = '[]'
         elif checkbox.startswith('[') and checkbox.endswith(']'):
             check = checkbox[1:-1]
             box = '[]'
+        elif checkbox.startswith('{') and checkbox.endswith('}'):
+            check = checkbox[1:-1]
+            box = '{}'
         else:
             check = None
             box = None
@@ -1112,8 +1116,8 @@ class Menu:
     def Thread(self, target=None, name=None, args=(), kwargs={}):
         return MenuThread(menu=self, target=target, name=name, args=args, kwargs=kwargs)
 
-    def Item(self, text='', cursor=None, checkbox=None, meta=False, onkey=None):
-        ret = MenuItem(menu=self, meta=meta, text=text, cursor=cursor, checkbox=checkbox)
+    def Item(self, text='', cursor=None, checkbox=None, check=None, box=None, meta=False, onkey=None):
+        ret = MenuItem(menu=self, meta=meta, text=text, cursor=cursor, checkbox=checkbox, check=check, box=box)
         if onkey:
             ret.onkey += onkey
         return ret
@@ -1239,18 +1243,18 @@ class Menu:
                 return index
         return -1
 
-    def insert(self, index, text='', cursor=None, checkbox=None, meta=False, onkey=None):
-        ret = self.Item(meta=meta, text=text, cursor=cursor, checkbox=checkbox, onkey=onkey)
+    def insert(self, index, text='', cursor=None, checkbox=None, check=None, box=None, meta=False, onkey=None):
+        ret = self.Item(meta=meta, text=text, cursor=cursor, checkbox=checkbox, check=check, box=box, onkey=onkey)
         self.options.insert(index, ret)
         return ret
 
-    def append(self, text='', cursor=None, checkbox=None, meta=False, onkey=None):
-        ret = self.Item(meta=meta, text=text, cursor=cursor, checkbox=checkbox, onkey=onkey)
+    def append(self, text='', cursor=None, checkbox=None, check=None, box=None, meta=False, onkey=None):
+        ret = self.Item(meta=meta, text=text, cursor=cursor, checkbox=checkbox, check=check, box=box, onkey=onkey)
         self.options.append(ret)
         return ret
 
-    def extend(self, options, cursor=None, checkbox=None, meta=False, onkey=None):
-        ret = [self.Item(meta=meta, text=text, cursor=cursor, checkbox=checkbox, onkey=onkey)
+    def extend(self, options, cursor=None, checkbox=None, check=None, box=None, meta=False, onkey=None):
+        ret = [self.Item(meta=meta, text=text, cursor=cursor, checkbox=checkbox, check=check, box=box, onkey=onkey)
                for text in options]
         self.options.extend(ret)
         return ret
@@ -1415,7 +1419,6 @@ class Menu:
             fmt = item.format or self.format
 
             check = '' if check is None else check
-            check = check(item) if callable(check) else check
             fmt = fmt if callable(fmt) else fmt.format
             self.pager[idx] = fmt(
                     menu=self,
@@ -1523,7 +1526,7 @@ class MenuItemRef:
 
 
 class MenuItem(MenuItemRef):
-    def __init__(self, *, menu, meta, text, cursor, checkbox):
+    def __init__(self, *, menu, meta, text, cursor, checkbox, check=None, box=None):
         self.menu = menu
         self.meta = bool(meta)
         self.text = str(text)
@@ -1532,15 +1535,35 @@ class MenuItem(MenuItemRef):
         self.format = None
 
         self.cursor_symbol = cursor
-        self.check, self.box = Menu.parse_checkbox(checkbox)
+        self._check, self._box = Menu.parse_checkbox(checkbox)
         if self.meta:
-            if not self.check:
-                self.check = '*'
-            if not self.box:
-                self.box = '{}'
+            if check:
+                self._check = check
+            if box:
+                self._box = box
 
         self._onkey = MenuKeyHandler(self)
         self._onevent = MenuEventDispatcher(self)
+
+    @getter
+    def check(self):
+        if callable(self._check):
+            return self._check(self)
+        return self._check if self.selected else None
+
+    @setter
+    def check(self, value):
+        self._check = value
+
+    @getter
+    def box(self):
+        if callable(self._box):
+            return self._box(self)
+        return self._box
+
+    @setter
+    def box(self, value):
+        self._box = value
 
     def __repr__(self):
         return f'MenuItem(index={self.index}, selected={self.selected}, text={repr(self.text)})'

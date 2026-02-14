@@ -508,7 +508,7 @@ class TestMenuItem(TestCase):
         self.eq(item.onkey['a'], [foo])
         self.eq(item.menu, self.menu)
         self.eq(item.text, 'wah')
-        self.eq(item.check, '*')
+        self.eq(item.check, None)
         self.eq(item.box, '[]')
         self.eq(item.feedkey('a'), 'k')
 
@@ -516,12 +516,28 @@ class TestMenuItem(TestCase):
         item = self.menu.Item(text='wah', meta=True)
         self.eq(item.menu, self.menu)
         self.eq(item.text, 'wah')
-        self.eq(item.check, '*')
+        self.eq(item.check, None)
+        self.eq(item.box, None)
+
+        def meta_check(item):
+            return '_-='[item.data.state]
+        def meta_box(item):
+            return ['||', '|}', '{|'][item.data.state]
+        item = self.menu.Item(text='wah', meta=True, checkbox='{+}', check=meta_check)
+        item.data.state = 0
+        self.eq(item.check, '_')
         self.eq(item.box, '{}')
 
-        item = self.menu.Item(text='wah', meta=True, checkbox='[+]')
-        self.eq(item.check, '+')
-        self.eq(item.box, '[]')
+        item.box = meta_box
+        self.eq(item.box, '||')
+
+        item.data.state = 1
+        self.eq(item.check, '-')
+        self.eq(item.box, '|}')
+
+        item.data.state = 2
+        self.eq(item.check, '=')
+        self.eq(item.box, '{|')
 
 
 class TestMenuThread(TestCase):
@@ -1826,7 +1842,7 @@ class TestMenuEvent(TestCase):
         checkpoint_menu.clear()
 
 
-class TestMenuScolling(TestMenuFixture):
+class TestMenuScrolling(TestMenuFixture):
     def test_menu_top_bottom_none(self):
         self.menu = iroiro.Menu('Do you like iroiro?', options=['item1'])
         self.eq(self.menu.top, None)
@@ -2018,5 +2034,54 @@ class TestMenuScolling(TestMenuFixture):
             ])
         self.eq(self.menu.top, 'item3')
         self.eq(self.menu.bottom, 'item7')
+
+        self.feedkey(EOFError)
+
+
+class TestMenuMetaItems(TestMenuFixture):
+    def test_render_meta_item(self):
+        self.menu = iroiro.Menu('Do you like iroiro?', options=['item1', 'item2'], checkbox='[]')
+
+        def meta_check(item):
+            if all(i.selected for i in item.menu if not i.meta):
+                return '*'
+            elif all(not i.selected for i in item.menu if not i.meta):
+                return ' '
+            else:
+                return '+'
+
+        def meta_box(item):
+            if all(i.selected for i in item.menu if not i.meta):
+                return '||'
+            elif all(not i.selected for i in item.menu if not i.meta):
+                return '__'
+            else:
+                return '|}'
+
+        self.menu.append('item meta', meta=True, check=meta_check, box=meta_box)
+        self.start_menu()
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> [ ] item1',
+            '  [ ] item2',
+            '  _ _ item meta',
+            ])
+
+        self.feedkey(' ')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '> [*] item1',
+            '  [ ] item2',
+            '  |+} item meta',
+            ])
+
+        self.feedkey(iroiro.KEY_DOWN)
+        self.feedkey(' ')
+        self.eq(self.terminal.lines, [
+            'Do you like iroiro?',
+            '  [*] item1',
+            '> [*] item2',
+            '  |*| item meta',
+            ])
 
         self.feedkey(EOFError)
