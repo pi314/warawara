@@ -472,6 +472,18 @@ class TestMenuItem(TestCase):
         i.selected = True
         self.eq(i.selected, True)
 
+    def test_meta_item_select_unselect_toggle(self):
+        i = self.menu.append('meta', meta=True)
+        self.eq(i.selected, False)
+        i.select()
+        self.eq(i.selected, False)
+        i.unselect()
+        self.eq(i.selected, False)
+        i.toggle()
+        self.eq(i.selected, False)
+        i.selected = True
+        self.eq(i.selected, False)
+
     def test_moveto(self):
         i = self.menu[1]
         self.eq(i.index, 1)
@@ -1285,14 +1297,17 @@ class TestMenuItemManipulation(TestMenuFixture):
         menu = self.menu
         def foo(item, key):
             return key.upper()
-        menu.append(text='text', onkey={'k': foo})
-        menu.append(text='text2')
+        i3 = menu.append(text='text', onkey={'k': foo})
+        i4 = menu.append(text='text2')
 
         self.eq(menu[0].text, 'Yes')
         self.eq(menu[1].text, 'yes yes')
         self.eq(menu[2].text, 'surely yes')
         self.eq(menu[3].text, 'text')
         self.eq(menu[4].text, 'text2')
+
+        self.eq(i3, menu[3])
+        self.eq(i4, menu[4])
 
         menu.cursor = 3
         self.eq(menu.feedkey('k'), 'K')
@@ -1381,6 +1396,12 @@ class TestMenuItemManipulation(TestMenuFixture):
 
     def test_multi_select_menu_select_all(self):
         menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]')
+        menu.select_all()
+        self.eq(menu.selected, ['Yes', 'no'])
+
+    def test_multi_select_menu_with_meta_item_select_all(self):
+        menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'no'], checkbox='[]')
+        menu.append('meta', meta=True)
         menu.select_all()
         self.eq(menu.selected, ['Yes', 'no'])
 
