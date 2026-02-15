@@ -527,7 +527,7 @@ class TestMenuItem(TestCase):
         self.eq(item.menu, self.menu)
         self.eq(item.text, 'wah')
         self.eq(item.check, None)
-        self.eq(item.box, None)
+        self.eq(item.box, '{}')
 
         def meta_check(item):
             return '_-='[item.data.state]

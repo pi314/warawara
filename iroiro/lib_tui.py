@@ -1535,7 +1535,7 @@ class MenuItem(MenuItemRef):
         self.format = None
 
         self.cursor_symbol = cursor
-        self._check, self._box = Menu.parse_checkbox(checkbox)
+        self._check, self._box = Menu.parse_checkbox('meta' if self.meta and checkbox is None else checkbox)
 
         if check:
             self._check = check
