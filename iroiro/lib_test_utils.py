@@ -95,6 +95,12 @@ class TestCase(unittest.TestCase):
             msg.append(']')
             raise AssertionError('\n'.join(msg))
 
+    def contains(self, a, b):
+        self.assertIn(b, a)
+
+    def contains_no(self, a, b):
+        self.assertNotIn(b, a)
+
     def isinstance(self, first, second):
         return self.true(isinstance(first, second))
 

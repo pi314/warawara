@@ -22,6 +22,12 @@ class TestTestCase(TestCase):
         self.isinstance(3, int)
         self.isinstance(3.1415926535897932384626433832795, float)
 
+    def test_contains(self):
+        self.contains([1, 2, 3], 1)
+        self.contains([1, 2, 3], 2)
+        self.contains([1, 2, 3], 3)
+        self.contains_no([1, 2, 3], 4)
+
     def test_list_diff_msg(self):
         try:
             self.eq([1, 2, 3], [1, 2, 3, 4])
