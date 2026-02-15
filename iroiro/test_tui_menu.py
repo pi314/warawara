@@ -584,9 +584,15 @@ class TestMenuThread(TestCase):
         t.start()
         self.true(t.thread.daemon)
         self.true(t.is_alive())
+
+        with self.raises(iroiro.AlreadyRunningError) as e:
+            t.start()
+
+        self.contains(str(e.exception), 'foo()')
+
         checkpoint.set()
 
-        t.join()
+        menu.threads.join()
         self.false(t.is_alive())
 
 

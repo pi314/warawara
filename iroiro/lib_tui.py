@@ -6,7 +6,7 @@ from collections import UserList, UserDict
 from .lib_threading import Lock
 from .lib_itertools import zip_longest, is_iterable
 from .lib_lang import getter, setter
-from .lib_lang import ResourceError, SignatureError
+from .lib_lang import ResourceError, SignatureError, AlreadyRunningError
 
 from .internal_utils import exporter
 export, __all__ = exporter()
@@ -992,13 +992,16 @@ class MenuThread:
 
     def start(self):
         import threading
+        if self.is_alive():
+            raise AlreadyRunningError(self.target.__name__ + '()')
+
         self.thread = threading.Thread(
                 target=self.target, name=self.name,
                 args=self.args, kwargs=self.kwargs,
                 daemon=True)
 
         # register self to self.menu
-        self.menu.notify_start(self.thread)
+        self.menu.notify_start(self)
 
         self.thread.start()
         return self
@@ -1008,6 +1011,16 @@ class MenuThread:
 
     def join(self):
         self.thread.join()
+
+
+class MenuThreadList(UserList):
+    def __init__(self):
+        super().__init__()
+
+    def join(self):
+        while self.data:
+            self.data[0].join()
+            self.data.pop(0)
 
 
 @export
@@ -1091,7 +1104,7 @@ class Menu:
         from .lib_threading import Throttler
         self._refresh_throttler = Throttler(self.do_render, 1/60)
 
-        self._threads = []
+        self.threads = MenuThreadList()
 
     def __iter__(self):
         return iter(self.options)
@@ -1126,7 +1139,7 @@ class Menu:
         return self.onevent.emit(event=event, menu=self, **kwargs)
 
     def notify_start(self, thread):
-        self._threads.append(thread)
+        self.threads.append(thread)
 
     @property
     def active(self):
@@ -1480,11 +1493,6 @@ class Menu:
                     self.onkey('q', self.quit)
 
                 return self.interact_loop()
-
-    def join(self):
-        while self._threads:
-            self._threads[0].join()
-            self._threads.pop(0)
 
 
 class MenuItemRef:
