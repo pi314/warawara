@@ -151,6 +151,9 @@ class TestStream(TestCase):
 
 
 class TestSubproc(TestCase):
+    def tearDown(self):
+        children().clear()
+
     def test_default_properties(self):
         def prog(proc):
             self.eq(proc[0].readline(), 'line')
@@ -187,16 +190,18 @@ class TestSubproc(TestCase):
         p = command(prog)
         p.run(wait=False)
 
-        with self.raises(AlreadyRunningError):
+        with self.raises(AlreadyRunningError) as e1:
             p.run()
+        self.contains(str(e1.exception), 'prog()')
 
         checkpoint.set()
         p.wait()
 
         p = command(['sleep', 1])
         p.run(wait=False)
-        with self.raises(AlreadyRunningError):
+        with self.raises(AlreadyRunningError) as e2:
             p.run(wait=False)
+        self.eq(str(e2.exception), 'sleep 1')
         p.kill()
 
     def test_word(self):
