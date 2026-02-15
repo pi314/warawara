@@ -15,6 +15,11 @@ def setter(func):
 
 
 @export
+class AlreadyRunningError(RuntimeError):
+    pass
+
+
+@export
 class ResourceError(RuntimeError):
     pass
 
