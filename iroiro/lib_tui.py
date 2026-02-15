@@ -1526,7 +1526,7 @@ class MenuItemRef:
 
 
 class MenuItem(MenuItemRef):
-    def __init__(self, *, menu, meta, text, cursor, checkbox, check=None, box=None):
+    def __init__(self, *, menu, meta, text, cursor, checkbox=None, check=None, box=None):
         self.menu = menu
         self.meta = bool(meta)
         self.text = str(text)
@@ -1536,11 +1536,11 @@ class MenuItem(MenuItemRef):
 
         self.cursor_symbol = cursor
         self._check, self._box = Menu.parse_checkbox(checkbox)
-        if self.meta:
-            if check:
-                self._check = check
-            if box:
-                self._box = box
+
+        if check:
+            self._check = check
+        if box:
+            self._box = box
 
         self._onkey = MenuKeyHandler(self)
         self._onevent = MenuEventDispatcher(self)

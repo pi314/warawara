@@ -504,6 +504,8 @@ class TestMenuItem(TestCase):
         def foo(item, key):
             return 'k'
         item = self.menu.Item(text='wah', checkbox='[]')
+        self.true(isinstance(item, iroiro.tui.MenuItem))
+
         item.onkey += ('a', foo)
         self.eq(item.onkey['a'], [foo])
         self.eq(item.menu, self.menu)
@@ -511,6 +513,14 @@ class TestMenuItem(TestCase):
         self.eq(item.check, None)
         self.eq(item.box, '[]')
         self.eq(item.feedkey('a'), 'k')
+
+        item = self.menu.Item(text='wah', check='v', box='//')
+        self.eq(item.check, None)
+        self.eq(item.box, '//')
+
+        item.select()
+        self.eq(item.check, 'v')
+        self.eq(item.box, '//')
 
     def test_meta_item(self):
         item = self.menu.Item(text='wah', meta=True)
@@ -523,12 +533,17 @@ class TestMenuItem(TestCase):
             return '_-='[item.data.state]
         def meta_box(item):
             return ['||', '|}', '{|'][item.data.state]
-        item = self.menu.Item(text='wah', meta=True, checkbox='{+}', check=meta_check)
-        item.data.state = 0
-        self.eq(item.check, '_')
+
+        item = self.menu.Item(text='iro', meta=True, checkbox='{+}', check='.')
+        self.eq(item.text, 'iro')
+        self.eq(item.check, None)
         self.eq(item.box, '{}')
 
+        item.check = meta_check
         item.box = meta_box
+
+        item.data.state = 0
+        self.eq(item.check, '_')
         self.eq(item.box, '||')
 
         item.data.state = 1
