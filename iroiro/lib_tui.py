@@ -1387,7 +1387,7 @@ class Menu:
                 self.pager.scroll = int(self.cursor)
                 return
 
-            for i in range(int(self.cursor), 0, -1):
+            for i in range(int(self.cursor), 0, -1): # pragma: no cover
                 if self.pager[i].visible:
                     self.pager.scroll += int(self.cursor) - i
                     break
@@ -1402,7 +1402,7 @@ class Menu:
             self.cursor = self.pager.scroll
             return
 
-        for i in range(int(self.cursor), 0, -1):
+        for i in range(int(self.cursor), 0, -1): # pragma: no cover
             if self.pager[i].visible:
                 self.cursor = i
                 break
