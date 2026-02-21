@@ -56,35 +56,37 @@ import iroiro
 
 Testing
 -------------------------------------------------------------------------------
-Through `Makefile`:
+*   Through `Makefile`:
 
-```console
-sh$ make run
-sh$ make run VERBOSE=1
-```
+    ```console
+    sh$ make run
+    sh$ make run VERBOSE=1
+    ```
 
-With built-in [`unittest`](https://docs.python.org/3/library/unittest.html):
+    -   To a specific Python version, if [`uv`](https://github.com/astral-sh/uv) is available:
 
-```console
-sh$ python3 -m unittest | cat
-```
+        ```console
+        sh$ make run PYTHON=3.9
+        ```
 
-With [`pytest-cov`](https://pytest-cov.readthedocs.io/en/latest/):
+*   With built-in [`unittest`](https://docs.python.org/3/library/unittest.html):
 
-```console
-sh$ pipx install pytest-cov --include-deps
-sh$ pytest --cov=iroiro --cov-report=html
-```
+    ```console
+    sh$ python3 -m unittest | cat
+    ```
 
-or (Python3.7 for example)
+*   With [`pytest-cov`](https://pytest-cov.readthedocs.io/en/latest/):
 
-```console
-sh$ pipx install pytest
-sh$ pipx runpip pytest install pytest-cov
-sh$ pytest --cov=iroiro --cov-report=html
-```
+    ```console
+    sh$ pipx install pytest-cov --include-deps
+    sh$ pytest --cov=iroiro --cov-report=html
+    ```
 
-To specific Python version, if [`uv`](https://github.com/astral-sh/uv) is available:
-```console
-sh$ make run PYTHON=3.9
-```
+    -   With manually installed `pytest-cov`:
+
+        ```console
+        sh$ pipx install pytest
+        sh$ pipx runpip pytest install pytest-cov
+        sh$ pytest --cov=iroiro --cov-report=html
+        ```
+        The use case is you only have `python3.7` and `pip` access in a limited environment.
