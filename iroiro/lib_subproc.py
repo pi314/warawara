@@ -7,22 +7,11 @@ import threading
 from signal import SIGINT, SIGTERM, SIGKILL
 from collections import UserList
 
+from .lib_lang import AlreadyRunningError
 from .lib_itertools import is_iterable
 
 from .internal_utils import exporter
 export, __all__ = exporter()
-
-
-@export
-class AlreadyRunningError(Exception):
-    def __init__(self, cmd):
-        if callable(cmd.cmd[0]):
-            prog = cmd.cmd[0].__name__ + '()'
-        else:
-            prog = cmd.cmd[0]
-
-        super().__init__(' '.join(
-            [prog] + cmd.cmd[1:]))
 
 
 class EventBroadcaster:
@@ -290,7 +279,11 @@ class command:
             raise TypeError('The type of "wait" should be NoneType, int, bool, or float')
 
         if self.proc or self.thread:
-            raise AlreadyRunningError(self)
+            if callable(self.cmd[0]):
+                who = self.cmd[0].__name__ + '()'
+            else:
+                who = self.cmd[0]
+            raise AlreadyRunningError(' '.join([who] + self.cmd[1:]))
 
         if callable(self.cmd[0]):
             def worker():

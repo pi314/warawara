@@ -22,6 +22,12 @@ class TestTestCase(TestCase):
         self.isinstance(3, int)
         self.isinstance(3.1415926535897932384626433832795, float)
 
+    def test_contains(self):
+        self.contains([1, 2, 3], 1)
+        self.contains([1, 2, 3], 2)
+        self.contains([1, 2, 3], 3)
+        self.contains_no([1, 2, 3], 4)
+
     def test_list_diff_msg(self):
         try:
             self.eq([1, 2, 3], [1, 2, 3, 4])
@@ -73,6 +79,20 @@ class TestTestCase(TestCase):
   4,
 ]''')
 
+    def test_list_of_list_diff_msg(self):
+        try:
+            self.eq([1, [2], 3], [1, [2, 3], 4])
+        except AssertionError as e:
+            self.eq(str(e),
+'''Lists not equal:
+[
+  1,
+- [2],
+- 3,
++ [2, 3],
++ 4,
+]''')
+
 
 class TestRunInThread(TestCase):
     def test_run_in_thread(self):
@@ -105,20 +125,29 @@ class TestRunInThread(TestCase):
 
 class TestCheckPoint(TestCase):
     def test_checkpoint(self):
-        Checkpoint = iro.Checkpoint
+        checkpoint = self.checkpoint()
 
-        checkpoint = Checkpoint(self)
-
-        self.false(checkpoint)
+        # Test a set checkpoint
         checkpoint.set()
-        checkpoint.check()
-        checkpoint.check(True)
         self.true(checkpoint)
 
+        # Test an unset checkpoint
         checkpoint.clear()
-        checkpoint.check(False)
         self.false(checkpoint)
 
+        # Verify a checkpoint, which resets it
+        checkpoint.set()
+        checkpoint.verify(True)
+        checkpoint.verify(False)
+        checkpoint.verify(False)
+
+        # Verify a checkpoint is reusable
+        checkpoint.set()
+        checkpoint.verify(True)
+        checkpoint.verify(False)
+        checkpoint.verify(False)
+
+        # Test a checkpoint with thread
         def set_checkpoint():
             checkpoint.wait()
 
@@ -335,6 +364,9 @@ class TestFakeTerminal(TestCase):
         self.eq(ft.cursor.y, 3)
         self.eq(ft.cursor.x, 3)
 
+        ft.puts('\033[100B')
+        self.eq(ft.cursor.y, 4)
+
     def test_escape_seq_cleareol(self):
         ft = iro.FakeTerminal()
         text = 'occuboinkal'
@@ -355,6 +387,26 @@ class TestFakeTerminal(TestCase):
         ft.puts('\033[3D\033[K')
         self.eq(ft.cursor.x, 5)
         self.eq(ft.lines[2], '嗚啦')
+
+    def test_escape_seq_cursor_visibility(self):
+        ft = iro.FakeTerminal()
+        self.eq(ft.cursor.visible, True)
+
+        ft.puts('\033[?25l')
+        self.eq(ft.cursor.visible, False)
+
+        ft.puts('嗚啦呀哈')
+        self.eq(ft.lines, ['嗚啦呀哈'])
+        self.eq(ft.cursor.y, 0)
+        self.eq(ft.cursor.x, 8)
+
+        ft.puts('\033[?25h')
+        self.eq(ft.cursor.visible, True)
+
+        ft.puts('嗚啦呀哈')
+        self.eq(ft.lines, ['嗚啦呀哈嗚啦呀哈'])
+        self.eq(ft.cursor.y, 0)
+        self.eq(ft.cursor.x, 16)
 
     def test_escape_seq_unknown_seq(self):
         ft = iro.FakeTerminal()
@@ -504,3 +556,105 @@ class TestFakeTerminal(TestCase):
         self.eq(ft.canvas[0][6].char, 'l')
         self.eq(ft.canvas[0][7].char, 'o')
         self.eq(ft.canvas[0][8].char, 'l')
+
+
+class TestFakeTime(TestCase):
+    def test_get_current_time(self):
+        fake_time = FakeTime()
+        for name, func in fake_time.patch():
+            self.patch(name, func)
+
+        import time
+        self.eq(time.time(), 0)
+        time.sleep(4.2)
+        self.eq(time.time(), 4.2)
+
+        time.sleep(42)
+        self.eq(time.time(), 4.2 + 42)
+
+        time.sleep(0)
+        self.eq(time.time(), 4.2 + 42)
+
+        with self.raises(ValueError):
+            time.sleep(-1)
+
+        self.eq(time.time(), 4.2 + 42)
+
+    def test_timer_normal(self):
+        fake_time = FakeTime()
+        for name, func in fake_time.patch():
+            self.patch(name, func)
+
+        checkpoint = self.checkpoint()
+        def foo(bar):
+            self.eq(bar, 42)
+            checkpoint.set()
+
+        import threading
+        t = threading.Timer(10, foo, kwargs={'bar': 42})
+        t.start()
+        self.false(checkpoint)
+
+        import time
+        time.sleep(5)
+        self.false(checkpoint)
+
+        time.sleep(5)
+        checkpoint.wait()
+
+    def test_timer_cancel(self):
+        fake_time = FakeTime()
+        for name, func in fake_time.patch():
+            self.patch(name, func)
+
+        checkpoint = self.checkpoint()
+        def foo(bar):
+            self.eq(bar, 42)
+            checkpoint.set()
+
+        import threading
+        t = threading.Timer(10, foo, kwargs={'bar': 42})
+        t.start()
+        self.false(checkpoint)
+
+        t.cancel()
+        self.false(t.active)
+        self.true(t.canceled)
+
+        import time
+        time.sleep(10)
+        self.false(checkpoint)
+
+    def test_timer_cancel_after_join(self):
+        fake_time = FakeTime()
+        for name, func in fake_time.patch():
+            self.patch(name, func)
+
+        checkpoint = self.checkpoint()
+        def foo(bar):
+            self.eq(bar, 42)
+            checkpoint.set()
+
+        import threading
+        t = threading.Timer(10, foo, kwargs={'bar': 42})
+        t.start()
+        self.false(checkpoint)
+
+        t_canceled = self.checkpoint()
+        def t_join():
+            t.join()
+            t_canceled.set()
+
+        thread = threading.Thread(target=t_join, daemon=True)
+        thread.start()
+
+        t.cancel()
+        self.false(t.active)
+        self.true(t.canceled)
+
+        import time
+        time.sleep(10)
+        self.false(checkpoint)
+
+        thread.join()
+        t_canceled.check()
