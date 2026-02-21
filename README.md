@@ -54,25 +54,37 @@ import iroiro
 ```
 
 
-Test
+Testing
 -------------------------------------------------------------------------------
-Testing:
+Through `Makefile`:
 
 ```console
-sh$ python3 -m unittest
+sh$ make run
+sh$ make run VERBOSE=1
 ```
 
-With [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/):
+With built-in [`unittest`](https://docs.python.org/3/library/unittest.html):
+
+```console
+sh$ python3 -m unittest | cat
+```
+
+With [`pytest-cov`](https://pytest-cov.readthedocs.io/en/latest/):
 
 ```console
 sh$ pipx install pytest-cov --include-deps
+sh$ pytest --cov=iroiro --cov-report=html
 ```
 
-or
+or (Python3.7 for example)
 
 ```console
 sh$ pipx install pytest
 sh$ pipx runpip pytest install pytest-cov
-
 sh$ pytest --cov=iroiro --cov-report=html
+```
+
+To specific Python version, if [`uv`](https://github.com/astral-sh/uv) is available:
+```console
+sh$ make run PYTHON=3.9
 ```

@@ -5,17 +5,22 @@ COVERAGE_JSON='coverage.json'
 'true' '''shell start'
 
 if [ "$1" != '' ]; then
-    verbose_flag=--full-trace
+    ARGS_VERBOSE=--full-trace
 fi
 
-if command -v pytest >/dev/null 2>&1 ; then
+if command -v uvx >/dev/null 2>&1 && [ -n "$PYTHON" ]; then
+    ARGS_UV="uvx --python "$PYTHON" --with pytest-cov"
+fi
+
+if command -v pytest >/dev/null 2>&1 || [ -n "$ARGS_UV" ] ; then
     rm -f "${COVERAGE_JSON}"
-    pytest --cov=iroiro --cov-report=json:"${COVERAGE_JSON}" --cov-report=html ${verbose_flag}
+    ${ARGS_UV} pytest --cov=iroiro --cov-report=json:"${COVERAGE_JSON}" --cov-report=html ${ARGS_VERBOSE}
     succ=$?
     if [ ${succ} -eq 0 ]; then
         python3 "$0"
     fi
     rm -f "${COVERAGE_JSON}"
+
 else
     python3 -m unittest --verbose
     succ=$?
