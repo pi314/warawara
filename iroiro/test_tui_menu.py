@@ -622,11 +622,11 @@ class TestMenuFixture(TestCase):
         self.terminal = FakeTerminal()
         self.patch('sys.stdout.isatty', lambda *args, **kargs: True)
         self.patch('shutil.get_terminal_size', self.terminal.get_terminal_size)
-        self.patch('iroiro.lib_tui.tui_print', lambda *args, **kwargs: self.terminal.print(*args, **kwargs))
-        self.patch('iroiro.lib_tui.tui_flush', lambda: None)
+        self.patch('iroiro.tui.tui_print', lambda *args, **kwargs: self.terminal.print(*args, **kwargs))
+        self.patch('iroiro.tui.tui_flush', lambda: None)
 
         from contextlib import nullcontext
-        self.patch('iroiro.lib_tui.HijackStdio', nullcontext)
+        self.patch('iroiro.tui.HijackStdio', nullcontext)
 
         self.menu = iroiro.Menu('Do you like iroiro?', ['Yes', 'yes yes', 'surely yes'])
         self.menu_ret = None
@@ -637,7 +637,7 @@ class TestMenuFixture(TestCase):
 
         import queue
         self.key_queue = queue.Queue()
-        self.patch('iroiro.lib_tui.getch', self.mock_getch)
+        self.patch('iroiro.tui.getch', self.mock_getch)
 
     def tearDown(self):
         self.eq(self.menu_thread, None)

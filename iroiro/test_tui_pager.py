@@ -8,8 +8,8 @@ class TestPager(TestCase):
         from .lib_test_utils import FakeTerminal
         self.terminal = FakeTerminal()
         self.patch('shutil.get_terminal_size', lambda: self.terminal.get_terminal_size())
-        self.patch('iroiro.lib_tui.tui_print', lambda *args, **kwargs: self.terminal.print(*args, **kwargs))
-        self.patch('iroiro.lib_tui.tui_flush', lambda: None)
+        self.patch('iroiro.tui.tui_print', lambda *args, **kwargs: self.terminal.print(*args, **kwargs))
+        self.patch('iroiro.tui.tui_flush', lambda: None)
 
     def test_data_storing(self):
         pager = Pager()

@@ -24,8 +24,8 @@ class TestThreadedSpinner(TestCase):
         self.behavior_queue = queue.Queue()
         self.events_upon_sleep = queue.Queue()
 
-        self.patch('iroiro.lib_tui.tui_print', self.mock_print)
-        self.patch('iroiro.lib_tui.tui_flush', lambda: None)
+        self.patch('iroiro.tui.tui_print', self.mock_print)
+        self.patch('iroiro.tui.tui_flush', lambda: None)
 
     def mock_print(self, *args, **kwargs):
         if not args and not kwargs:
