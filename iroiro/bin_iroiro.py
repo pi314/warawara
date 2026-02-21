@@ -1,14 +1,22 @@
+import argparse
 import os
 import sys
 
-from os.path import basename
+from os.path import basename, dirname
 
+from . import __version__
 from . import bin
 
 
 def main():
     prog = basename(sys.argv[0])
     sys.argv = sys.argv[1:]
+
+    parser = argparse.ArgumentParser(description='iroiro', prog='iroiro')
+    parser.add_argument('-v', '--version', action='version', help='print version and exit', version=__version__)
+    parser.add_argument('-w', '--which', '--where', action='version', help='print package path and exit', version=dirname(__file__))
+    parser.add_argument('command', nargs='*', help='sub-command and args')
+    args = parser.parse_args(sys.argv)
 
     arg_idx = None
     for idx, arg in enumerate(sys.argv):
@@ -23,10 +31,9 @@ r'''
         │       ╭──────────────────────╮ │
         │       │   ╭────────────────╮ │ │
         │       │   │ RecursionError │ │ │
-        │       │   ╰──────┬─────────╯ │ │
-        │       │     ,__, ╯           │ │
-        │       │   __(..)             │ │
-        │       │ ~(  (__)             │ │
+        │       │   ╰─────┬──────────╯ │ │
+        │       │    .__. ╯            │ │
+        │       │ .(=('')              │ │
         │       │  ||-||               │ │
         │       ╰────┬─────────────────╯ │
         │       ,__, ╯                   │
