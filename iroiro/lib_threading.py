@@ -14,7 +14,7 @@ class LockWrapper:
         acquired = self.lock.acquire(blocking=blocking, timeout=timeout)
         if acquired:
             self._locked += 1
-        return Locked(self.lock, acquired)
+        return Locked(self, acquired)
 
     def release(self):
         self._locked -= 1
@@ -28,9 +28,7 @@ class LockWrapper:
 
     @property
     def locked(self):
-        if not hasattr(self.lock, 'locked'):
-            return self._locked
-        return self.lock.locked()
+        return self._locked
 
 
 @export

@@ -386,10 +386,12 @@ class TestThrottler(TestCase):
         time.sleep(1)
 
         barrier = threading.Barrier(2)
+        first_caller_set = threading.Event()
 
         record = []
         def foo(*args, **kwargs):
             record.append((time.time(), args, kwargs))
+            first_caller_set.set()
             barrier.wait()
 
         th = iro.threading.Throttler(foo, interval=1)
@@ -397,6 +399,7 @@ class TestThrottler(TestCase):
         t = threading.Thread(target=lambda:th(args=['first caller']), daemon=True)
         t.start()
 
+        first_caller_set.wait()
         th(args=['fast caller'])
         th(args=['fast caller2'])
 
