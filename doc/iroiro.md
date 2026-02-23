@@ -9,37 +9,52 @@ This is the index document of package `iroiro`.
 sh$ pip3 install iroiro
 ```
 
-Or just copy the whole folder to your machine, and add the path to `sys.path`:
+Or just copy the whole folder to your machine, and add its path to `sys.path`:
 
 ```python
 import sys
-sys.path.insert(0, '/some/path/to/place/iroiro')
+sys.path.insert(0, '/the/path/to/iroiro')
 import iroiro
+sys.path.pop(0)
 ```
 
 
-## Test
+## Testing
 
-Testing:
+*   Through `Makefile`:
 
-```console
-sh$ python3 -m unittest
-```
+    ```console
+    sh$ make run
+    sh$ make run VERBOSE=1
+    ```
 
-With [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/):
+    -   To a specific Python version, if [`uv`](https://github.com/astral-sh/uv) is available:
 
-```console
-sh$ pipx install pytest-cov --include-deps
-```
+        ```console
+        sh$ make run PYTHON=3.9
+        ```
 
-or
+*   With built-in [`unittest`](https://docs.python.org/3/library/unittest.html):
 
-```console
-sh$ pipx install pytest
-sh$ pipx runpip pytest install pytest-cov
+    ```console
+    sh$ python3 -m unittest | cat
+    ```
 
-sh$ pytest --cov=iroiro --cov-report=html
-```
+*   With [`pytest-cov`](https://pytest-cov.readthedocs.io/en/latest/):
+
+    ```console
+    sh$ pipx install pytest-cov --include-deps
+    sh$ pytest --cov=iroiro --cov-report=html
+    ```
+
+    -   With manually installed `pytest-cov`:
+
+        ```console
+        sh$ pipx install pytest
+        sh$ pipx runpip pytest install pytest-cov
+        sh$ pytest --cov=iroiro --cov-report=html
+        ```
+        The use case is you only have `python3.7` and `pip` access in a limited environment.
 
 
 ## "Attributes"
@@ -48,12 +63,12 @@ Like Python standard libraries, `iroiro` divide its functionalities into
 different categories.
 
 For example, `iroiro.subproc` contains functions about sub-processes,
-`iroiro.colors` contains fucntions about colors.
+`iroiro.colors` contains functions about colors.
 
 (Note that they are not sub-modules, so they are not `from iroiro import xxx` able.)
 
 For convenience, if not specified, functions are accessible directly at package level.
-In other words, `iroiro.subproc.xxx` is shortcut to `iroiro.xxx`.
+In other words, `iroiro.subproc.xxx` is shortcut-ed to `iroiro.xxx`.
 
 Documents and descriptions of the categories are as following:
 

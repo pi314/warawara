@@ -45,12 +45,13 @@ Installation
 sh$ pip3 install iroiro
 ```
 
-Or just copy the whole folder to your machine, and add the path to `sys.path`:
+Or just copy the whole folder to your machine, and add its path to `sys.path`:
 
 ```python
 import sys
-sys.path.insert(0, '/some/path/to/place/iroiro')
+sys.path.insert(0, '/the/path/to/iroiro')
 import iroiro
+sys.path.pop(0)
 ```
 
 

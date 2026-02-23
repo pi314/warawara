@@ -82,7 +82,7 @@ command(self, cmd, *,
     -   If `encoding` is `False`, the process is opened in binary mode.
 
 *   `rstrip` (default: `'\r\n'`)
-    -   In text mode (`encoding != False`), each line will be `rstrip()`ed with `rstrip` value
+    -   In text mode (`encoding != False`), each line is `rstrip()`ed with `rstrip` value
 
 *   `bufsize` (default: `-1`)
     -   `bufsize` is only meaningful when encoding is `False`.

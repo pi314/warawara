@@ -61,7 +61,7 @@ The first string should be able to fit into `width`.
 The second string is the remaining string.
 
 If `clip` is specified, it should be a single width string,
-and it will be appended to the first string if `width` limit is inside a wide character.
+and it's appended to the first string if `width` limit is in the middle of a wide character.
 
 If theres a color escape sequence right on the wrap boundary, the algorithm tends to
 *   include it if it's `\033[m` or `\033[0m`
@@ -100,7 +100,7 @@ assert ljust('test', 10) == 'test      '
 assert rjust('test', 10) == '      test'
 ```
 
-If `data` is a 2-dimensional list of `str`, each columns are aligned separately.
+If `data` is a 2-dimensional list of `str`, each column is aligned separately.
 
 ```python
 data = [
@@ -233,23 +233,23 @@ assert yn != 'no'
 In this example, `accept_empty=True`, so empty string is treated as equal
 to the first option specified, i.e. `'yes'`.
 
-Similarly, if user input an empty string, both `yn == 'yes'` and `yn == ''` evaluates to `True`.
+Similarly, if user inputs an empty string, both `yn == 'yes'` and `yn == ''` evaluates to `True`.
 
 If user triggers `EOFError` or `KeyboardInterrupt`,
-it will be suppressed and make `yn` stores `None`.
+it's suppressed and make `yn` stores `None`.
 
 `yn.selected` stores the user input, so you could distinguish `yes` and `''`.
 
 
 ## `getch()`
 
-Get a "character" from stdin without waiting for carriage return.
+Get a "character" from stdin without waiting for carriage return (`\n`).
 
 A character (represents by [`Key`](#key) class described below) could be
 
 *   A printable ASCII character (e.g. a-z, A-Z, comma, underscore, etc)
 *   A multi-byte control sequence (e.g. arrow keys)
-*   A unicode character (e.g. '😂')
+*   A unicode character (e.g. `'😂'`)
 *   Any sequences that does not prefix-match others that are recognized as a key
 
 This function is probably very platform dependent.
@@ -346,13 +346,13 @@ __Examples__
 key = register_key('abcd', 'ABCD')
 user_input = getch()
 ```
-In the above example, you have to input `'abcd'` extremely fast for it to be detected.
-Or just paste `'abcd'` and hope it would work.
+In the above example, you have to input `abcd` extremely fast for it to be detected.
+Or just paste `abcd` and hope it would work.
 
 
 ## `deregister_key()`
 
-Deregister a sequene from key table.
+Deregister a sequence from key table.
 
 The deregistered key object is returned.
 

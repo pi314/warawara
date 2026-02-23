@@ -73,7 +73,7 @@ __Examples__
 ```python
 self.patch('builtins.open', mock_open)
 ```
-After the aboved `patch()` call, any calls to `open()` will be forwared to `mock_open`.
+After the aboved `patch()` call, any calls to `open()` is forwared to `mock_open`.
 
 
 ## class `Checkpoint`
