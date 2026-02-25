@@ -366,3 +366,7 @@ __Examples__
 key = deregister_key(seq)
 assert key.seq == seq
 ```
+
+## Class `Menu`
+
+See [iroiro.tui.menu](iroiro.tui.menu.md)
