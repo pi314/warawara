@@ -7,17 +7,34 @@ For the index of this package, see [iroiro.md](iroiro.md).
 
 ## Class `Menu`
 
-`Menu` provides a configurable, non-ncurses, interactive menu.
+`Menu` provides a configurable, interactive, non-ncurses menu.
 
-For example:
+Basic menu:
 
-```console
+```
 Do you like iroiro?
 > Yes
   Absolutelly yes
 ```
 
-User could use `q` or `ctrl+c` to abort the selection, arrow keys to move cursor, and `enter` to select.
+Single select (radio) menu:
+
+```
+Do you like iroiro?
+> (*) Yes
+  ( ) Absolutelly yes
+```
+
+Multiple select menu:
+
+```
+Do you like iroiro?
+> [*] Yes
+  [*] Absolutelly yes
+```
+
+`q` and `ctrl+c` abort the selection, `up` and `down` move cursor,
+`space` selects/toggles item, and `enter` finalizes the result.
 
 
 __Parameters__
@@ -28,23 +45,29 @@ Menu(title=None, options=None, *,
      onkey=None, term_cursor_invisible=None)
 ```
 
-*   `title`
-    -   The text that stays on top of the menu.
+*   `title`: the text that stays at top of the menu
 
-*   `options`
-    -   Options, should be in `str`.
+*   `options`: options in `list[str]`
 
-*   `message`
-    -   The text than stays on the bottom of the menu.
+*   `message`: the text that stays at the bottom of the menu
 
-*   `max_height`
-    -   Height limitation.
-    -   By default iroiro query terminal height and width.
+*   `max_height`: limitation of menu height
+    -   By default iroiro queries terminal height and width
 
-*   `wrap`
-    -   If set to `True`, cursor wrap around first and last options.
-    -   Press `down` on the last item moves cursor to the first one.
-    -   Prexx `up` on the first item moves cursor to the last one.
+*   `wrap`: whether to wrap cursor around first and last options
+    -   Press `down` on the last item moves cursor to the first one
+    -   Press `up` on the first item moves cursor to the last one
 
-*   `format`
-    -   Defines the display format when rendering items.
+*   `format`: the display format for rendering items
+    -   If a `callable` is specified, it's used as the formatting entry point
+    -   If it's `None`, the default value is decided by menu type
+        +   `'{cursor} {item.text}'` for basic menu
+        +   `'{cursor} {box[0]}{check}{box[1]} {item.text}'` for single and multiple select menu
+    -   Otherwise, `str.format()` is used as the formatting entry point
+    -   The following arguments are passed to the formatter:
+        +   `menu`: the menu object
+        +   `cursor`: the cursor string or space, padded to the same display width
+        +   `item`: the item being formatted
+        +   `check`: the check mark or space, padded to the same display width
+        +   `box`: the checkbox that wraps checkmark,
+            `box[0]` and `box[1]` being the left part and right part, respectively
