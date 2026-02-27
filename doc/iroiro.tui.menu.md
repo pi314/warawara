@@ -71,3 +71,25 @@ Menu(title=None, options=None, *,
         +   `check`: the check mark or space, padded to the same display width
         +   `box`: the checkbox that wraps checkmark,
             `box[0]` and `box[1]` being the left part and right part, respectively
+
+
+### Methods and Properties
+
+#### `Menu.interact()`
+Starts the menu interaction loop, and returns the select items afterward.
+
+__Parameters__
+```python
+Menu.interact(suppress=(EOFError, KeyboardInterrupt, BlockingIOError))
+```
+
+If exceptions listed in `suppress` happen, the funciton returns `None`.
+
+__Examples__
+```python
+menu = Menu(...)
+res = menu.interact()
+print(res)
+```
+
+The select item could also be accessed through `Menu.selected` .
