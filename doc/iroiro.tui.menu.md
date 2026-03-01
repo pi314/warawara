@@ -5,6 +5,29 @@ This document describes Menu-related API provided by [`iroiro.tui`](iroiro.tui.m
 For the index of this package, see [iroiro.md](iroiro.md).
 
 
+## Overview
+
+All menu related features are provided through `Menu` class and/or its attributes.
+
+For convenience, while some of the features are described using internal class/function name,
+they are not intented for being used directly.
+
+Given `menu` referencing to a `Menu` instance,
+
+*   `menu[n]` access to n-th item ([`MenuItem`](#class-menuitem))
+
+    -   `menu[n].text` is the display text
+    -   `menu[n].selected` indicates whether the item is selected
+    -   `menu[n].select()`/`unselect()`/`toggle()` switch selection status of the item
+
+*   `menu.interact()` starts interaction
+*   `menu.cursor` access to menu cursor ([`MenuCursor`](#class-menucursor))
+
+    -   `menu.cursor.item` points to the actual item
+    -   `menu.cursor.up()` moves cursor up
+    -   `menu.cursor.down()` moves cursor down
+
+
 ## Class `Menu`
 
 `Menu` provides a configurable, interactive, non-ncurses menu.
@@ -114,9 +137,8 @@ The selected item(s) could also be accessed through `Menu.selected` .
 
 
 #### Property `Menu.selected`
-*   For single selected menu, it's the selected `MenuItem` or `None`.
+*   For basic and single selected menu, it's the selected `MenuItem` or `None`.
 *   For multi-select menu, it's a `[MenuItem]` of selected items (or `[]`.)
-*   For basic menu, it's the selected `MenuItem` or `None`.
 
 It's dynamically calculated every time when accessed.
 
@@ -130,4 +152,8 @@ Sets `Menu[idx].text` to `str(value)`
 
 
 ## Class `MenuItem`
-`MenuItem` has the following methods and attributes
+WIP
+
+
+## Class `MenuCursor`
+WIP
