@@ -32,7 +32,7 @@ class TestMenuCursor(TestCase):
 
     def test_repr(self):
         cursor = self.menu.cursor
-        self.eq(repr(self.menu.cursor), f'MenuCursor(index={cursor.index}, wrap={cursor.wrap})')
+        self.eq(repr(self.menu.cursor), f'MenuCursor(pos={cursor.pos}, wrap={cursor.wrap})')
 
     def test_str(self):
         self.eq(str(self.menu.cursor), '>')

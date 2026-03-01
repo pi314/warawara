@@ -1650,23 +1650,27 @@ class MenuCursor(MenuItemRef):
     def __init__(self, menu, *, wrap=False):
         self.menu = menu
         self.wrap = wrap
-        self.index = 0
+        self.pos = 0
 
     @property
     def item(self):
-        return self.menu[self.index]
+        return self.menu[self.pos]
+
+    @property
+    def index(self):
+        return self.item.index
 
     def __repr__(self):
-        return f'MenuCursor(index={self.index}, wrap={self.wrap})'
+        return f'MenuCursor(pos={self.pos}, wrap={self.wrap})'
 
     def __str__(self):
         return self.menu[self].cursor_symbol or self.menu.cursor_symbol
 
     def __int__(self):
-        return self.index
+        return self.pos
 
     def __add__(self, other):
-        return self.cal_index(self.index + other)
+        return self.cal_index(self.pos + other)
 
     def __radd__(self, other):
         return self + other
@@ -1676,10 +1680,10 @@ class MenuCursor(MenuItemRef):
         return self
 
     def __sub__(self, other):
-        return self.cal_index(self.index - other)
+        return self.cal_index(self.pos - other)
 
     def __rsub__(self, other):
-        return other - self.index
+        return other - self.pos
 
     def __isub__(self, other):
         self.to(self - other)
@@ -1691,7 +1695,7 @@ class MenuCursor(MenuItemRef):
         raise AttributeError(attr)
 
     def __setattr__(self, attr, value):
-        if attr in ('menu', 'wrap', 'index'):
+        if attr in ('menu', 'wrap', 'pos'):
             return super().__setattr__(attr, value)
 
         if not attr.startswith('_') and hasattr(self.item, attr):
@@ -1713,7 +1717,7 @@ class MenuCursor(MenuItemRef):
             return clamp(0, value, N - 1)
 
     def to(self, value):
-        self.index = self.cal_index(value)
+        self.pos = self.cal_index(value)
         self.menu.scroll_to_cursor()
 
     def up(self, count=1):
