@@ -24,8 +24,14 @@ Given `menu` referencing to a `Menu` instance,
 *   `menu.cursor` access to menu cursor ([`MenuCursor`](#class-menucursor))
 
     -   `menu.cursor.item` points to the actual item
-    -   `menu.cursor.up()` moves cursor up
-    -   `menu.cursor.down()` moves cursor down
+    -   `menu.cursor.up()`/`down()` moves cursor up/down
+    -   `menu.cursor` `-=1`/`+=1` also moves cursor up/down
+    -   `menu.cursor.select()`/`unselect()`/`toggle()` switch selection status of them item
+
+*   `menu.onkey(key, handler)` binds `handler` to `key` ([`MenuKeyHandler`](#class-menukeyhandler)),
+    i.e. when `key` is pressed, `handler` is called
+
+    -   `menu.onkey[key](handler)` does the same
 
 
 ## Class `Menu`
@@ -156,4 +162,8 @@ WIP
 
 
 ## Class `MenuCursor`
+WIP
+
+
+## Class `MenuKeyHandler`
 WIP
