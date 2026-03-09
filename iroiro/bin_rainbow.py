@@ -230,6 +230,8 @@ def expand_macro_named():
 def main_256cube():
     # Print color cube palette
     print('Format: ESC[30;48;5;{}m')
+
+    tiles = []
     for c in range(0, 256):
         bg = color(c).to_rgb()
 
@@ -252,16 +254,62 @@ def main_256cube():
         else:
             fg = bg.to_rgb() // 4
 
-        print(paint(fg=fg, bg=c)(' ' + str(c).rjust(3)), end='')
+        tiles.append(paint(fg=fg, bg=c)(' ' + str(c).rjust(3)))
 
-        if c < 16 and (c + 1) % 8 == 0:
-            print()
-        if c >= 16 and (c - 16 + 1) % 36 == 0:
-            print()
-        if c in (15, 231):
-            print()
+    import shutil
+    term_size = shutil.get_terminal_size()
+    term_width = term_size.columns
 
+    # Basic ANSI 8 color section
+    for i in range(0, 16):
+        print(tiles[i], end='')
+        if (i + 1) % 8 == 0:
+            print()
     print()
+
+    cubes = [[], [], [], [], [], []]
+
+    for i in range(16, 232):
+        base = i - 16
+        index_R = (base // 36)
+        index_G = ((base % 36) // 6)
+        index_B = (base % 6)
+        cubes[index_G].append(tiles[i])
+
+    # 6x6x6 color cube section
+    for rows in range(1, 6):
+        cols, remaining = divmod(len(cubes), rows)
+        if remaining:
+            continue
+        if 4 * 6 * cols + 2 * (cols - 1) <= term_width:
+            break
+
+    for cube_row in range(rows):
+        for tile_row in range(6):
+            for cube_col in range(cols):
+                cube_idx = cube_row * cols + cube_col
+                if cube_col:
+                    print('  ', end='')
+                for tile_col in range(6):
+                    print(cubes[cube_idx][tile_row * 6 + tile_col], end='')
+            print()
+        print()
+
+    # Grayscale section
+    tile_num = 256 - 232
+    for lines in range(1, tile_num):
+        cols, rem = divmod(tile_num, lines)
+        if rem:
+            continue
+        if 4 * cols <= term_width:
+            break
+
+    for i in range(232, 256):
+        print(tiles[i], end='')
+        if (i - 232 + 1) % cols == 0:
+            print()
+    print()
+
     sys.exit()
 
 
