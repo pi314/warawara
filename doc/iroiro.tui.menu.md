@@ -33,6 +33,10 @@ Given `menu` referencing to a `Menu` instance,
 
     -   `menu.onkey[key](handler)` does the same
 
+*   There are other event hooks available: `.onselect` / `.onunselect` / `.onsubmit` / `.onquit`
+
+*   You can even create your own event: `onevent('myevent', handler)`
+
 
 ## Class `Menu`
 

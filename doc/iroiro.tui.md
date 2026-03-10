@@ -296,34 +296,34 @@ assert KEY_ESCAPE == 'escape'
 
 The following keys are pre-defined by iroiro:
 
-| Name                                        | Sequence              | Aliases                                   |
-|---------------------------------------------|-----------------------|-------------------------------------------|
-| `KEY_ESCAPE`                                | `b'\033'`             | `'esc'`, `'escape'`                       |
-| `KEY_BACKSPACE`                             | `b'\x7f'`             | `'backspace'`                             |
-| `KEY_TAB`                                   | `b'\t'`               | `'tab'`, `'ctrl-i'`, `'ctrl+i'`, `'^I'`   |
-| `KEY_ENTER`                                 | `b'\r'`               | `'enter'`, `'ctrl-m'`, `'ctrl+m'`, `'^M'` |
-| `KEY_SPACE`                                 | `b' '`                | `'space'`                                 |
-| `KEY_UP`                                    | `b'\033[A'`           | `'up'`                                    |
-| `KEY_DOWN`                                  | `b'\033[B'`           | `'down'`                                  |
-| `KEY_RIGHT`                                 | `b'\033[C'`           | `'right'`                                 |
-| `KEY_LEFT`                                  | `b'\033[D'`           | `'left'`                                  |
-| `KEY_HOME`                                  | `b'\033[1~'`          | `'home'`                                  |
-| `KEY_END`                                   | `b'\033[4~'`          | `'end'`                                   |
-| `KEY_PGUP`                                  | `b'\033[5~'`          | `'pgup'`, `'pageup'`                      |
-| `KEY_PGDN`                                  | `b'\033[6~'`          | `'pgdn'`, `'pagedown'`                    |
-| `KEY_CTRL_#` (`a` ~ `z` except `i` and `m`) | `b'\x01'` ~ `b'\x1a'` | `'ctrl-#'`, `'ctrl+#'`, `'^#'`            |
-| `KEY_F1`                                    | `b'\033OP'`           | `'F1'`                                    |
-| `KEY_F2`                                    | `b'\033OQ'`           | `'F2'`                                    |
-| `KEY_F3`                                    | `b'\033OR'`           | `'F3'`                                    |
-| `KEY_F4`                                    | `b'\033OS'`           | `'F4'`                                    |
-| `KEY_F5`                                    | `b'\033[15~'`         | `'F5'`                                    |
-| `KEY_F6`                                    | `b'\033[17~'`         | `'F6'`                                    |
-| `KEY_F7`                                    | `b'\033[18~'`         | `'F7'`                                    |
-| `KEY_F8`                                    | `b'\033[19~'`         | `'F8'`                                    |
-| `KEY_F9`                                    | `b'\033[20~'`         | `'F9'`                                    |
-| `KEY_F10`                                   | `b'\033[21~'`         | `'F10'`                                   |
-| `KEY_F11`                                   | `b'\033[23~'`         | `'F11'`                                   |
-| `KEY_F12`                                   | `b'\033[24~'`         | `'F12'`                                   |
+| Name                                            | Sequence              | Aliases                                   |
+|-------------------------------------------------|-----------------------|-------------------------------------------|
+| `KEY_ESCAPE`                                    | `b'\033'`             | `'esc'`, `'escape'`                       |
+| `KEY_BACKSPACE`                                 | `b'\x7f'`             | `'backspace'`                             |
+| `KEY_TAB`                                       | `b'\t'`               | `'tab'`, `'ctrl-i'`, `'ctrl+i'`, `'^I'`   |
+| `KEY_ENTER`                                     | `b'\r'`               | `'enter'`, `'ctrl-m'`, `'ctrl+m'`, `'^M'` |
+| `KEY_SPACE`                                     | `b' '`                | `'space'`                                 |
+| `KEY_UP`                                        | `b'\033[A'`           | `'up'`                                    |
+| `KEY_DOWN`                                      | `b'\033[B'`           | `'down'`                                  |
+| `KEY_RIGHT`                                     | `b'\033[C'`           | `'right'`                                 |
+| `KEY_LEFT`                                      | `b'\033[D'`           | `'left'`                                  |
+| `KEY_HOME`                                      | `b'\033[1~'`          | `'home'`                                  |
+| `KEY_END`                                       | `b'\033[4~'`          | `'end'`                                   |
+| `KEY_PGUP`                                      | `b'\033[5~'`          | `'pgup'`, `'pageup'`                      |
+| `KEY_PGDN`                                      | `b'\033[6~'`          | `'pgdn'`, `'pagedown'`                    |
+| `KEY_CTRL_#` <br>(`a` ~ `z` except `i` and `m`) | `b'\x01'` ~ `b'\x1a'` | `'ctrl-#'`, `'ctrl+#'`, `'^#'`            |
+| `KEY_F1`                                        | `b'\033OP'`           | `'F1'`                                    |
+| `KEY_F2`                                        | `b'\033OQ'`           | `'F2'`                                    |
+| `KEY_F3`                                        | `b'\033OR'`           | `'F3'`                                    |
+| `KEY_F4`                                        | `b'\033OS'`           | `'F4'`                                    |
+| `KEY_F5`                                        | `b'\033[15~'`         | `'F5'`                                    |
+| `KEY_F6`                                        | `b'\033[17~'`         | `'F6'`                                    |
+| `KEY_F7`                                        | `b'\033[18~'`         | `'F7'`                                    |
+| `KEY_F8`                                        | `b'\033[19~'`         | `'F8'`                                    |
+| `KEY_F9`                                        | `b'\033[20~'`         | `'F9'`                                    |
+| `KEY_F10`                                       | `b'\033[21~'`         | `'F10'`                                   |
+| `KEY_F11`                                       | `b'\033[23~'`         | `'F11'`                                   |
+| `KEY_F12`                                       | `b'\033[24~'`         | `'F12'`                                   |
 
 
 ## `register_key()`
