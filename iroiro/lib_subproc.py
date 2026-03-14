@@ -39,6 +39,15 @@ class QueueEventAdapter:
         self.Q.put(line)
 
 
+class FileAdapter:
+    def __init__(self, file):
+        self.file = file
+
+    def __call__(self, line):
+        self.file.write(line + '\n')
+        self.file.flush()
+
+
 class stream:
     def __init__(self):
         self.queue = queue.Queue()
@@ -58,20 +67,24 @@ class stream:
             self.welcome_one(subscriber)
 
     def welcome_one(self, subscriber):
+        if subscriber is self:
+            raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
+
         if subscriber is True:
             self.keep = True
+            return
 
+        handler = None
+        if hasattr(subscriber, 'put'):
+            handler = QueueEventAdapter(subscriber)
+        elif callable(subscriber):
+            handler = subscriber
+        elif hasattr(subscriber, 'write'):
+            handler = FileAdapter(subscriber)
         else:
-            handler = None
-            if hasattr(subscriber, 'put'):
-                handler = QueueEventAdapter(subscriber)
-            elif callable(subscriber):
-                handler = subscriber
+            raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
 
-            if handler:
-                self.hub += handler
-            else:
-                raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
+        self.hub += handler
 
     def pipe_attached(self):
         with self.pipe_count_lock:
@@ -216,6 +229,10 @@ class command:
                 self.stdin_queue = stdin
             elif is_iterable(stdin):
                 for line in stdin:
+                    try:
+                        line = line.rstrip(self.rstrip)
+                    except TypeError:
+                        pass
                     self.stdin.write(line)
                 self.stdin_autoclose = True
 

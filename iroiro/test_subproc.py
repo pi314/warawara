@@ -126,6 +126,9 @@ class TestStream(TestCase):
         with self.raises(TypeError):
             s.welcome(s)
 
+        with self.raises(TypeError):
+            s.welcome(3)
+
         lines = ['line1', 'line2', 'line3']
         s.writelines(lines)
 
@@ -165,14 +168,64 @@ class TestSubproc(TestCase):
         self.true(hex(id(p)) in repr(p))
         self.true('iroiro' in repr(p))
 
-    def test_stdout(self):
+    def test_stdout_lines(self):
         p = run('seq 5'.split())
         self.eq(p.stdout.lines, '1 2 3 4 5'.split())
 
-    def test_disable_stdout_and_stderr(self):
+    def test_stdout_and_stderr_none(self):
         p = command('seq 5'.split(), stdout=None, stderr=None)
         self.true(p.stdout.closed)
         self.true(p.stderr.closed)
+
+    def test_stdout_to_false(self):
+        p = command('seq 5'.split(), stdout=False)
+        p.run()
+        self.eq(p.stdout.lines, [])
+
+    def test_stdout_to_callback(self):
+        lines = []
+        def callback(line):
+            lines.append(line)
+        p = command('seq 5'.split(), stdout=callback)
+        p.run()
+        self.eq(lines, ['1', '2', '3', '4', '5'])
+
+    def test_stdout_to_queue(self):
+        Q = queue.Queue()
+        p = command('seq 5'.split(), stdout=Q)
+        self.false(p.stdout.keep)
+        p.run()
+        self.eq(p.stdout.lines, [])
+        self.eq(queue_to_list(Q), ['1', '2', '3', '4', '5'])
+
+    def test_stdout_and_stderr_to_file(self):
+        import io
+        fake_file0 = io.StringIO('line1\nline2\nline333')
+        fake_file1 = io.StringIO()
+        fake_file2 = io.StringIO()
+        def prog(proc, *args):
+            for line in proc[0]:
+                proc[1].writeline('[' + line + ']')
+                proc[2].writeline('{' + line + '}')
+            return 42
+        p = run(prog, stdin=fake_file0, stdout=fake_file1, stderr=fake_file2)
+        self.eq(p.returncode, 42)
+        self.eq(p.stdout.lines, [])
+        self.eq(fake_file1.getvalue(), '[line1]\n[line2]\n[line333]\n')
+        self.eq(fake_file2.getvalue(), '{line1}\n{line2}\n{line333}\n')
+
+    def test_rstrip_false(self):
+        import io
+        fake_file0 = io.StringIO('line1\nline2\nline333')
+        fake_file1 = io.StringIO()
+        def prog(proc, *args):
+            for line in proc[0]:
+                proc[1].writeline('[' + line + ']')
+            return 42
+        p = run(prog, stdin=fake_file0, stdout=fake_file1, rstrip=False)
+        self.eq(p.returncode, 42)
+        self.eq(p.stdout.lines, [])
+        self.eq(fake_file1.getvalue(), '[line1\n]\n[line2\n]\n[line333]\n')
 
     def test_wait_early(self):
         p = command('seq 5'.split())
@@ -232,11 +285,6 @@ class TestSubproc(TestCase):
         with command(prog) as p:
             barrier.wait()
 
-    def test_stdout_nokeep(self):
-        p = command('seq 5'.split(), stdout=False)
-        p.run()
-        self.eq(p.stdout.lines, [])
-
     def test_keep_trailing_whitespaces(self):
         p = run(['echo', 'a b c '])
         self.eq(p.stdout.lines, ['a b c '])
@@ -252,22 +300,6 @@ class TestSubproc(TestCase):
         self.eq(p.stdout.lines, ['hello ', 'im fine '])
         self.eq(p.stderr.lines, ['how are you ', 'thank you '])
         self.eq(p.returncode, 2024)
-
-    def test_stdout_callback(self):
-        lines = []
-        def callback(line):
-            lines.append(line)
-        p = command('seq 5'.split(), stdout=callback)
-        p.run()
-        self.eq(lines, ['1', '2', '3', '4', '5'])
-
-    def test_stdout_queue(self):
-        Q = queue.Queue()
-        p = command('seq 5'.split(), stdout=Q)
-        self.false(p.stdout.keep)
-        p.run()
-        self.eq(p.stdout.lines, [])
-        self.eq(queue_to_list(Q), ['1', '2', '3', '4', '5'])
 
     def test_multi_ouptut_merge(self):
         def prog(proc, *args):
@@ -291,12 +323,12 @@ class TestSubproc(TestCase):
 
         self.eq(queue_to_list(Q), [0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
 
-    def test_stdin(self):
+    def test_stdin_from_list(self):
         p = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
         p.run()
         self.eq(p.stdout.lines, ['1:hello', '2:world'])
 
-    def test_stdin_delayed_write(self):
+    def test_stdin_ignore_delayed_writes(self):
         data = ['hello', 'world']
         p = command('nl -w 1 -s :'.split(), stdin=data)
 
@@ -306,7 +338,7 @@ class TestSubproc(TestCase):
 
         self.eq(p.stdout.lines, ['1:hello', '2:world', '3:wah'])
 
-    def test_stdin_queue(self):
+    def test_stdin_from_queue(self):
         Q = queue.Queue()
         p = command('nl -w 1 -s :'.split(), stdin=Q)
 
@@ -325,6 +357,17 @@ class TestSubproc(TestCase):
 
         p.wait()
         self.eq(p.stdout.lines, ['1:pre', '2:hello', '3:world', '4:wah'])
+
+    def test_stdin_from_file(self):
+        import io
+        fake_file = io.StringIO('line1\nline2\nline333')
+        def prog(proc, *args):
+            for line in proc[0]:
+                proc[1].writeline(line)
+            return 42
+        p = run(prog, stdin=fake_file)
+        self.eq(p.returncode, 42)
+        self.eq(p.stdout.lines, ['line1', 'line2', 'line333'])
 
     def test_callable_with_pipe(self):
         def prog(proc, *args):
