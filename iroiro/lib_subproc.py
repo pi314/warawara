@@ -40,11 +40,15 @@ class QueueEventAdapter:
 
 
 class FileAdapter:
-    def __init__(self, file):
+    def __init__(self, file, newline):
         self.file = file
+        self.newline = newline
 
     def __call__(self, line):
-        self.file.write(line + '\n')
+        if self.newline:
+            self.file.write(line + '\n')
+        else:
+            self.file.writeline(line)
         self.file.flush()
 
 
@@ -75,14 +79,16 @@ class stream:
             return
 
         handler = None
-        if hasattr(subscriber, 'put'):
+        if hasattr(subscriber, 'put') and callable(subscriber.put):
             handler = QueueEventAdapter(subscriber)
+        elif hasattr(subscriber, 'writeline') and callable(subscriber.writeline):
+            handler = FileAdapter(subscriber, newline=False)
+        elif hasattr(subscriber, 'write') and callable(subscriber.write):
+            handler = FileAdapter(subscriber, newline=True)
         elif callable(subscriber):
             handler = subscriber
-        elif hasattr(subscriber, 'write'):
-            handler = FileAdapter(subscriber)
         else:
-            raise TypeError('Invalid subscriber value: {}'.format(repr(subscriber)))
+            raise TypeError('Invalid subscriber: {}'.format(repr(subscriber)))
 
         self.hub += handler
 

@@ -107,6 +107,25 @@ class TestStream(TestCase):
         self.eq(s.lines, lines)
         self.eq(len(s), 3)
 
+    def test_stream_invalid_subscribers(self):
+        s = stream()
+        with self.raises(TypeError):
+            s.welcome(s)
+        with self.raises(TypeError):
+            s.welcome(3)
+
+        class WeirdQueue:
+            def __init__(self):
+                self.put = 'put'
+        with self.raises(TypeError):
+            s.welcome(WeirdQueue())
+
+        class WeirdFile:
+            def __init__(self):
+                self.write = 'write'
+        with self.raises(TypeError):
+            s.welcome(WeirdFile())
+
     def test_stream_subscribers(self):
         data1 = []
         def handler1(line):
@@ -122,12 +141,6 @@ class TestStream(TestCase):
         s.welcome([handler1, handler2])
         s.welcome(Q)
         s.welcome(True)
-
-        with self.raises(TypeError):
-            s.welcome(s)
-
-        with self.raises(TypeError):
-            s.welcome(3)
 
         lines = ['line1', 'line2', 'line3']
         s.writelines(lines)
@@ -213,6 +226,29 @@ class TestSubproc(TestCase):
         self.eq(p.stdout.lines, [])
         self.eq(fake_file1.getvalue(), '[line1]\n[line2]\n[line333]\n')
         self.eq(fake_file2.getvalue(), '{line1}\n{line2}\n{line333}\n')
+
+    def test_stdout_and_stderr_to_file_writeline(self):
+        import io
+        fake_file0 = io.StringIO('line1\nline2\nline333')
+
+        class LineFile(io.StringIO):
+            def __init__(self):
+                self.lines = []
+            def writeline(self, line):
+                self.lines.append(line)
+
+        fake_file1 = LineFile()
+        fake_file2 = LineFile()
+        def prog(proc, *args):
+            for line in proc[0]:
+                proc[1].writeline('[' + line + ']')
+                proc[2].writeline('{' + line + '}')
+            return 42
+        p = run(prog, stdin=fake_file0, stdout=fake_file1, stderr=fake_file2)
+        self.eq(p.returncode, 42)
+        self.eq(p.stdout.lines, [])
+        self.eq(fake_file1.lines, ['[line1]', '[line2]', '[line333]'])
+        self.eq(fake_file2.lines, ['{line1}', '{line2}', '{line333}'])
 
     def test_rstrip_false(self):
         import io

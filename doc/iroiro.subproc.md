@@ -68,8 +68,13 @@ command(self, cmd, *,
     -   If `stdout` is `None`, the stream is forwarded to the tty.
     -   If `stdout` is `False`, the stream is closed and outputs are silently dropped.
     -   If `stdout` is `True`, the output data is kept in the stream object.
-    -   If `stdout` is a `callable`, the callable is called for each line as argument.
-    -   If `stdout` is a `queue.Queue`, each line of output is put into the `Queue` object.
+    -   If `stdout` has `put()` method, each line of output is handled with `stdout.put(line)`.
+        +   For example, a `queue.Queue`.
+    -   If `stdout` has `writeline()` method, each line of output is handled with `stdout.writeline(line)`.
+        +   For example, a file opened through [`iroiro.open()`](iroiro.fs.md#open).
+    -   If `stdout` has `write()` method, each line of output is handled with `stdout.write(line)`.
+        +   For example, a file.
+    -   If `stdout` is a `callable`, each line of output is handled with `stdout(line)`.
     -   If `stdout` is a `tuple` or a `list`, output is duplicated to each object.
     -   Examples
         +   `stdout=lambda line: ...`
