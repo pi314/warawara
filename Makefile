@@ -61,6 +61,6 @@ ${HTMLDOC}/%.html: %.md Makefile ${GFM}
 	@[ -d '${HTMLDOC}' ] || mkdir '${HTMLDOC}'
 	@echo '$< -> $@'
 	@'${GFM}' '$<' '$@'
-	@sed -i '' 's|href="\(doc/\)\{0,1\}\(.*\).md"|href="\2.html"|' '$@'
+	@sed -i '' 's|href="\(doc/\)\{0,1\}\(.*\).md\(#.*\)"|href="\2.html\3"|' '$@'
 
 vpath %.md doc
