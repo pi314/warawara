@@ -89,7 +89,7 @@ class HTMLElement:
     def __init__(self, name, attrs):
         self.name = name
         self.attrs = dict(attrs)
-        self.children = []
+        self.childnodes = []
 
     @property
     def tagname(self):
@@ -106,20 +106,27 @@ class HTMLElement:
         return []
 
     @property
+    def children(self):
+        return [child
+                for child in self.childnodes
+                if not isinstance(child, str)
+                ]
+
+    @property
     def innerText(self):
         # TODO
         return ' '.join(child if isinstance(child, str) else child.innerText
-                       for child in self.children)
-
-    def append(self, elem):
-        self.children.append(elem)
+                       for child in self.childnodes)
 
     def __getattr__(self, name):
         if name in self.attrs:
             return self.attrs[name]
 
-        for child in self.children:
+        for child in self.childnodes:
             if child.name == name:
                 return child
 
         raise AttributeError(name)
+
+    def append(self, elem):
+        self.childnodes.append(elem)
