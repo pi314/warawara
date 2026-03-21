@@ -3,15 +3,27 @@ from .lib_test_utils import *
 from .lib_html import HTML
 
 
-class IroiroHTMLDocument(TestCase):
-    def test_empty_html(self):
+class TestHTMLInputSource(TestCase):
+    def test_read_from_empty_string(self):
         document = HTML('')
         self.eq(document.root, None)
+
+    def test_read_from_string(self):
+        document = HTML('<html></html>')
+        self.ne(document.root, None)
+        self.eq(document.root.name, 'html')
+
+    def test_read_from_file(self):
+        import io
+        fake_file = io.StringIO('<html><head></head><body><div id="container"></div></body></html>')
+        document = HTML(fake_file)
+        self.eq(document.html.body.div.id, 'container')
 
     def test_invalid_input(self):
         with self.raises(TypeError):
             document = HTML(42)
 
+class TestHTMLContent(TestCase):
     def test_only_doctype(self):
         document = HTML('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" '
                         '"http://www.w3.org/TR/html4/strict.dtd">')
@@ -61,12 +73,6 @@ class IroiroHTMLDocument(TestCase):
         self.eq(document.body.div.id, 'container')
         self.eq(document.body.div.innerText, 'text')
 
-    def test_read_from_file(self):
-        import io
-        fake_file = io.StringIO('<html><head></head><body><div id="container"></div></body></html>')
-        document = HTML(fake_file)
-        self.eq(document.html.body.div.id, 'container')
-
     def test_multiple_roots(self):
         document = HTML('<head><title>title</title></head><body><div id="container"></div></body>')
         self.eq(document.head.title.innerText, 'title')
@@ -76,10 +82,6 @@ class IroiroHTMLDocument(TestCase):
                         '<div id="second"></div>')
         self.eq(document.roots[0].id, 'first')
         self.eq(document.roots[1].id, 'second')
-
-    def test_classlist(self):
-        document = HTML('<div class="container centered hidden"></div>')
-        self.eq(document.div.classlist, ['container', 'centered', 'hidden'])
 
     def test_only_closing_tag(self):
         document = HTML('</table>')
@@ -98,3 +100,12 @@ class IroiroHTMLDocument(TestCase):
     def test_redundent_closing_whole_root(self):
         document = HTML('<table><tr><td>td</table>')
         self.eq(document.table.tr.td.innerText, 'td')
+
+class TestHTMLElementAttributes(TestCase):
+    def test_classlist(self):
+        document = HTML('<div class="container centered hidden"></div>')
+        self.eq(document.div.classlist, ['container', 'centered', 'hidden'])
+
+    def test_tagname(self):
+        document = HTML('<div class="container centered hidden"></div>')
+        self.eq(document.div.tagname, 'div')
