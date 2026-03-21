@@ -67,6 +67,16 @@ class IroiroHTMLDocument(TestCase):
         document = HTML(fake_file)
         self.eq(document.html.body.div.id, 'container')
 
+    def test_multiple_roots(self):
+        document = HTML('<head><title>title</title></head><body><div id="container"></div></body>')
+        self.eq(document.head.title.innerText, 'title')
+        self.eq(document.body.div.id, 'container')
+
+        document = HTML('<div id="first"></div>'
+                        '<div id="second"></div>')
+        self.eq(document.roots[0].id, 'first')
+        self.eq(document.roots[1].id, 'second')
+
     def test_classlist(self):
         document = HTML('<div class="container centered hidden"></div>')
         self.eq(document.div.classlist, ['container', 'centered', 'hidden'])

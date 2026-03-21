@@ -18,12 +18,8 @@ class HTML(HTMLParser):
         super().__init__()
 
         self.decl = None
-        self.root = None
+        self.roots = []
         self.stack = []
-
-        self.html = None
-        self.head = None
-        self.body = None
 
         if hasattr(source, 'read') and callable(source.read):
             self.feed(source.read())
@@ -32,10 +28,23 @@ class HTML(HTMLParser):
         else:
             raise TypeError('Unrecognized source:', repr(source))
 
+    @property
+    def root(self):
+        if self.roots:
+            return self.roots[0]
+
     def __getattr__(self, name):
-        if name == self.root.name:
-            return self.root
-        return getattr(self.root, name)
+        for root in self.roots:
+            if name == root.name:
+                return root
+
+        for root in self.roots:
+            try:
+                return getattr(root, name)
+            except AttributeError:
+                pass
+
+        raise AttributeError(name)
 
     def handle_decl(self, decl):
         self.decl = decl
@@ -45,21 +54,15 @@ class HTML(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         elem = HTMLElement(tag, attrs)
-        if self.root is None:
-            self.root = elem
+
+        if not self.stack:
+            self.roots.append(elem)
 
         if self.stack:
             self.stack[-1].append(elem)
 
         if tag not in self_closing_tags:
             self.stack.append(elem)
-
-        if elem.name == 'html':
-            self.html = elem
-        elif elem.name == 'head':
-            self.head = elem
-        elif elem.name == 'body':
-            self.body = elem
 
     def handle_endtag(self, tag):
         if not self.stack:
