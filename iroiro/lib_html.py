@@ -96,6 +96,18 @@ class HTMLElement:
         self.attrs = dict(attrs)
         self.childnodes = []
 
+    def __repr__(self):
+        if self.attrs:
+            attr = ' ' + repr(self.attrs)
+        else:
+            attr = ''
+        if self.name in self_closing_tags:
+            return f'<{self.name}{attr}>'
+
+        return (f'<{self.name}{attr}>' +
+                ''.join(child if isinstance(child, str) else repr(child) for child in self.childnodes) +
+                f'</{self.name}>')
+
     @property
     def tagname(self):
         return self.name
