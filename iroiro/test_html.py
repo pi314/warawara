@@ -66,3 +66,7 @@ class IroiroHTMLDocument(TestCase):
         fake_file = io.StringIO('<html><head></head><body><div id="container"></div></body></html>')
         document = HTML(fake_file)
         self.eq(document.html.body.div.id, 'container')
+
+    def test_classlist(self):
+        document = HTML('<div class="container centered hidden"></div>')
+        self.eq(document.div.classlist, ['container', 'centered', 'hidden'])

@@ -32,6 +32,11 @@ class HTML(HTMLParser):
         else:
             raise TypeError('Unrecognized source:', repr(source))
 
+    def __getattr__(self, name):
+        if name == self.root.name:
+            return self.root
+        return getattr(self.root, name)
+
     def handle_decl(self, decl):
         self.decl = decl
 
@@ -97,8 +102,7 @@ class HTMLElement:
 
     @property
     def classlist(self):
-        # TODO
-        return []
+        return self.attrs.get('class', '').split()
 
     @property
     def dataset(self):
