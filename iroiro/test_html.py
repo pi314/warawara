@@ -80,3 +80,21 @@ class IroiroHTMLDocument(TestCase):
     def test_classlist(self):
         document = HTML('<div class="container centered hidden"></div>')
         self.eq(document.div.classlist, ['container', 'centered', 'hidden'])
+
+    def test_only_closing_tag(self):
+        document = HTML('</table>')
+        self.eq(document.roots, [])
+
+    def test_redundent_closing_tag(self):
+        document = HTML('<table><tr><td>td</td></td></tr><tr><td>td2</td></tr></tr></table>')
+        self.eq(document.table.tr.td.innerText, 'td')
+        self.eq(document.table.children[1].td.innerText, 'td2')
+
+    def test_redundent_closing_parent_tag(self):
+        document = HTML('<table><tr><td>td</tr><tr><td>td2</td></tr></tr></table>')
+        self.eq(document.table.tr.td.innerText, 'td')
+        self.eq(document.table.children[1].td.innerText, 'td2')
+
+    def test_redundent_closing_whole_root(self):
+        document = HTML('<table><tr><td>td</table>')
+        self.eq(document.table.tr.td.innerText, 'td')

@@ -80,9 +80,6 @@ class HTML(HTMLParser):
                 self.stack[i:] = []
                 break
 
-        if not self.stack:
-            self.root = None
-
     def handle_data(self, data):
         d = data.strip()
         # TODO
@@ -129,7 +126,7 @@ class HTMLElement:
         if name in self.attrs:
             return self.attrs[name]
 
-        for child in self.childnodes:
+        for child in self.children:
             if child.name == name:
                 return child
 
