@@ -131,6 +131,14 @@ class HTMLComment:
         return self is other or str(self) == other
 
 
+class HTMLElementDataSetProxy:
+    def __init__(self, elem):
+        self.elem = elem
+
+    def __getattr__(self, name):
+        return self.elem.attrs.get('data-' + name)
+
+
 class HTMLElement:
     def __init__(self, name, attrs):
         self.name = name
@@ -159,8 +167,7 @@ class HTMLElement:
 
     @property
     def dataset(self):
-        # TODO
-        return []
+        return HTMLElementDataSetProxy(self)
 
     @property
     def children(self):

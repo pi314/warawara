@@ -170,3 +170,8 @@ class TestHTMLElementAttributes(TestCase):
 
         document = HTML('<br>')
         self.eq(repr(document.br), "<br>")
+
+    def test_dataset(self):
+        document = HTML('<div data-what="iroiro">text</div>')
+        self.eq(document.div.dataset.what, 'iroiro')
+        self.eq(document.div.dataset.what2, None)
