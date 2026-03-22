@@ -122,7 +122,7 @@ class HTMLComment:
         self.data = data
 
     def __repr__(self):
-        return '<!--' + data + '-->'
+        return '<!--' + self.data + '-->'
 
     def __str__(self):
         return self.data

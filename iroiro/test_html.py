@@ -130,6 +130,7 @@ class TestHTMLContent(TestCase):
 
         document = HTML('<!-- comment? -->', keep_comments=True)
         self.eq(document.root, ' comment? ')
+        self.eq(repr(document.root), '<!-- comment? -->')
 
     def test_keep_spaces(self):
         doc = '''
