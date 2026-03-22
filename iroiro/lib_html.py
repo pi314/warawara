@@ -14,8 +14,10 @@ self_closing_tags = {
 
 @export
 class HTML(HTMLParser):
-    def __init__(self, source):
+    def __init__(self, source, keep_comments=False):
         super().__init__()
+
+        self.keep_comments = keep_comments
 
         self.decl = None
         self.roots = []
@@ -50,7 +52,16 @@ class HTML(HTMLParser):
         self.decl = decl
 
     def handle_comment(self, data):
-        pass
+        if not self.keep_comments:
+            return
+
+        elem = HTMLComment(data)
+
+        if not self.stack:
+            self.roots.append(elem)
+
+        if self.stack:
+            self.stack[-1].append(elem)
 
     def handle_starttag(self, tag, attrs):
         elem = HTMLElement(tag, attrs)
@@ -88,6 +99,20 @@ class HTML(HTMLParser):
 
         if self.stack:
             self.stack[-1].append(d)
+
+
+class HTMLComment:
+    def __init__(self, data):
+        self.data = data
+
+    def __repr__(self):
+        return '<!--' + data + '-->'
+
+    def __str__(self):
+        return self.data
+
+    def __eq__(self, other):
+        return self is other or str(self) == other
 
 
 class HTMLElement:

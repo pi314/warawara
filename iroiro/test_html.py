@@ -109,6 +109,28 @@ class TestHTMLContent(TestCase):
         document = HTML('<table><tr><td>td</table>')
         self.eq(document.table.tr.td.innerText, 'td')
 
+    def test_comment(self):
+        doc = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--comment1-->
+    </head>
+    <body>
+        <!-- comment2 -->
+    </body>
+</html>'''
+        document = HTML(doc, keep_comments=False)
+        self.eq(document.head.childnodes, [])
+        self.eq(document.body.childnodes, [])
+
+        document = HTML(doc, keep_comments=True)
+        self.eq(document.head.childnodes[0], 'comment1')
+        self.eq(document.body.childnodes[0], ' comment2 ')
+
+        document = HTML('<!-- comment? -->', keep_comments=True)
+        self.eq(document.root, ' comment? ')
+
 
 class TestHTMLElementAttributes(TestCase):
     def test_classlist(self):
