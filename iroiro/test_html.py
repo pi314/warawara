@@ -23,6 +23,7 @@ class TestHTMLInputSource(TestCase):
         with self.raises(TypeError):
             document = HTML(42)
 
+
 class TestHTMLContent(TestCase):
     def test_only_doctype(self):
         document = HTML('<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" '
@@ -33,6 +34,10 @@ class TestHTMLContent(TestCase):
         document = HTML('<html></html>')
         self.ne(document.root, None)
         self.eq(document.root.name, 'html')
+
+    def test_ignore_naked_strings(self):
+        document = HTML('data')
+        self.eq(document.root, None)
 
     def test_minimal_html_doc(self):
         document = HTML('<!DOCTYPE html><title>a</title>')
@@ -83,6 +88,9 @@ class TestHTMLContent(TestCase):
         self.eq(document.roots[0].id, 'first')
         self.eq(document.roots[1].id, 'second')
 
+        with self.raises(AttributeError):
+            document.table
+
     def test_only_closing_tag(self):
         document = HTML('</table>')
         self.eq(document.roots, [])
@@ -100,6 +108,7 @@ class TestHTMLContent(TestCase):
     def test_redundent_closing_whole_root(self):
         document = HTML('<table><tr><td>td</table>')
         self.eq(document.table.tr.td.innerText, 'td')
+
 
 class TestHTMLElementAttributes(TestCase):
     def test_classlist(self):
