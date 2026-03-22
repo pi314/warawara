@@ -14,10 +14,19 @@ self_closing_tags = {
 
 @export
 class HTML(HTMLParser):
-    def __init__(self, source, keep_comments=False):
+    def __init__(self, source, keep_comments=False, keep_spaces='pre'):
         super().__init__()
 
+        if isinstance(keep_spaces, str):
+            keep_spaces = {keep_spaces}
+        else:
+            try:
+                keep_spaces = set(keep_spaces)
+            except TypeError:
+                keep_spaces = bool(keep_spaces)
+
         self.keep_comments = keep_comments
+        self.keep_spaces = keep_spaces
 
         self.decl = None
         self.roots = []
@@ -92,13 +101,20 @@ class HTML(HTMLParser):
                 break
 
     def handle_data(self, data):
-        d = data.strip()
-        # TODO
-        if not d:
+        keep_spaces = None
+        if isinstance(self.keep_spaces, set):
+            keep_spaces = self.keep_spaces & set(node.name for node in self.stack)
+        else:
+            keep_spaces = bool(self.keep_spaces)
+
+        if not keep_spaces:
+            data = data.strip()
+
+        if not data:
             return
 
         if self.stack:
-            self.stack[-1].append(d)
+            self.stack[-1].append(data)
 
 
 class HTMLComment:
@@ -155,9 +171,22 @@ class HTMLElement:
 
     @property
     def innerText(self):
-        # TODO
-        return ' '.join(child if isinstance(child, str) else child.innerText
-                       for child in self.childnodes)
+        tokens = [child if isinstance(child, str) else child.innerText
+                  for child in self.childnodes]
+
+        if not tokens:
+            return ''
+
+        # Join child innerTexts with
+        # - empty, if one of the connecting ends already have space
+        # - space, otherwise
+        ret, *tokens = tokens
+        for token in tokens:
+            if (not ret or ret.endswith((' ', '\n'))) or (not token or token.startswith((' ', '\n'))):
+                ret += token
+            else:
+                ret += ' ' + token
+        return ret
 
     def __getattr__(self, name):
         if name in self.attrs:
