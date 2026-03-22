@@ -147,7 +147,8 @@ class HTMLElement:
 
     def __repr__(self):
         if self.attrs:
-            attr = ' ' + repr(self.attrs)
+            attr = ' ' + ' '.join([f'{attr}="{value}"'
+                                   for attr, value in self.attrs.items()])
         else:
             attr = ''
         if self.name in self_closing_tags:

@@ -166,7 +166,7 @@ class TestHTMLElementAttributes(TestCase):
 
     def test_repr(self):
         document = HTML('<div class="container centered hidden">text</div>')
-        self.eq(repr(document.div), "<div {'class': 'container centered hidden'}>text</div>")
+        self.eq(repr(document.div), '<div class="container centered hidden">text</div>')
 
         document = HTML('<br>')
         self.eq(repr(document.br), "<br>")
