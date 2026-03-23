@@ -680,6 +680,66 @@ class TestSubproc(TestCase):
         p.run()
         self.eq(p.stdout.lines, [b'a lot of data\n'])
 
+    def test_stdin_broken_pipe_error(self):
+        class IntrovertStream:
+            def __init__(self, which, *args, **kwargs):
+                self.which = which
+
+            def write(self, line):
+                if self.which == scary:
+                    raise BrokenPipeError()
+
+            def flush(self):
+                pass
+
+            def close(self):
+                if self.which == scary:
+                    raise BrokenPipeError()
+
+            def __iter__(self):
+                if self.which == scary:
+                    raise BrokenPipeError()
+                yield f'stream {self.which}'
+
+        class IntrovertProcess:
+            def __init__(self, *args, **kwargs):
+                self.received_signal = None
+                self.returncode = None
+                self.stdin = IntrovertStream(0)
+                self.stdout = IntrovertStream(1)
+                self.stderr = IntrovertStream(2)
+
+            def wait(self, timeout=None):
+                self.returncode = 0
+                return None
+
+            def send_signal(self, signal):
+                self.received_signal = signal
+                self.returncode = -int(signal)
+
+            def poll(self):
+                return self.returncode or None
+
+        self.patch('subprocess.Popen', IntrovertProcess)
+
+        scary = 0
+        p = run('what', stdin=['line1', 'line2'])
+        self.true(p.stdin.broken_pipe_error)
+        self.false(p.stdout.broken_pipe_error)
+        self.false(p.stderr.broken_pipe_error)
+
+        scary = 1
+        p = run('what')
+        self.false(p.stdin.broken_pipe_error)
+        self.true(p.stdout.broken_pipe_error)
+        self.false(p.stderr.broken_pipe_error)
+
+        scary = 2
+        p = run('what')
+        self.false(p.stdin.broken_pipe_error)
+        self.false(p.stdout.broken_pipe_error)
+        self.true(p.stderr.broken_pipe_error)
+
 
 class TestPipe(TestCase):
     def test_pipe(self):

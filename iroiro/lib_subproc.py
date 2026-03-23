@@ -59,6 +59,7 @@ class stream:
         self.lines = []
         self.eof = threading.Event()
         self.hub = EventBroadcaster()
+        self.broken_pipe_error = False
 
         self.pipe_count_lock = threading.Lock()
         self.pipe_count = 0
@@ -347,44 +348,60 @@ class command:
             _children.append(self)
 
             def writer(self_stream, proc_stream):
-                for line in self_stream:
-                    if self.encoding == False:
-                        proc_stream.write(line)
-                    elif isinstance(line, (bytes, bytearray)):
-                        proc_stream.buffer.write(line)
-                    else:
-                        proc_stream.write(line + '\n')
-                    proc_stream.flush()
-                proc_stream.close()
+                try:
+                    for line in self_stream:
+                        if self.encoding == False:
+                            proc_stream.write(line)
+                        elif isinstance(line, (bytes, bytearray)):
+                            proc_stream.buffer.write(line)
+                        else:
+                            proc_stream.write(line + '\n')
+                        proc_stream.flush()
+                except BrokenPipeError:
+                    self_stream.broken_pipe_error = True
+
+                try:
+                    proc_stream.close()
+                except BrokenPipeError:
+                    self_stream.broken_pipe_error = True
+
+            def reader_text(self_stream, proc_stream):
+                for line in proc_stream:
+                    line = line.rstrip(self.rstrip)
+                    self_stream.writeline(line)
+
+            def reader_binary(self_stream, proc_stream):
+                while self.poll() is None:
+                    data = proc_stream.read(
+                            -1
+                            if self.bufsize < 0
+                            else (self.bufsize or 1)
+                            )
+
+                    if not data:
+                        continue
+
+                    self_stream.write(data)
+
+                # Read all remaining data left in stream
+                data = proc_stream.read()
+                if data:
+                    self_stream.writeline(data)
 
             def reader(self_stream, proc_stream):
-                if self.encoding != False:
-                    # text
-                    for line in proc_stream:
-                        line = line.rstrip(self.rstrip)
-                        self_stream.writeline(line)
-
-                else:
-                    # binary
-                    while self.poll() is None:
-                        data = proc_stream.read(
-                                -1
-                                if self.bufsize < 0
-                                else (self.bufsize or 1)
-                                )
-
-                        if not data:
-                            continue
-
-                        self_stream.write(data)
-
-                    # Read all remaining data left in stream
-                    data = proc_stream.read()
-                    if data:
-                        self_stream.writeline(data)
+                try:
+                    if self.encoding != False:
+                        reader_text(self_stream, proc_stream)
+                    else:
+                        reader_binary(self_stream, proc_stream)
+                except BrokenPipeError:
+                    self_stream.broken_pipe_error = True
 
                 self_stream.close()
-                proc_stream.close()
+                try:
+                    proc_stream.close()
+                except BrokenPipeError:
+                    self_stream.broken_pipe_error = True
 
             for (worker, self_stream, proc_stream) in (
                     (writer, self.stdin, self.proc.stdin),
