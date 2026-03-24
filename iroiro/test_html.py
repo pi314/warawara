@@ -139,19 +139,19 @@ class TestHTMLContent(TestCase):
     <body>  <pre>
         <div>text  </div><span> </span>  </pre>  </body>
 </html>'''
-        document = HTML(doc, keep_spaces=False)
+        document = HTML(doc, pre=False)
         self.eq(document.body.innerText, 'text')
 
-        document = HTML(doc, keep_spaces=True)
+        document = HTML(doc, pre=True)
         self.eq(document.body.innerText, '  \n        text       ')
 
-        document = HTML(doc, keep_spaces='pre')
+        document = HTML(doc, pre='pre')
         self.eq(document.body.innerText, '\n        text     ')
 
-        document = HTML(doc, keep_spaces='div')
+        document = HTML(doc, pre='div')
         self.eq(document.body.innerText, 'text  ')
 
-        document = HTML(doc, keep_spaces={'div', 'span'})
+        document = HTML(doc, pre={'div', 'span'})
         self.eq(document.body.innerText, 'text   ')
 
 

@@ -14,19 +14,19 @@ self_closing_tags = {
 
 @export
 class HTML(HTMLParser):
-    def __init__(self, source, keep_comments=False, keep_spaces='pre'):
+    def __init__(self, source, keep_comments=False, pre='pre'):
         super().__init__()
 
-        if isinstance(keep_spaces, str):
-            keep_spaces = {keep_spaces}
+        if isinstance(pre, str):
+            pre = {pre}
         else:
             try:
-                keep_spaces = set(keep_spaces)
+                pre = set(pre)
             except TypeError:
-                keep_spaces = bool(keep_spaces)
+                pre = bool(pre)
 
         self.keep_comments = keep_comments
-        self.keep_spaces = keep_spaces
+        self.pre = pre
 
         self.decl = None
         self.roots = []
@@ -101,13 +101,13 @@ class HTML(HTMLParser):
                 break
 
     def handle_data(self, data):
-        keep_spaces = None
-        if isinstance(self.keep_spaces, set):
-            keep_spaces = self.keep_spaces & set(node.name for node in self.stack)
+        pre = None
+        if isinstance(self.pre, set):
+            pre = self.pre & set(node.name for node in self.stack)
         else:
-            keep_spaces = bool(self.keep_spaces)
+            pre = bool(self.pre)
 
-        if not keep_spaces:
+        if not pre:
             data = data.strip()
 
         if not data:
