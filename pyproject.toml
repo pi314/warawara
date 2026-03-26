@@ -34,6 +34,7 @@ palette = "iroiro:bin.palette.main"
 rainbow = "iroiro:bin.rainbow.main"
 sponge = "iroiro:bin.sponge.main"
 ntfy = "iroiro:bin.ntfy.main"
+nowrap = "iroiro:bin.nowrap.main"
 
 
 [project.urls]
