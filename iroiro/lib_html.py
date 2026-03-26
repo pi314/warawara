@@ -1,3 +1,5 @@
+import re
+
 from html.parser import HTMLParser
 
 from .internal_utils import exporter
@@ -108,7 +110,8 @@ class HTML(HTMLParser):
             pre = bool(self.pre)
 
         if not pre:
-            data = data.strip()
+            data = re.sub(r' +', r' ', data.replace('\n', ' '))
+            data = re.sub(r'(^ +| +$)', '', data)
 
         if not data:
             return

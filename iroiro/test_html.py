@@ -132,27 +132,27 @@ class TestHTMLContent(TestCase):
         self.eq(document.root, ' comment? ')
         self.eq(repr(document.root), '<!-- comment? -->')
 
-    def test_keep_spaces(self):
+    def test_pre(self):
         doc = '''
 <!DOCTYPE html>
 <html>
     <body>  <pre>
-        <div>text  </div><span> </span>  </pre>  </body>
+        <div>text  </div><span> iroiro </span>  </pre>  </body>
 </html>'''
         document = HTML(doc, pre=False)
-        self.eq(document.body.innerText, 'text')
+        self.eq(document.body.innerText, 'text iroiro')
 
         document = HTML(doc, pre=True)
-        self.eq(document.body.innerText, '  \n        text       ')
+        self.eq(document.body.innerText, '  \n        text   iroiro     ')
 
         document = HTML(doc, pre='pre')
-        self.eq(document.body.innerText, '\n        text     ')
+        self.eq(document.body.innerText, '\n        text   iroiro   ')
 
         document = HTML(doc, pre='div')
-        self.eq(document.body.innerText, 'text  ')
+        self.eq(document.body.innerText, 'text  iroiro')
 
         document = HTML(doc, pre={'div', 'span'})
-        self.eq(document.body.innerText, 'text   ')
+        self.eq(document.body.innerText, 'text   iroiro ')
 
 
 class TestHTMLElementAttributes(TestCase):
