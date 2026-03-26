@@ -39,10 +39,13 @@ class HTML(HTMLParser):
         if isinstance(source, pathlib.Path):
             with lib_fs.open(source) as f:
                 self.feed(f.read())
+                self.close()
         elif hasattr(source, 'read') and callable(source.read):
             self.feed(source.read())
+            self.close()
         elif isinstance(source, str):
             self.feed(source)
+            self.close()
         else:
             raise TypeError('Unrecognized source:', repr(source))
 
