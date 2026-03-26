@@ -13,10 +13,23 @@ class TestHTMLInputSource(TestCase):
         self.ne(document.root, None)
         self.eq(document.root.name, 'html')
 
-    def test_read_from_file(self):
+    def test_read_from_file_obj(self):
         import io
         fake_file = io.StringIO('<html><head></head><body><div id="container"></div></body></html>')
         document = HTML(fake_file)
+        self.eq(document.html.body.div.id, 'container')
+
+    def test_read_from_file_path(self):
+        import pathlib
+        fake_path = pathlib.Path('some/path')
+
+        def mock_open(path):
+            self.eq(path, fake_path)
+            import io
+            return io.StringIO('<html><head></head><body><div id="container"></div></body></html>')
+        self.patch('iroiro.fs.open', mock_open)
+
+        document = HTML(fake_path)
         self.eq(document.html.body.div.id, 'container')
 
     def test_invalid_input(self):

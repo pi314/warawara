@@ -1,10 +1,12 @@
 import re
+import pathlib
 
 from html.parser import HTMLParser
 
 from .internal_utils import exporter
 export, __all__ = exporter()
 
+from . import lib_fs
 from .lib_math import interval
 
 
@@ -34,7 +36,10 @@ class HTML(HTMLParser):
         self.roots = []
         self.stack = []
 
-        if hasattr(source, 'read') and callable(source.read):
+        if isinstance(source, pathlib.Path):
+            with lib_fs.open(source) as f:
+                self.feed(f.read())
+        elif hasattr(source, 'read') and callable(source.read):
             self.feed(source.read())
         elif isinstance(source, str):
             self.feed(source)
