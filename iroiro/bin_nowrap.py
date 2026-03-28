@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import shutil
@@ -17,7 +18,12 @@ def main():
 
     args = parser.parse_args(argv)
 
-    for line in sys.stdin:
-        line = line.rstrip()
-        a, b = tui.wrap(line, args.width or term_size.columns)
-        print(a + str(colors.color(b)))
+    try:
+        for line in sys.stdin:
+            line = line.rstrip()
+            a, b = tui.wrap(line, args.width or term_size.columns)
+            print(a + str(colors.color(b)), flush=True)
+    except BrokenPipeError:
+        # https://docs.python.org/3/library/signal.html#note-on-sigpipe
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
