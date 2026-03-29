@@ -18,7 +18,7 @@ self_closing_tags = {
 
 @export
 class HTML(HTMLParser):
-    def __init__(self, source, keep_comments=False, pre='pre'):
+    def __init__(self, source=None, *, keep_comments=False, pre='pre'):
         super().__init__()
 
         if isinstance(pre, str):
@@ -46,6 +46,8 @@ class HTML(HTMLParser):
         elif isinstance(source, str):
             self.feed(source)
             self.close()
+        elif source is None:
+            pass
         else:
             raise TypeError('Unrecognized source:', repr(source))
 
@@ -91,7 +93,9 @@ class HTML(HTMLParser):
         if self.stack:
             self.stack[-1].append(elem)
 
-        if tag not in self_closing_tags:
+        if tag in self_closing_tags:
+            elem.closed = True
+        else:
             self.stack.append(elem)
 
     def handle_endtag(self, tag):
@@ -102,6 +106,7 @@ class HTML(HTMLParser):
             return
 
         if self.stack[-1].name == tag:
+            self.stack[-1].closed = True
             self.stack.pop()
             return
 
@@ -155,6 +160,7 @@ class HTMLElement:
         self.name = name
         self.attrs = dict(attrs)
         self.childnodes = []
+        self.closed = False
 
     def __repr__(self):
         if self.attrs:
@@ -167,7 +173,7 @@ class HTMLElement:
 
         return (f'<{self.name}{attr}>' +
                 ''.join(child if isinstance(child, str) else repr(child) for child in self.childnodes) +
-                f'</{self.name}>')
+                (f'</{self.name}>' if self.closed else ''))
 
     @property
     def tagname(self):

@@ -32,6 +32,9 @@ class TestHTMLInputSource(TestCase):
         document = HTML(fake_path)
         self.eq(document.html.body.div.id, 'container')
 
+    def test_no_source(self):
+        document = HTML()
+
     def test_invalid_input(self):
         with self.raises(TypeError):
             document = HTML(42)
@@ -166,6 +169,23 @@ class TestHTMLContent(TestCase):
 
         document = HTML(doc, pre={'div', 'span'})
         self.eq(document.body.innerText, 'text   iroiro ')
+
+    def test_feed_on_demand(self):
+        document = HTML()
+        document.feed('<html>')
+        self.eq(repr(document.html), '<html>')
+        document.feed('<head></head>')
+        document.feed('<body>')
+        self.eq(repr(document.html), '<html><head></head><body>')
+        document.feed('<div id="container"></div>')
+        self.eq(repr(document.html), '<html><head></head><body><div id="container"></div>')
+        self.eq(document.html.body.div.id, 'container')
+        self.eq(document.html.body.closed, False)
+        document.feed('</body>')
+        document.feed('</html>')
+        document.close()
+        self.eq(repr(document.html), '<html><head></head><body><div id="container"></div></body></html>')
+        self.eq(document.html.body.closed, True)
 
 
 class TestHTMLElementAttributes(TestCase):
