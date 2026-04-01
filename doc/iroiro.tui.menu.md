@@ -6,10 +6,9 @@ For the index of this package, see [iroiro.md](iroiro.md).
 
 
 ## Overview
-
 All menu related features are provided through `Menu` class and/or its attributes.
 
-For convenience, while some of the features are described using internal class/function name,
+While some of the features are described using internal class/function name in this document,
 they are not intented for being used directly.
 
 Given `menu` referencing to a `Menu` instance,
@@ -39,7 +38,6 @@ Given `menu` referencing to a `Menu` instance,
 
 
 ## Class `Menu`
-
 `Menu` provides a configurable, interactive, non-ncurses menu.
 
 Basic menu:
@@ -161,11 +159,51 @@ It's dynamically calculated every time when accessed.
 Sets `Menu[idx].text` to `str(value)`
 
 
+## Class `MenuItemRef`
+Represents reference to a menu item.
+
+### Methods and Properties
+
+#### Rich Comparison methods
+
+The following methods are supported:
+*   `ref.__lt__(other)`
+*   `ref.__le__(other)`
+*   `ref.__eq__(other)`
+*   `ref.__ne__(other)`
+*   `ref.__gt__(other)`
+*   `ref.__ge__(other)`
+
+For different type of `other`,
+*   If `other` is a MenuItem, their index will be compared.
+*   If `other` is a MenuCursor, `self.index` and `other.pos` will be compared.
+*   If `other` is a `str`, `self.text` and `other` will be compared
+*   Otherwise, `self.index` and `other` will be compared.
+
+
 ## Class `MenuItem`
+Inherits from [`MenuItemRef`](class-menuitemref).
+
+### Methods and Properties
+
+#### Getter `MenuItem.check`
+Returns the check mark (if checked) or None of this menu item.
+
+#### Setter `MenuItem.check(value)`
+Sets the check mark of this menu item.
+
+#### Getter `MenuItem.box`
+Returns the box or None of this menu item.
+
+#### Setter `MenuItem.box(value)`
+Sets the box of this menu item.
+
 WIP
 
 
 ## Class `MenuCursor`
+Inherits from [`MenuItemRef`](class-menuitemref).
+
 WIP
 
 
