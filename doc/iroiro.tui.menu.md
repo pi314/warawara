@@ -11,37 +11,9 @@ All menu related features are provided through `Menu` class and/or its attribute
 While some of the features are described using internal class/function name in this document,
 they are not intented for being used directly.
 
-Given `menu` referencing to a `Menu` instance,
-
-*   `menu[n]` access to n-th item ([`MenuItem`](#class-menuitem))
-
-    -   `menu[n].text` is the display text
-    -   `menu[n].selected` indicates whether the item is selected
-    -   `menu[n].select()`/`unselect()`/`toggle()` switch selection status of the item
-
-*   `menu.interact()` starts interaction
-*   `menu.cursor` access to menu cursor ([`MenuCursor`](#class-menucursor))
-
-    -   `menu.cursor.item` points to the actual item
-    -   `menu.cursor.up()`/`down()` moves cursor up/down
-    -   `menu.cursor` `-=1`/`+=1` also moves cursor up/down
-    -   `menu.cursor.select()`/`unselect()`/`toggle()` switch selection status of them item
-
-*   `menu.onkey(key, handler)` binds `handler` to `key` ([`MenuKeyHandler`](#class-menukeyhandler)),
-    i.e. when `key` is pressed, `handler` is called
-
-    -   `menu.onkey[key](handler)` does the same
-
-*   There are other event hooks available: `.onselect` / `.onunselect` / `.onsubmit` / `.onquit`
-
-*   You can even create your own event: `onevent('myevent', handler)`
-
-
-## Class `Menu`
 `Menu` provides a configurable, interactive, non-ncurses menu.
 
 Basic menu:
-
 ```
 Do you like iroiro?
 > Yes
@@ -49,7 +21,6 @@ Do you like iroiro?
 ```
 
 Single select (radio) menu:
-
 ```
 Do you like iroiro?
 > (*) Yes
@@ -57,7 +28,6 @@ Do you like iroiro?
 ```
 
 Multi-select menu:
-
 ```
 Do you like iroiro?
 > [*] Yes
@@ -67,8 +37,8 @@ Do you like iroiro?
 `q` and `ctrl+c` abort the selection, `up` and `down` move cursor,
 `space` selects/toggles item, and `enter` finalizes the result.
 
-Each of items in menu is in `MenuItem`, see its description below.
 
+## Class `Menu`
 
 __Parameters__
 ```python
@@ -123,6 +93,7 @@ Menu(title=None, options=None, *,
 
 
 ### Methods and Properties
+Given `menu` referencing to a `Menu` instance,
 
 #### `Menu.interact()`
 Starts the menu interaction loop, and returns the select items after interaction ends.
@@ -141,71 +112,74 @@ res = menu.interact()
 print(res)
 ```
 
-The selected item(s) could also be accessed through `Menu.selected` .
+The selected item(s) could also be accessed through `menu.selected` .
 
 
 #### Property `Menu.selected`
-*   For basic and single selected menu, it's the selected `MenuItem` or `None`.
+*   For basic and single select menu, it's the selected `MenuItem` or `None`.
 *   For multi-select menu, it's a `[MenuItem]` of selected items (or `[]`.)
 
 It's dynamically calculated every time when accessed.
 
 
-#### `Menu.__getitem__(idx)`
-`Menu[idx]` returns the `MenuItem` object at index `idx`.
+#### Menu item
+
+`menu[n]` access to n-th item
+
+*   `menu[n].text` is the displayed text
+
+*   `menu[n].selected` indicates whether the item is selected
+
+*   `menu[n].select()`/`unselect()`/`toggle()` switch selection status of the item
+
+*   `menu[n] = value` sets `menu[n].text` to `str(value)`
+
+*   `menu[n].check` returns check mark of the item
+
+    -   Could be used for `format`ing
+
+*   `menu[n].box` returns checkbox of the item
+
+    -   Could be used for `format`ing
+
+*   `menu[n].index` returns `n`
+
+*   `menu[n].moveto(where)` moves the item to `where`
+
+    -   It's not swapping, it slides through the adjacent items
 
 
-#### `Menu.__setitem__(idx, value)`
-Sets `Menu[idx].text` to `str(value)`
+#### Menu cursor
+
+`menu.cursor` access to menu cursor
+
+*   `menu.cursor.pos` is the cursor position
+
+    -   Also `int(menu.cursor)` and `menu.cursor.index`
+
+*   `str(menu.cursor)` returns the cursor symbol
+
+*   `menu.cursor.item` points to the actual item object
+
+*   `menu.cursor.up()`/`down()` moves cursor up/down
+
+*   `menu.cursor` `-=1`/`+=1` also moves cursor up/down
+
+*   `menu.cursor.to(N)` moves cursor to `N`-th item
+
+*   `menu.cursor.select()`/`unselect()`/`toggle()` switch selection status of the pointed item
 
 
-## Class `MenuItemRef`
-Represents reference to a menu item.
+#### Menu Key Handler
 
-### Methods and Properties
+`menu.onkey(key, handler)` binds `handler` to `key` ([`MenuKeyHandler`](#class-menukeyhandler)),
+i.e. when `key` is pressed, `handler` is called.
 
-#### Rich Comparison methods
-
-The following methods are supported:
-*   `ref.__lt__(other)`
-*   `ref.__le__(other)`
-*   `ref.__eq__(other)`
-*   `ref.__ne__(other)`
-*   `ref.__gt__(other)`
-*   `ref.__ge__(other)`
-
-For different type of `other`,
-*   If `other` is a MenuItem, their index will be compared.
-*   If `other` is a MenuCursor, `self.index` and `other.pos` will be compared.
-*   If `other` is a `str`, `self.text` and `other` will be compared
-*   Otherwise, `self.index` and `other` will be compared.
+`menu.onkey[key](handler)` does the same.
 
 
-## Class `MenuItem`
-Inherits from [`MenuItemRef`](class-menuitemref).
+#### Menu Event Handler
 
-### Methods and Properties
+`.onselect` / `.onunselect` / `.onsubmit` / `.onquit`
 
-#### Getter `MenuItem.check`
-Returns the check mark (if checked) or None of this menu item.
-
-#### Setter `MenuItem.check(value)`
-Sets the check mark of this menu item.
-
-#### Getter `MenuItem.box`
-Returns the box or None of this menu item.
-
-#### Setter `MenuItem.box(value)`
-Sets the box of this menu item.
-
-WIP
-
-
-## Class `MenuCursor`
-Inherits from [`MenuItemRef`](class-menuitemref).
-
-WIP
-
-
-## Class `MenuKeyHandler`
-WIP
+`onevent('myevent', handler)`
