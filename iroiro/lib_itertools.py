@@ -1,3 +1,4 @@
+import builtins
 import itertools
 import collections
 
@@ -98,6 +99,25 @@ def zip_longest(*iterables, fillvalues=None):
         yield tuple(values)
 
 
+@export
+def filter(func, iterable=None):
+    if iterable is None:
+        func, iterable = lambda x: x, func
+    return type(iterable)(builtins.filter(func, iterable))
+
+
+@export
+def filterout(func, iterable=None):
+    if not callable(func):
+        what = func
+        if func is None:
+            func = lambda x: x is not None
+        else:
+            func = lambda x: x != what
+
+    return filter(func, iterable=iterable)
+
+
 class Chained:
     def __init__(self, data, type=None):
         self.data = data
@@ -171,11 +191,11 @@ class Chained:
             items = self.data.items()
             return Chained(data_type((key, value) for key, value in items if func(key, value)))
         else:
-            return Chained(filter(func, self.data),
+            return Chained(builtins.filter(func, self.data),
                            type=self.type or type(self.data))
 
     def starfilter(self, func=None):
-        return Chained(filter(lambda x: func(*x), self.data),
+        return Chained(builtins.filter(lambda x: func(*x), self.data),
                        type=self.type or type(self.data))
 
     def reduce(self, func, **kwargs):

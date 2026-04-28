@@ -1,10 +1,22 @@
 from .lib_test_utils import *
 
-from iroiro import *
+import iroiro
 
 
 class TestItertools(TestCase):
+    def test_is_iterable(self):
+        from iroiro import is_iterable
+        self.true(is_iterable([]))
+        self.true(is_iterable(tuple()))
+        self.true(is_iterable([1, 2, 3]))
+        self.true(is_iterable('iroiro'))
+        self.true(is_iterable({'key': 'value'}))
+        self.true(is_iterable({'set', 'elements'}))
+        self.false(is_iterable(None))
+        self.false(is_iterable(42))
+
     def test_unwrap_one(self):
+        from iroiro import unwrap_one
         self.eq(unwrap_one(1), 1)
         self.eq(unwrap_one((1,)), (1,))
         self.eq(unwrap_one(False), False)
@@ -19,6 +31,7 @@ class TestItertools(TestCase):
         self.eq(unwrap_one(([1, 2, 3])), [1, 2, 3])
 
     def test_unwrap(self):
+        from iroiro import unwrap
         def wrap(obj, type=tuple):
             return type((obj,))
 
@@ -42,6 +55,7 @@ class TestItertools(TestCase):
         self.eq(unwrap(([1, 2, 3],)), [1, 2, 3])
 
     def test_flatten(self):
+        from iroiro import flatten
         self.eq(flatten(False), False)
         self.eq(flatten('text'), 'text')
 
@@ -61,6 +75,7 @@ class TestItertools(TestCase):
                 )
 
     def test_lookahead(self):
+        from iroiro import lookahead
         data = [1, 2, 3, 4, 5]
         self.eq([(val, is_last) for val, is_last in lookahead(data)], [
             (1, False),
@@ -79,6 +94,7 @@ class TestItertools(TestCase):
         self.eq([(val, is_last) for val, is_last in lookahead(data)], [])
 
     def test_zip_longest(self):
+        from iroiro import zip_longest
         self.eq(list(zip_longest('ABCD', [1, 2])),
                 [
                     ('A', 1),
@@ -133,9 +149,48 @@ class TestItertools(TestCase):
                     ]
                 )
 
+    def test_filter_like_builtin(self):
+        import iroiro
+
+        res = iroiro.filter(None, [True, True, False, True])
+        self.eq(list(res), [True, True, True])
+
+        res = iroiro.filter(lambda x: x % 2, [1, 1, 2, 3, 5, 8, 13, 21, 34])
+        self.eq(list(res), [1, 1, 3, 5, 13, 21])
+
+        res = iroiro.filter(lambda x: x % 2 == 0, [1, 1, 2, 3, 5, 8, 13, 21, 34])
+        self.eq(list(res), [2, 8, 34])
+
+    def test_filter_without_func(self):
+        import iroiro
+        res = iroiro.filter([True, True, False, True])
+        self.eq(res, [True, True, True])
+
+        res = iroiro.filter((True, True, False, True))
+        self.eq(res, (True, True, True))
+
+    def test_filterout(self):
+        import iroiro
+
+        res = iroiro.filterout(None, [True, True, None, False, None, True])
+        self.eq(res, [True, True, False, True])
+
+        res = iroiro.filterout(True, [True, True, False, True])
+        self.eq(res, [False])
+
+        res = iroiro.filterout(False, [True, True, False, True])
+        self.eq(res, [True, True, True])
+
+        res = iroiro.filterout(lambda x: x % 2, (1, 1, 2, 3, 5, 8, 13, 21, 34))
+        self.eq(res, (1, 1, 3, 5, 13, 21))
+
+        res = iroiro.filterout(lambda x: x % 2 == 0, (1, 1, 2, 3, 5, 8, 13, 21, 34))
+        self.eq(res, (2, 8, 34))
+
 
 class TestChain(TestCase):
     def test_chaining_map(self):
+        from iroiro import chaining
         seq = chaining([1, 1, 2, 3, 5, 8, 13])
         res = seq.map(lambda x: x * 2).eval()
         self.isinstance(res, list)
@@ -152,6 +207,7 @@ class TestChain(TestCase):
         self.eq(res, {2, 4, 6, 10, 16, 26})
 
     def test_chaining_enumerate(self):
+        from iroiro import chaining
         seq = chaining([1, 1, 2, 3, 5, 8, 13])
         self.eq(seq.enumerate().eval(), [
             (0, 1),
@@ -175,6 +231,7 @@ class TestChain(TestCase):
             ])
 
     def test_chaining_zip(self):
+        from iroiro import chaining
         import itertools
         seq = chaining([1, 1, 2, 3, 5, 8, 13]).zip(itertools.cycle([0, 1, 2]))
         self.eq(seq.eval(), [
@@ -188,6 +245,7 @@ class TestChain(TestCase):
             ])
 
     def test_chaining_zipleft(self):
+        from iroiro import chaining
         import itertools
         seq = chaining([1, 1, 2, 3, 5, 8, 13]).zipleft(itertools.cycle([0, 1, 2]))
         self.eq(seq.eval(), [
@@ -201,6 +259,7 @@ class TestChain(TestCase):
             ])
 
     def test_chaining_zip_with_shorter_seq(self):
+        from iroiro import chaining
         import itertools
         seq = chaining([1, 1, 2, 3, 5, 8, 13])
         seq = seq.zip(['foo', 'bar', 'baz'], ['foofoo', 'barbar', 'bazbaz'], fill=True)
@@ -227,11 +286,13 @@ class TestChain(TestCase):
             ])
 
     def test_chaining_sort(self):
+        from iroiro import chaining
         data = [1, 1, 2, 3, 5, 8, 13]
         seq = chaining(data[::-1])
         self.eq(seq.sort().eval(), data)
 
     def test_chaining_filter(self):
+        from iroiro import chaining
         seq = chaining([0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 0])
         self.eq(seq.filter().eval(), [1, 2, 3, 4, 5])
 
@@ -239,6 +300,7 @@ class TestChain(TestCase):
         self.eq(seq.filter(lambda x: x % 2).eval(), [1, 1, 3, 5, 13])
 
     def test_chaining_starfilter(self):
+        from iroiro import chaining
         seq = chaining([1, 1, 2, 3, 5, 8, 13])
         self.eq(seq
                 .enumerate()
@@ -248,6 +310,7 @@ class TestChain(TestCase):
                 [5, 8, 13])
 
     def test_chaining_reduce(self):
+        from iroiro import chaining
         seq = chaining([1, 0, 1, 2, 3, 0, 5, 8, 13])
         self.eq(seq.reduce(lambda a, b: a + b), 33)
 
@@ -255,10 +318,12 @@ class TestChain(TestCase):
         self.eq(seq.reduce(lambda a, b: a + b, initial=42), 33 + 42)
 
     def test_chaining_join(self):
+        from iroiro import chaining
         s = chaining('iroiro')
         self.eq(s.map(str.upper).join('.'), 'I.R.O.I.R.O')
 
     def test_chaining_min_max(self):
+        from iroiro import chaining
         seq = chaining([3, 5, 34, 8, 13, 21])
         self.eq(seq.min(), 3)
         self.eq(seq.max(), 34)
@@ -266,6 +331,7 @@ class TestChain(TestCase):
         self.eq(seq.max(key=lambda x: -x), 3)
 
     def test_chaining_iter(self):
+        from iroiro import chaining
         seq = chaining([1, 1, 2, 3, 5, 8, 13])
         i = seq.iter()
         i2 = iter(seq)
@@ -274,6 +340,7 @@ class TestChain(TestCase):
         self.eq(list(i2), seq.data)
 
     def test_chaining_concat(self):
+        from iroiro import chaining
         res = (chaining([1, 2, 3])
                .concat([4, 5, 6, 7], (8, 9, 10))
                .map(lambda x: x * 2)
@@ -281,6 +348,7 @@ class TestChain(TestCase):
         self.eq(res, [2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
 
     def test_chaining_in_action(self):
+        from iroiro import chaining
         res = (chaining([1, 0, 1, 2, 3, 0, 5, 8, 13])
                .filter()
                .map(lambda x: x * 2)
@@ -291,16 +359,19 @@ class TestChain(TestCase):
         self.eq(res, 87)
 
     def test_chaining_map_on_dict(self):
+        from iroiro import chaining
         seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
         res = seq.map(lambda key, value: (key + key, value * 2)).eval()
         self.eq(res, {'foofoo': 2, 'barbar': 4, 'bazbaz': 6, 'quxqux': 10, 'quuxquux': 16, 'corgecorge': 26})
 
     def test_chaining_filter_on_dict(self):
+        from iroiro import chaining
         seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
         res = seq.filter(lambda key, value: 'b' not in key).eval()
         self.eq(res, {'foo': 1, 'qux': 5, 'quux': 8, 'corge': 13})
 
     def test_chaining_reduce_on_dict(self):
+        from iroiro import chaining
         seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
         res = seq.reduce(lambda acc, item: (acc[0] + item[0], acc[1] + item[1]))
         self.eq(res, ('foobarbazquxquuxcorge', 32))
@@ -310,6 +381,7 @@ class TestChain(TestCase):
         self.eq(res, ('+foobarbazquxquuxcorge', 37))
 
     def test_chaining_keys_values_items_on_dict(self):
+        from iroiro import chaining
         seq = chaining({'foo': 1, 'bar': 2, 'baz': 3, 'qux': 5, 'quux': 8, 'corge': 13})
         res = seq.keys().map(lambda x: f'({x})').eval()
         self.eq(res, ('(foo)', '(bar)', '(baz)', '(qux)', '(quux)', '(corge)'))
@@ -321,6 +393,7 @@ class TestChain(TestCase):
         self.eq(res, ((1, 'foo'), (2, 'bar'), (3, 'baz'), (5, 'qux'), (8, 'quux'), (13, 'corge')))
 
     def test_chaining_casting(self):
+        from iroiro import chaining
         seq = chaining(((1, 'foo'), (2, 'bar'), (3, 'baz'), (5, 'qux'), (8, 'quux'), (13, 'corge')))
 
         res = seq.to_dict()

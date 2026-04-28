@@ -99,10 +99,53 @@ B = [
 assert A == B
 ```
 
+## `filter(func, iterable)`
+## `filter(iterable)`
+
+Filter `iterable` with `func`, which defaults to `None` if not specified.
+
+The return value is eagerly-evaluated with the same type of `iterable`.
+
+__Examples__
+```python
+res = iroiro.filter([True, True, False, True])
+assert res == [True, True, True]
+
+res = iroiro.filter((True, True, False, True))
+assert res == (True, True, True)
+```
+
+
+## `filterout(func, iterable)`
+
+If `func` is `callable`, filter `iterable` with inverted result of `func`.
+
+Otherwise, filter-out `func` from `iterable`.
+
+__Examples__
+```python
+res = iroiro.filterout(None, [True, True, None, False, None, True])
+assert res == [True, True, False, True]
+
+res = iroiro.filterout(True, [True, True, False, True])
+assert res == [False]
+
+res = iroiro.filterout(False, [True, True, False, True])
+assert res == [True, True, True]
+
+res = iroiro.filterout(lambda x: x % 2, (1, 1, 2, 3, 5, 8, 13, 21, 34))
+assert res == (1, 1, 3, 5, 13, 21)
+
+res = iroiro.filterout(lambda x: x % 2 == 0, (1, 1, 2, 3, 5, 8, 13, 21, 34))
+assert res == (2, 8, 34)
+```
+
+
 ## `chaining()`
 
 Return a helper object that allows method-chaining style operation.
 
+__Examples__
 ```python
 res = (chaining([1, 0, 1, 2, 3, 0, 5, 8, 13])
        .filter()
