@@ -183,6 +183,7 @@ prompt(question, options=tuple(),
        abbr=True,
        ignorecase=None,
        sep=' / ',
+       yes=None,
        suppress=(EOFError, KeyboardInterrupt))
 ```
 
@@ -191,6 +192,7 @@ prompt(question, options=tuple(),
 *   `abbr`: show abbreviations of the options
 *   `ignorecase`: ignorecase
 *   `sep`: set the separator between options
+*   `yes`: automatically set response without actually prompting and asking user
 *   `suppress`: exception type list that being suppressed
 
 In the simplest form, it could be used like `input()`:
@@ -239,6 +241,15 @@ If user triggers `EOFError` or `KeyboardInterrupt`,
 it's suppressed and make `yn` stores `None`.
 
 `yn.selected` stores the user input, so you could distinguish `yes` and `''`.
+
+The parameter `yes` might be useful in some specific cases.
+For example, you might want to handle `sys.stdin.isatty() == False` differently,
+but since `prompt()` returns a dedicated object,
+you can't just assign `yn = ''` in special case, because then `yn.selected` won't work.
+
+By using `yes` parameter, you could pretend to have user input and align the process logics.
+
+Note that if `yes` is set to a invalid option, the result stores `None`.
 
 
 ## `getch()`

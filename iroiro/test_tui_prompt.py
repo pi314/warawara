@@ -14,7 +14,7 @@ def queue_to_list(Q):
     return ret
 
 
-class TestPromotAskUser(TestCase):
+class TestPromptAskUser(TestCase):
     def setUp(self):
         self.input_queue = None
         self.print_queue = queue.Queue()
@@ -204,3 +204,29 @@ class TestPromotAskUser(TestCase):
         self.eq(yn, 'Coffee')
         self.eq(yn, 'COFFEE')
         self.ne(yn, 'tea')
+
+
+class TestPromptWithoutAskUser(TestCase):
+    def mock_print(self, *args, **kwargs):
+        self.fail()
+
+    def mock_input(self, prompt=None):
+        self.fail()
+
+    def test_auto_select(self):
+        self.patch('iroiro.tui.tui_print', self.mock_print)
+        self.patch('iroiro.tui.tui_input', self.mock_input)
+
+        yn = prompt('Coffee or tea?', 'coffee tea both', yes='coffee')
+        self.eq(yn, 'coffee')
+        self.eq(yn, '')
+        self.eq(yn.selected, 'coffee')
+
+        yn = prompt('Coffee or tea?', 'coffee tea both', yes='')
+        self.eq(yn, 'coffee')
+        self.eq(yn, '')
+        self.eq(yn.selected, '')
+
+        yn = prompt('Coffee or tea?', 'coffee tea both', yes='iroiro')
+        self.eq(yn, None)
+        self.eq(yn.selected, None)
