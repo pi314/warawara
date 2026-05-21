@@ -172,13 +172,71 @@ It's dynamically calculated every time when accessed.
 
 #### Menu Key Handler
 
-`menu.onkey(key, handler)` binds `handler` to `key` ([`MenuKeyHandler`](#class-menukeyhandler)),
-i.e. when `key` is pressed, `handler` is called.
+`menu.onkey(key, handler)` binds `handler` to `key`.
+When `key` is pressed, `handler` is called.
 
-`menu.onkey[key](handler)` does the same.
+*   If handler signature contains `key`, `key` is passed as an argument
+*   If handler signature contains `menu`, `menu` is passed as an argument
+
+`menu.onkey` is a `MenuKeyHandler` object, which has the following properties:
+
+*   `menu.onkey.bind(key, handler)` binds (appends) `handler` to `key`
+
+    -   `menu.onkey.bind(key1, key2, ..., handler1, handler2, ...)` binds all handlers to all keys
+    -   `menu.onkey.bind({key1: handler1, key2: [...]})` binds handlers to keys accordingly
+
+*   `menu.onkey.bind(handler)` binds `handler` as a default handler.  
+    When a key is pressed and no dedicated handlers are bound for it, the default handlers are called
+
+*   `menu.onkey.unbind(key, handler)` unbinds `handler` from `key`
+
+    -   `menu.onkey.unbind(key, ...)` unbinds all `handler`s from all specified `key`s
+    -   `menu.onkey.unbind(handler, ...)` unbinds all specified `handler`s from all `key`s
+    -   `menu.onkey.unbind(key1, key2, ..., handler1, handler2, ...)`
+        unbinds all specified handlers from all specified keys
+
+*   `menu.onkey[key]` accesses the list of callback functions of `key`
+    that are called in sequence when `key` is pressed
+
+    -   `menu.onkey[key](handler, ...)` binds `handler`s to `key`
+
+    -   `menu.onkey[key] += handler` binds `handler` to `key`
+        +   `menu.onkey[key] += [handler, ...]` likewise
+        +   `menu.onkey[key] += {key: handler}` likewise
+
+    -   `menu.onkey[key] -= handler` unbinds `handler` from `key`
+        +   `menu.onkey[key] -= [handler, ...]` likewise
+        +   `menu.onkey[key] -= {key: handler}` likewise
+
+    -   `menu.onkey[key] = handler` clears all handlers from `key` before binding `handler`
+        +   `menu.onkey[key] = [handler, ...]` likewise
+        +   `menu.onkey[key] = {key: handler}` likewise
+
+    -   `menu.onkey[key] = None` clears all handlers from `key`
+
+    -   `menu.onkey[None]` access to the default handlers list
+        +   When `[key]` is omitted (i.e. `menu.onkey`), `handlers` are bind to the default handler list
+            *   `menu.onkey += handler`
+            *   `menu.onkey += [handler]`
+            *   `menu.onkey += {key: handler}`
+            *   `menu.onkey -= handler`
+            *   `menu.onkey -= [handler]`
+            *   `menu.onkey -= {key: handler}`
+            *   `menu.onkey = handler`
+            *   `menu.onkey = [handler]`
+
+*   `menu.onkey(args, ...)` is equal to `menu.onkey.bind(args, ...)`
+
+*   `menu.onkey.clear()` unbinds all key bindings
+    -   `menu.onkey = None` likewise
+
+*   `bool(menu.onkey)` evaluates to `True` when it contains at least one handlers.
+    `False` otherwise
 
 
 #### Menu Event Handler
+
+(WIP)
 
 `.onselect` / `.onunselect` / `.onsubmit` / `.onquit`
 
