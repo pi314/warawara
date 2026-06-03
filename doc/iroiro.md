@@ -82,4 +82,5 @@ Documents and descriptions of the categories are as following:
 *   [iroiro.sh](iroiro.sh.md)
 *   [iroiro.subproc](iroiro.subproc.md)
 *   [iroiro.test_utils](iroiro.test_utils.md)
+*   [iroiro.threading](iroiro.threading.md)
 *   [iroiro.tui](iroiro.tui.md)
