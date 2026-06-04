@@ -78,7 +78,7 @@ After the aboved `patch()` call, any calls to `open()` is forwared to `mock_open
 
 ## class `Checkpoint`
 
-A wrapper to `threading.Event()` that links to a `Testcase`.
+A wrapper for `threading.Event()` that links to a `Testcase`.
 
 ### Methods and Properties
 

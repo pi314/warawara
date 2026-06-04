@@ -7,7 +7,7 @@ For the index of this package, see [iroiro.md](iroiro.md).
 
 ## Class `Lock`
 
-A wrapper to standard `threading.Lock`.
+A wrapper for standard `threading.Lock`.
 
 Note that it's a wrapper, not a subclass, `isinstance()` won't trace back to standard `Lock`.
 
@@ -53,3 +53,58 @@ All methods are same as [Lock](#class-lock).
 
 `locked()` method is added into standard library since Python 3.14.
 Before that, iroiro backs you.
+
+
+## Class `Timer`
+
+A wrapper for standard `threading.Timer` that is reusable.
+
+__Parameters__
+```python
+Timer(func, interval=None, *, args=None, kwargs=None)
+```
+
+`interval`, `args`, and `kwargs` could be specified as default values.
+
+`args` should be in `list` or `tuple`.
+
+`kwargs` should be in `dict`.
+
+### `Timer.remaining`
+
+The remaining time of the timer in seconds.
+
+### `Timer.start()`
+
+Start the timer.
+
+__Parameters__
+```
+Timer.start(interval=None, *, args=None, kwargs=None):
+```
+
+`internal`, `args`, and `kwargs` overrides the default values.
+
+### `Timer.cancel()`
+
+Cancel the timer.
+
+### `Timer.join()`
+
+Join the timer.
+
+### `Timer.active`
+
+Indicates if the timer is running.
+
+### `Timer.expired`
+
+Indicates if the timer is expired.
+
+### `Timer.idle`
+
+Indicates if the timer is idle (before first start.)
+
+### `Timer.cancel`
+
+Indicates if the timer is canceled.
