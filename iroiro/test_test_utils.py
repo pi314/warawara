@@ -561,8 +561,7 @@ class TestFakeTerminal(TestCase):
 class TestFakeTime(TestCase):
     def test_get_current_time(self):
         fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
+        fake_time.patch(self)
 
         import time
         self.eq(time.time(), 0)
@@ -582,8 +581,7 @@ class TestFakeTime(TestCase):
 
     def test_timer_normal(self):
         fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
+        fake_time.patch(self)
 
         checkpoint = self.checkpoint()
         def foo(bar):
@@ -604,8 +602,7 @@ class TestFakeTime(TestCase):
 
     def test_timer_cancel(self):
         fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
+        fake_time.patch(self)
 
         checkpoint = self.checkpoint()
         def foo(bar):
@@ -627,8 +624,7 @@ class TestFakeTime(TestCase):
 
     def test_timer_cancel_after_join(self):
         fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
+        fake_time.patch(self)
 
         checkpoint = self.checkpoint()
         def foo(bar):

@@ -439,13 +439,17 @@ class FakeTime:
 
         self.FakeTimerWrapper = FakeTimerWrapper
 
-    def patch(self):
-        return (
+    def patch(self, testcase=None):
+        patch_list = (
                 ('time.time', self.time_time),
                 ('time.monotonic', self.time_time),
                 ('time.sleep', self.time_sleep),
                 ('threading.Timer', self.FakeTimerWrapper),
                 )
+        if testcase:
+            for name, func in patch_list:
+                testcase.patch(name, func)
+        return patch_list
 
     def time_time(self):
         return self.sys_time
