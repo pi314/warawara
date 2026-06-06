@@ -8,7 +8,7 @@ what:
 
 .PHONY: run
 run:
-	@sh scripts/runtest.sh ${VERBOSE}
+	@sh scripts/runtest.sh
 
 
 .PHONY: clean
