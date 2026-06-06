@@ -1,6 +1,6 @@
 .PHONY: what
 what:
-	@echo $$ make run [VERBOSE=1]
+	@echo $$ make run [VERBOSE=1] [TC=keyword] [STDOUT=1] [COV=0]
 	@echo $$ make clean
 	@echo $$ make htmldoc
 	@echo $$ make publish

@@ -21,13 +21,18 @@ if command -v uvx >/dev/null 2>&1 && [ -n "$PYTHON" ]; then
 fi
 
 if command -v pytest >/dev/null 2>&1 || [ -n "$ARGS_UV" ] ; then
-    rm -f "${COVERAGE_JSON}"
-    ${ARGS_UV} pytest --cov=iroiro --cov-report=json:"${COVERAGE_JSON}" --cov-report=html ${ARGS_VERBOSE} ${ARGS_TC} ${ARGS_CAPTURE}
-    succ=$?
-    if [ ${succ} -eq 0 ]; then
-        python3 "$0"
+    if [ "${COV}" = '0' ]; then
+        ${ARGS_UV} pytest ${ARGS_VERBOSE} ${ARGS_TC} ${ARGS_CAPTURE}
+
+    else
+        rm -f "${COVERAGE_JSON}"
+        ${ARGS_UV} pytest --cov=iroiro --cov-report=json:"${COVERAGE_JSON}" --cov-report=html ${ARGS_VERBOSE} ${ARGS_TC} ${ARGS_CAPTURE}
+        succ=$?
+        if [ ${succ} -eq 0 ]; then
+            python3 "$0"
+        fi
+        rm -f "${COVERAGE_JSON}"
     fi
-    rm -f "${COVERAGE_JSON}"
 
 else
     python3 -m unittest --verbose
