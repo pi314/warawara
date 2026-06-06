@@ -4,12 +4,16 @@ COVERAGE_JSON='coverage.json'
 
 'true' r'''shell start'
 
-if [ "${VERBOSE}" == 1 ]; then
+if [ "${VERBOSE}" == '1' ]; then
     ARGS_VERBOSE=--full-trace
 fi
 
 if [ -n "${TC}" ]; then
     ARGS_TC="-k ${TC}"
+fi
+
+if [ "${STDOUT}" == '1' ]; then
+    ARGS_CAPTURE="--capture=no"
 fi
 
 if command -v uvx >/dev/null 2>&1 && [ -n "$PYTHON" ]; then
@@ -18,7 +22,7 @@ fi
 
 if command -v pytest >/dev/null 2>&1 || [ -n "$ARGS_UV" ] ; then
     rm -f "${COVERAGE_JSON}"
-    ${ARGS_UV} pytest --cov=iroiro --cov-report=json:"${COVERAGE_JSON}" --cov-report=html ${ARGS_VERBOSE} ${ARGS_TC}
+    ${ARGS_UV} pytest --cov=iroiro --cov-report=json:"${COVERAGE_JSON}" --cov-report=html ${ARGS_VERBOSE} ${ARGS_TC} ${ARGS_CAPTURE}
     succ=$?
     if [ ${succ} -eq 0 ]; then
         python3 "$0"
