@@ -484,7 +484,8 @@ class FakeTime:
 
     def teardown(self):
         self.mailbox.put(None)
-        for thread in self.thread_status.keys():
+        remaining_threads = list(self.thread_status.keys())
+        for thread in remaining_threads:
             if thread is not main_thread():
                 thread.join()
         self.thread.join()
