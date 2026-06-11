@@ -558,11 +558,25 @@ class TestFakeTerminal(TestCase):
         self.eq(ft.canvas[0][8].char, 'l')
 
 
-class TestFakeTime(TestCase):
-    def test_get_current_time(self):
+class TestFakeTimeOutOfContext(TestCase):
+    def test_fake_time_without_context(self):
         fake_time = FakeTime()
-        fake_time.patch(self)
+        with self.raises(RuntimeError):
+            fake_time.time()
 
+        with self.raises(RuntimeError):
+            fake_time.sleep(3)
+
+
+class TestFakeTime(TestCase):
+    def setUp(self):
+        self.fake_time = FakeTime()
+        self.fake_time.setup(testcase=self)
+
+    def tearDown(self):
+        self.fake_time.teardown()
+
+    def test_get_current_time(self):
         import time
         self.eq(time.time(), 0)
         time.sleep(4.2)
@@ -580,17 +594,14 @@ class TestFakeTime(TestCase):
         self.eq(time.time(), 4.2 + 42)
 
     def test_timer_normal(self):
-        fake_time = FakeTime()
-        fake_time.patch(self)
-
         checkpoint = self.checkpoint()
         def foo(bar):
             self.eq(bar, 42)
             checkpoint.set()
 
         import threading
-        t = threading.Timer(10, foo, kwargs={'bar': 42})
-        t.start()
+        tmr = threading.Timer(4294967295, foo, kwargs={'bar': 42})
+        tmr.start()
         self.false(checkpoint)
 
         import time
@@ -598,59 +609,71 @@ class TestFakeTime(TestCase):
         self.false(checkpoint)
 
         time.sleep(5)
+        self.false(checkpoint)
+
+        time.sleep(4294967295 - 10)
+        tmr.join()
         checkpoint.wait()
 
     def test_timer_cancel(self):
-        fake_time = FakeTime()
-        fake_time.patch(self)
-
         checkpoint = self.checkpoint()
         def foo(bar):
             self.eq(bar, 42)
             checkpoint.set()
 
         import threading
-        t = threading.Timer(10, foo, kwargs={'bar': 42})
-        t.start()
+        tmr = threading.Timer(10, foo, kwargs={'bar': 42})
+        tmr.start()
         self.false(checkpoint)
 
-        t.cancel()
-        self.false(t.active)
-        self.true(t.canceled)
+        tmr.cancel()
+        self.false(tmr.active)
+        self.true(tmr.canceled)
 
         import time
         time.sleep(10)
         self.false(checkpoint)
 
-    def test_timer_cancel_after_join(self):
-        fake_time = FakeTime()
-        fake_time.patch(self)
-
-        checkpoint = self.checkpoint()
+    def test_timer_cancel_unblocks_join(self):
+        tmr_checkpoint = self.checkpoint()
         def foo(bar):
             self.eq(bar, 42)
-            checkpoint.set()
+            tmr_checkpoint.set()
 
         import threading
-        t = threading.Timer(10, foo, kwargs={'bar': 42})
-        t.start()
-        self.false(checkpoint)
+        tmr = threading.Timer(10, foo, kwargs={'bar': 42})
+        tmr.start()
+        self.false(tmr_checkpoint)
 
         t_canceled = self.checkpoint()
-        def t_join():
-            t.join()
+        def tmr_join():
+            tmr.join()
             t_canceled.set()
 
-        thread = threading.Thread(target=t_join, daemon=True)
+        thread = threading.Thread(target=tmr_join, daemon=True)
         thread.start()
 
-        t.cancel()
-        self.false(t.active)
-        self.true(t.canceled)
-
-        import time
-        time.sleep(10)
-        self.false(checkpoint)
+        tmr.cancel()
+        self.false(tmr.active)
+        self.true(tmr.canceled)
 
         thread.join()
         t_canceled.check()
+
+        import time
+        time.sleep(10)
+        tmr.join()
+        self.false(tmr_checkpoint)
+
+    def test_join_timer_from_main_thread(self):
+        tmr_checkpoint = self.checkpoint()
+        def foo(arg):
+            self.eq(arg, 42)
+            tmr_checkpoint.set()
+
+        import threading
+        tmr = threading.Timer(10, foo, kwargs={'arg': 42})
+
+        tmr.start()
+        tmr.join()
+        self.true(tmr_checkpoint)

@@ -46,6 +46,13 @@ class TestLock(TestCase):
 
 
 class TestTimer(TestCase):
+    def setUp(self):
+        self.fake_time = FakeTime()
+        self.fake_time.setup(testcase=self)
+
+    def tearDown(self):
+        self.fake_time.teardown()
+
     def check_status(self, timer, status):
         self.true(getattr(timer, status))
         self.check_consistency(timer)
@@ -78,10 +85,6 @@ class TestTimer(TestCase):
         self.true(any([timer.active, timer.idle, timer.expired, timer.canceled]))
 
     def test_timer_interval_and_default_interval(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
-
         checkpoint = self.checkpoint()
 
         def foo():
@@ -102,9 +105,6 @@ class TestTimer(TestCase):
         checkpoint.wait()
 
     def test_timer_args_and_default_args(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
         import time
 
         checkpoint = self.checkpoint()
@@ -146,10 +146,6 @@ class TestTimer(TestCase):
         self.eq(timer.ret, 5)
 
     def test_timer_start_expire(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
-
         checkpoint = self.checkpoint()
 
         def foo():
@@ -168,10 +164,6 @@ class TestTimer(TestCase):
         self.check_status(timer, 'expired')
 
     def test_timer_start_cancel(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
-
         checkpoint = self.checkpoint()
 
         def foo():
@@ -189,10 +181,6 @@ class TestTimer(TestCase):
         self.check_status(timer, 'canceled')
 
     def test_timer_start_expire_cancel(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
-
         checkpoint = self.checkpoint()
 
         def foo():
@@ -214,10 +202,6 @@ class TestTimer(TestCase):
         self.check_status(timer, 'expired')
 
     def test_timer_start_twice(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
-
         checkpoint = self.checkpoint()
 
         def foo():
@@ -235,10 +219,6 @@ class TestTimer(TestCase):
         self.check_status(timer, 'active')
 
     def test_timer_idle_cancel(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
-
         def foo(*args, **kwargs):
             pass
 
@@ -249,10 +229,6 @@ class TestTimer(TestCase):
         self.check_status(timer, 'idle')
 
     def test_timer_join(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
-
         checkpoint = self.checkpoint()
 
         def foo():
@@ -285,9 +261,6 @@ class TestTimer(TestCase):
         self.check_status(timer, 'expired')
 
     def test_timer_remaing_time(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
         import time
 
         checkpoint = self.checkpoint()
@@ -308,14 +281,18 @@ class TestTimer(TestCase):
 
 
 class TestThrottler(TestCase):
+    def setUp(self):
+        self.fake_time = FakeTime()
+        self.fake_time.setup(testcase=self)
+
+    def tearDown(self):
+        self.fake_time.teardown()
+
     def test_non_callable(self):
         with self.raises(TypeError):
             iro.threading.Throttler(False, 1)
 
     def test_blocking_calls(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
         import time
 
         record = []
@@ -341,9 +318,6 @@ class TestThrottler(TestCase):
             ])
 
     def test_non_blocking_calls(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
         import time
 
         record = []
@@ -379,9 +353,6 @@ class TestThrottler(TestCase):
             ])
 
     def test_lopri_calls_compete(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
         import time
         time.sleep(1)
 
@@ -411,16 +382,15 @@ class TestThrottler(TestCase):
             ])
 
     def test_lopri_and_hipri_calls_compete(self):
-        fake_time = FakeTime()
-        for name, func in fake_time.patch():
-            self.patch(name, func)
         import time
         time.sleep(1)
 
+        called = threading.Event()
         barrier = threading.Barrier(2)
 
         record = []
         def foo(*args, **kwargs):
+            called.set()
             record.append((time.time(), args, kwargs))
             barrier.wait()
 
@@ -428,6 +398,7 @@ class TestThrottler(TestCase):
 
         t = threading.Thread(target=lambda:th(blocking=True, args=['first caller']), daemon=True)
         t.start()
+        called.wait()
 
         ret = th(args=['fast caller'])
         self.eq(ret, None)

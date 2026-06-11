@@ -1,5 +1,6 @@
 import unittest
 import threading
+import queue
 
 from collections import UserList
 
@@ -11,6 +12,9 @@ from .lib_colors import color
 
 
 __unittest = True
+
+# Keep a Thread reference because it would be patched in testcase
+Thread = threading.Thread
 
 
 @export
@@ -126,9 +130,9 @@ class TestCase(unittest.TestCase):
 
     def patch(self, name, side_effect):
         patcher = unittest.mock.patch(name, side_effect=side_effect)
-        thing = patcher.start()
+        patcher.start()
         self.addCleanup(patcher.stop)
-        return thing
+        return patcher
 
 
 @export
@@ -426,99 +430,225 @@ class FakeTerminal:
         return True
 
 
+def main_thread():
+    return threading.main_thread()
+
+
+def current_thread():
+    return threading.current_thread()
+
+
 @export
 class FakeTime:
     def __init__(self):
-        self.sys_time = 0
-        self.event_list = []
+        self.world_time = 0
+        self.mailbox = queue.Queue()
+        self.pin_list = []
+        self.thread = None
+        self.thread_status = {}
 
         me = self
-        class FakeTimerWrapper(self.FakeTimer):
+        class FakeTimerWrapper(FakeTimer):
             def __init__(s, *args, **kwargs):
                 super().__init__(me, *args, **kwargs)
-
         self.FakeTimerWrapper = FakeTimerWrapper
 
-    def patch(self, testcase=None):
+        class FakeThreadWrapper(FakeThread):
+            def __init__(s, *args, **kwargs):
+                super().__init__(me, *args, **kwargs)
+        self.FakeThreadWrapper = FakeThreadWrapper
+
+        from collections import namedtuple
+        self.Pin = namedtuple('Pin', ('timestamp', 'mailbox', 'msg'))
+
+    def patch(self, *, testcase):
         patch_list = (
-                ('time.time', self.time_time),
-                ('time.monotonic', self.time_time),
-                ('time.sleep', self.time_sleep),
+                ('time.time', self.time),
+                ('time.monotonic', self.time),
+                ('time.sleep', self.sleep),
                 ('threading.Timer', self.FakeTimerWrapper),
+                ('threading.Thread', self.FakeThreadWrapper),
                 )
-        if testcase:
-            for name, func in patch_list:
-                testcase.patch(name, func)
-        return patch_list
 
-    def time_time(self):
-        return self.sys_time
+        patchers = []
+        for name, func in patch_list:
+            patchers.append(testcase.patch(name, func))
+        return patchers
 
-    def time_sleep(self, secs):
+    def setup(self, *, testcase):
+        self.patch(testcase=testcase)
+        self.mail('start', current_thread())
+        self.thread = Thread(target=self.event_loop)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def teardown(self):
+        self.mailbox.put(None)
+        for thread in self.thread_status.keys():
+            if thread is not main_thread():
+                thread.join()
+        self.thread.join()
+        self.thread = None
+
+    def mail(self, event, *args, **kwargs):
+        self.mailbox.put((event, args, kwargs))
+
+    def event_loop(self):
+        while True:
+            mail = self.mailbox.get()
+            if not mail:
+                break
+
+            handler = getattr(self, 'handle_' + mail[0])
+            handler(*mail[1], **mail[2])
+
+            if self.mailbox.empty():
+                self.schedule_next_task()
+
+    def handle_start(self, thread):
+        self.thread_status[thread] = True
+
+    def handle_end(self, thread):
+        self.thread_status.pop(thread, None)
+
+    def handle_suspend(self, thread):
+        self.thread_status[thread] = False
+
+    def handle_resume(self, thread):
+        self.thread_status[thread] = True
+
+    def handle_pin(self, secs, mailbox, msg):
+        self.pin_list.append(self.Pin(
+            timestamp=self.world_time + secs,
+            mailbox=mailbox, msg=msg))
+        self.pin_list.sort(key=lambda x: x[0])
+
+    def schedule_next_task(self):
+        if not any(self.thread_status.values()):
+            if self.pin_list:
+                self.advance_to(self.pin_list[0].timestamp)
+
+    def advance(self, secs, *args, **kwargs):
+        self.advance_to(self.world_time + secs, *args, **kwargs)
+
+    def advance_to(self, timestamp):
+        self.world_time = max(self.world_time, timestamp)
+
+        expired_list = []
+        waiting_list = []
+
+        for pin in self.pin_list:
+            (expired_list if pin[0] <= self.world_time else waiting_list).append(pin)
+
+        self.pin_list = waiting_list
+
+        barrier = threading.Barrier(len(expired_list) + 1)
+
+        for pin in expired_list:
+            pin.mailbox.put((barrier, pin.msg))
+
+        barrier.wait()
+
+    def time(self):
+        if not self.thread:
+            raise RuntimeError('Need to run in FakeTime context')
+        return self.world_time
+
+    def sleep(self, secs):
+        if not self.thread:
+            raise RuntimeError('Need to run in FakeTime context')
+
         if secs < 0:
             raise ValueError('This Python implementation is not powerful enough to rewind time')
 
         if secs == 0:
             return
 
-        self.sys_time += secs
-        expired_list = []
-        waiting_list = []
+        mailbox = queue.Queue()
+        self.mail('pin', secs=secs, mailbox=mailbox, msg=None)
+        self.mail('suspend', current_thread())
+        barrier, msg = mailbox.get()
+        self.mail('resume', current_thread())
+        barrier.wait()
 
-        for t, poke, ack in self.event_list:
-            if t <= self.sys_time:
-                dest = expired_list
-            else:
-                dest = waiting_list
-            dest.append((t, poke, ack))
 
-        self.event_list = waiting_list
+class FakeTimer:
+    def __init__(self, world, interval, function, args=[], kwargs={}):
+        self.world = world
 
-        for _, poke, _ in expired_list:
-            poke.set()
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
 
-        for _, _, ack in expired_list:
-            ack.wait()
+        self.active = False
+        self.canceled = False
 
-    def pin(self, interval, poke, ack):
-        self.event_list.append((self.sys_time + interval, poke, ack))
-        self.event_list.sort(key=lambda x: x[0])
+        self.thread = threading.Thread(target=self.gogo, daemon=True)
+        self.expired = threading.Event()
+        self.finished = threading.Event()
+        self.mailbox = queue.Queue()
 
-    class FakeTimer:
-        def __init__(self, coordinator, interval, function, args=[], kwargs={}):
-            self.coordinator = coordinator
-            self.interval = interval
-            self.function = function
-            self.args = args
-            self.kwargs = kwargs
-            self.active = False
-
-            import threading
-            self.thread = threading.Thread(target=self.gogo, daemon=True)
-            self.expired = threading.Event()
-            self.canceled = False
-            self.finished = threading.Event()
-
-            self.poke = threading.Event()
-
-        def gogo(self):
-            self.poke.wait()
-            if self.canceled:
-                return
+    def gogo(self):
+        import time
+        self.world.mail('pin', secs=self.interval, mailbox=self.mailbox, msg='expired')
+        self.world.mail('suspend', current_thread())
+        barrier, msg = self.mailbox.get()
+        self.world.mail('resume', current_thread())
+        if not self.canceled:
             self.expired.set()
             self.function(*self.args, **self.kwargs)
             self.finished.set()
+        barrier.wait()
 
-        def start(self):
-            self.active = True
-            self.coordinator.pin(self.interval, self.poke, self.finished)
-            self.thread.start()
+    def start(self):
+        self.active = True
+        self.expired.clear()
+        self.canceled = False
+        self.finished.clear()
+        self.thread.start()
 
-        def cancel(self):
-            self.active = False
-            self.canceled = True
-            self.finished.set()
+    def cancel(self):
+        self.active = False
+        self.canceled = True
+        self.finished.set()
 
-        def join(self):
-            assert self.active
-            self.finished.wait()
+    def join(self, timeout=None):
+        if not self.active:
+            return
+
+        mailbox = queue.Queue()
+        if timeout:
+            self.world.mail('pin', secs=timeout, mailbox=mailbox, msg='timeout')
+            self.world.mail('suspend', current_thread())
+            mailbox.get()
+            mailbox.task_done()
+        else:
+            self.world.mail('suspend', current_thread())
+
+        self.finished.wait()
+        self.world.mail('resume', current_thread())
+
+
+class FakeThread:
+    def __init__(self, world, target=None, *args, **kwargs):
+        self.world = world
+
+        def target_wrapper(*args, **kwargs):
+            self.world.mail('start', current_thread())
+            if target:
+                target(*args, **kwargs)
+            self.world.mail('end', current_thread())
+
+        self.thread = Thread(target=target_wrapper, *args, **kwargs)
+
+    def start(self, *args, **kwargs):
+        self.thread.start(*args, **kwargs)
+
+    def join(self, *args, **kwargs):
+        self.world.mail('suspend', current_thread())
+        self.thread.join(*args, **kwargs)
+        self.world.mail('resume', current_thread())
+
+    def __getattr__(self, name):
+        return getattr(self.thread, name)
