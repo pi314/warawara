@@ -147,14 +147,19 @@ class TestCheckPoint(TestCase):
         checkpoint.verify(False)
         checkpoint.verify(False)
 
-        # Test a checkpoint with thread
-        def set_checkpoint():
+        # Test waiting a checkpoint in thread
+        def wait_checkpoint():
             checkpoint.wait()
-
-        with self.run_in_thread(set_checkpoint):
+        with self.run_in_thread(wait_checkpoint):
             checkpoint.set()
+        checkpoint.verify(True)
 
-        checkpoint.check()
+        # Test setting a checkpoint in thread
+        def set_checkpoint():
+            checkpoint.set()
+        with self.run_in_thread(set_checkpoint):
+            checkpoint.wait()
+        checkpoint.verify(True)
 
 
 class TestSubprocRunMocker(TestCase):
@@ -721,3 +726,31 @@ class TestFakeTime(TestCase):
 
         tmr.join()
         self.true(tmr_checkpoint)
+
+    def test_join_thread_with_timeout(self):
+        barrier = threading.Event()
+        checkpoint = self.checkpoint()
+
+        def wait_checkpoint():
+            barrier.wait()
+            checkpoint.set()
+
+        thread = threading.Thread(target=wait_checkpoint, daemon=True)
+        thread.start()
+        thread.join(timeout=5)
+        self.false(checkpoint)
+
+        barrier.set()
+        thread.join()
+        self.true(checkpoint)
+
+    def test_wait_event_with_timeout(self):
+        event = threading.Event()
+        self.false(event.is_set())
+
+        event.wait(timeout=4)
+        self.false(event.is_set())
+
+        event.set()
+        event.wait()
+        self.true(event.is_set())

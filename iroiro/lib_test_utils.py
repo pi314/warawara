@@ -149,7 +149,7 @@ class TestCase(unittest.TestCase):
         def patcher_stop():
             try:
                 patcher.stop()
-            except RuntimeError:
+            except RuntimeError: # pragma: no cover
                 pass
         self.addCleanup(patcher_stop)
         return patcher
