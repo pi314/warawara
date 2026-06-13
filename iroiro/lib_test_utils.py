@@ -524,6 +524,9 @@ class FakeTime:
             mailbox=mailbox, msg=msg))
         self.pin_list.sort(key=lambda x: x[0])
 
+    def handle_unpin(self, mailbox):
+        self.pin_list = [pin for pin in self.pin_list if pin.mailbox is not mailbox]
+
     def schedule_next_task(self):
         if not any(self.thread_status.values()):
             if self.pin_list:
@@ -597,7 +600,8 @@ class FakeTimer:
             self.expired.set()
             self.function(*self.args, **self.kwargs)
             self.finished.set()
-        barrier.wait()
+        if barrier:
+            barrier.wait()
 
     def start(self):
         self.active = True
@@ -607,9 +611,11 @@ class FakeTimer:
         self.thread.start()
 
     def cancel(self):
+        self.world.mail('unpin', mailbox=self.mailbox)
         self.active = False
         self.canceled = True
         self.finished.set()
+        self.mailbox.put((None, 'canceled'))
 
     def join(self, timeout=None):
         if not self.active:
