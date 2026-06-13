@@ -159,9 +159,10 @@ class stream:
                 yield line
 
 
-class IntegerEvent(threading.Event):
+class IntegerEvent:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.event = threading.Event()
         self.value = None
 
     def __repr__(self):
@@ -169,16 +170,22 @@ class IntegerEvent(threading.Event):
 
     def set(self, value=None):
         self.value = value
-        super().set()
+        self.event.set()
 
     def clear(self):
         self.value = None
-        super().clear()
+        self.event.clear()
+
+    def wait(self, timeout=None):
+        self.event.wait(timeout=timeout)
 
     def __eq__(self, other):
         if not self.is_set():
             return other is False or other is None
         return self.value == other
+
+    def __getattr__(self, name):
+        return getattr(self.event, name)
 
 
 @export
