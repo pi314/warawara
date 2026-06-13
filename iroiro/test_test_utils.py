@@ -576,6 +576,17 @@ class TestFakeTime(TestCase):
     def tearDown(self):
         self.fake_time.teardown()
 
+    def test_fake_thread_property(self):
+        res = []
+        def foo():
+            res.append('foo')
+
+        thread = threading.Thread(target=foo)
+        self.eq(thread.name, thread.thread.name)
+        thread.start()
+        thread.join()
+        self.eq(res, ['foo'])
+
     def test_get_current_time(self):
         import time
         self.eq(time.time(), 0)
