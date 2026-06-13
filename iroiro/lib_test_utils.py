@@ -146,7 +146,12 @@ class TestCase(unittest.TestCase):
     def patch(self, name, side_effect):
         patcher = unittest.mock.patch(name, side_effect=side_effect)
         patcher.start()
-        self.addCleanup(patcher.stop)
+        def patcher_stop():
+            try:
+                patcher.stop()
+            except RuntimeError:
+                pass
+        self.addCleanup(patcher_stop)
         return patcher
 
 
