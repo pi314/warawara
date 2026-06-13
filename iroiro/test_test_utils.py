@@ -636,8 +636,8 @@ class TestFakeTime(TestCase):
         self.false(checkpoint)
 
         tmr.cancel()
-        self.false(tmr.active)
-        self.true(tmr.canceled)
+        self.false(tmr.active.is_set())
+        self.true(tmr.canceled.is_set())
 
         import time
         time.sleep(10)
@@ -663,8 +663,8 @@ class TestFakeTime(TestCase):
         thread.start()
 
         tmr.cancel()
-        self.false(tmr.active)
-        self.true(tmr.canceled)
+        self.false(tmr.active.is_set())
+        self.true(tmr.canceled.is_set())
 
         thread.join()
         t_canceled.check()
@@ -704,4 +704,20 @@ class TestFakeTime(TestCase):
         thread.start()
         thread.join()
 
+        self.true(tmr_checkpoint)
+
+    def test_join_timer_with_timeout(self):
+        tmr_checkpoint = self.checkpoint()
+        def foo(arg):
+            self.eq(arg, 42)
+            tmr_checkpoint.set()
+
+        import threading
+        tmr = threading.Timer(10, foo, kwargs={'arg': 42})
+
+        tmr.start()
+        tmr.join(timeout=5)
+        self.false(tmr_checkpoint)
+
+        tmr.join()
         self.true(tmr_checkpoint)

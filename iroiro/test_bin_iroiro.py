@@ -17,13 +17,13 @@ class TestBinIroiro(TestCase):
 
     @property
     def stdout(self):
-        return [' '.join(args)
+        return [' '.join(str(arg) for arg in args)
                 for args, kwargs in self.prints
                 if kwargs.get('file', sys.stdout) == sys.stdout]
 
     @property
     def stderr(self):
-        return [' '.join(args)
+        return [' '.join(str(arg) for arg in args)
                 for args, kwargs in self.prints
                 if kwargs.get('file') == sys.stderr]
 

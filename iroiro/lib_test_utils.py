@@ -16,6 +16,7 @@ __unittest = True
 
 # Keep a Thread reference because it would be patched in testcase
 Thread = threading.Thread
+Event = threading.Event
 
 
 @export
@@ -474,6 +475,13 @@ class FakeTime:
                 super().__init__(me, *args, **kwargs)
         self.FakeThreadWrapper = FakeThreadWrapper
 
+        class FakeEventWrapper(FakeEvent):
+            def __init__(s, *args, **kwargs):
+                super().__init__(me, *args, **kwargs)
+        self.FakeEventWrapper = FakeEventWrapper
+
+        self.patchers = []
+
         from collections import namedtuple
         self.Pin = namedtuple('Pin', ('timestamp', 'mailbox', 'msg'))
 
@@ -484,12 +492,17 @@ class FakeTime:
                 ('time.sleep', self.sleep),
                 ('threading.Timer', self.FakeTimerWrapper),
                 ('threading.Thread', self.FakeThreadWrapper),
+                ('threading.Event', self.FakeEventWrapper),
                 )
 
-        patchers = []
         for name, func in patch_list:
-            patchers.append(self.testcase.patch(name, func))
-        return patchers
+            self.patchers.append(self.testcase.patch(name, func))
+        return self.patchers
+
+    def unpatch(self):
+        for patcher in self.patchers:
+            patcher.stop()
+        self.patchers = []
 
     def setup(self):
         self.patch()
@@ -544,6 +557,7 @@ class FakeTime:
         self.pin_list.sort(key=lambda x: x[0])
 
     def handle_unpin(self, mailbox):
+        assert self.pin_list
         self.pin_list = [pin for pin in self.pin_list if pin.mailbox is not mailbox]
 
     def schedule_next_task(self):
@@ -589,7 +603,8 @@ class FakeTime:
         self.mail('suspend', current_thread())
         barrier, msg = mailbox.get()
         self.mail('resume', current_thread())
-        barrier.wait()
+        if hasattr(barrier, 'wait'):
+            barrier.wait()
 
 
 class FakeTimer:
@@ -601,55 +616,57 @@ class FakeTimer:
         self.args = args
         self.kwargs = kwargs
 
-        self.active = False
-        self.canceled = False
-
         self.thread = threading.Thread(target=self.gogo, daemon=True)
+        self.active = threading.Event()
         self.expired = threading.Event()
         self.finished = threading.Event()
+        self.canceled = threading.Event()
         self.mailbox = queue.Queue()
 
     def gogo(self):
+        self.active.set()
         import time
         self.world.mail('pin', secs=self.interval, mailbox=self.mailbox, msg='expired')
         self.world.mail('suspend', current_thread())
         barrier, msg = self.mailbox.get()
         self.world.mail('resume', current_thread())
-        if not self.canceled:
+        if not self.canceled.is_set():
             self.expired.set()
             self.function(*self.args, **self.kwargs)
             self.finished.set()
-        if barrier:
+        if hasattr(barrier, 'wait'):
             barrier.wait()
 
     def start(self):
-        self.active = True
         self.expired.clear()
-        self.canceled = False
+        self.canceled.clear()
         self.finished.clear()
         self.thread.start()
+        self.active.wait()
 
     def cancel(self):
         self.world.mail('unpin', mailbox=self.mailbox)
-        self.active = False
-        self.canceled = True
+        self.active.clear()
+        self.canceled.set()
         self.finished.set()
         self.mailbox.put((None, 'canceled'))
 
     def join(self, timeout=None):
-        if not self.active:
+        if not self.active.is_set():
             return
 
         mailbox = queue.Queue()
         if timeout:
             self.world.mail('pin', secs=timeout, mailbox=mailbox, msg='timeout')
             self.world.mail('suspend', current_thread())
-            mailbox.get()
+            barrier, msg = mailbox.get()
+            if hasattr(barrier, 'wait'):
+                barrier.wait()
             mailbox.task_done()
         else:
             self.world.mail('suspend', current_thread())
+            self.finished.wait()
 
-        self.finished.wait()
         self.world.mail('resume', current_thread())
 
 
@@ -657,20 +674,41 @@ class FakeThread:
     def __init__(self, world, target=None, *args, **kwargs):
         self.world = world
 
-        def target_wrapper(*args, **kwargs):
-            self.world.mail('start', current_thread())
-            if target:
-                target(*args, **kwargs)
-            self.world.mail('end', current_thread())
+        self.target = target
+        self.thread = Thread(target=self.gogo, *args, **kwargs)
+        self.active = threading.Event()
 
-        self.thread = Thread(target=target_wrapper, *args, **kwargs)
+    def __getattr__(self, name):
+        return getattr(self.thread, name)
+
+    def gogo(self, *args, **kwargs):
+        self.active.set()
+        self.world.mail('start', current_thread())
+        if self.target:
+            self.target(*args, **kwargs)
+        self.world.mail('end', current_thread())
 
     def start(self, *args, **kwargs):
         self.thread.start(*args, **kwargs)
+        self.active.wait()
 
-    def join(self, *args, **kwargs):
-        self.world.mail('suspend', current_thread())
-        self.thread.join(*args, **kwargs)
+    def join(self, timeout=None):
+        if not self.thread.is_alive():
+            self.thread.join(timeout=timeout)
+            return
+
+        mailbox = queue.Queue()
+        if timeout:
+            self.world.mail('pin', secs=timeout, mailbox=mailbox, msg='timeout')
+            self.world.mail('suspend', current_thread())
+            barrier, msg = mailbox.get()
+            if hasattr(barrier, 'wait'):
+                barrier.wait()
+            mailbox.task_done()
+        else:
+            self.world.mail('suspend', current_thread())
+            self.thread.join()
+
         self.world.mail('resume', current_thread())
 
     @getter
@@ -681,5 +719,31 @@ class FakeThread:
     def daemon(self, value):
         self.thread.daemon = value
 
+
+class FakeEvent:
+    def __init__(self, world):
+        self.world = world
+        self.event = Event()
+
     def __getattr__(self, name):
-        return getattr(self.thread, name)
+        return getattr(self.event, name)
+
+    def wait(self, timeout=None):
+        import inspect
+        frame = inspect.stack()[1]
+        if frame.filename.endswith('/threading.py'):
+            return self.event.wait(timeout=timeout)
+
+        mailbox = queue.Queue()
+        if timeout:
+            self.world.mail('pin', secs=timeout, mailbox=mailbox, msg='timeout')
+            self.world.mail('suspend', current_thread())
+            barrier, msg = mailbox.get()
+            if hasattr(barrier, 'wait'):
+                barrier.wait()
+            mailbox.task_done()
+        else:
+            self.world.mail('suspend', current_thread())
+            self.event.wait()
+
+        self.world.mail('resume', current_thread())

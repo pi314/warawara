@@ -54,6 +54,10 @@ class TestEventBroadcaster(TestCase):
 
 
 class TestStream(TestCase):
+    def setup(self):
+        self.fake_time.teardown()
+        self.fake_time.unpatch()
+
     def test_stream_basic_io(self):
         s = stream()
         self.eq(s.keep, False)
@@ -167,6 +171,10 @@ class TestStream(TestCase):
 
 
 class TestSubproc(TestCase):
+    def setup(self):
+        self.fake_time.teardown()
+        self.fake_time.unpatch()
+
     def teardown(self):
         children().clear()
 
@@ -742,6 +750,10 @@ class TestSubproc(TestCase):
 
 
 class TestPipe(TestCase):
+    def setup(self):
+        self.fake_time.teardown()
+        self.fake_time.unpatch()
+
     def test_pipe(self):
         p1 = command('nl -w 1 -s :'.split(), stdin=['hello', 'world'])
         p2 = command('nl -w 1 -s /'.split(), stdin=True)
@@ -853,6 +865,10 @@ class TestPipe(TestCase):
         self.true(o.closed)
 
 class TestChildrenManagement(TestCase):
+    def setup(self):
+        self.fake_time.teardown()
+        self.fake_time.unpatch()
+
     def patch_pid_funcions(self):
         import random
         from signal import SIGUSR1, SIGUSR2, SIGKILL

@@ -22,7 +22,7 @@ fi
 
 if command -v pytest >/dev/null 2>&1 || [ -n "$ARGS_UV" ] ; then
     if [ "${COV}" = '0' ]; then
-        ${ARGS_UV} pytest ${ARGS_VERBOSE} ${ARGS_TC} ${ARGS_CAPTURE}
+        ${ARGS_UV} pytest -v ${ARGS_VERBOSE} ${ARGS_TC} ${ARGS_CAPTURE}
 
     else
         rm -f "${COVERAGE_JSON}"
