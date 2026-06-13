@@ -7,6 +7,7 @@ from collections import UserList
 from .internal_utils import exporter
 export, __all__ = exporter()
 
+from .lib_lang import getter, setter
 from .lib_regex import rere
 from .lib_colors import color
 
@@ -62,6 +63,19 @@ class TestCase(unittest.TestCase):
         self.true = self.assertTrue
         self.false = self.assertFalse
         self.raises = self.assertRaises
+
+    def setUp(self):
+        super().setUp()
+        self.fake_time = FakeTime(testcase=self)
+        self.fake_time.setup()
+        if hasattr(self, 'setup'):
+            self.setup()
+
+    def tearDown(self):
+        self.fake_time.teardown()
+        if hasattr(self, 'teardown'):
+            self.teardown()
+        super().tearDown()
 
     def eq(self, first, second, msg=None):
         if (not isinstance(first, (list, tuple, UserList)) or
@@ -440,8 +454,10 @@ def current_thread():
 
 @export
 class FakeTime:
-    def __init__(self):
-        self.world_time = 0
+    def __init__(self, *, testcase=None, base=0):
+        assert testcase
+        self.testcase = testcase
+        self.world_time = base
         self.mailbox = queue.Queue()
         self.pin_list = []
         self.thread = None
@@ -461,7 +477,7 @@ class FakeTime:
         from collections import namedtuple
         self.Pin = namedtuple('Pin', ('timestamp', 'mailbox', 'msg'))
 
-    def patch(self, *, testcase):
+    def patch(self):
         patch_list = (
                 ('time.time', self.time),
                 ('time.monotonic', self.time),
@@ -472,22 +488,25 @@ class FakeTime:
 
         patchers = []
         for name, func in patch_list:
-            patchers.append(testcase.patch(name, func))
+            patchers.append(self.testcase.patch(name, func))
         return patchers
 
-    def setup(self, *, testcase):
-        self.patch(testcase=testcase)
+    def setup(self):
+        self.patch()
         self.mail('start', current_thread())
         self.thread = Thread(target=self.event_loop)
         self.thread.daemon = True
         self.thread.start()
 
     def teardown(self):
+        if not self.thread or not self.thread.is_alive():
+            return
+
         self.mailbox.put(None)
         remaining_threads = list(self.thread_status.keys())
         for thread in remaining_threads:
-            if thread is not main_thread():
-                thread.join()
+            if thread is not main_thread() and not thread.daemon: # pragma: no cover 
+                assert not thread.is_alive()
         self.thread.join()
         self.thread = None
 
@@ -653,6 +672,14 @@ class FakeThread:
         self.world.mail('suspend', current_thread())
         self.thread.join(*args, **kwargs)
         self.world.mail('resume', current_thread())
+
+    @getter
+    def daemon(self):
+        return self.thread.daemon
+
+    @setter
+    def daemon(self, value):
+        self.thread.daemon = value
 
     def __getattr__(self, name):
         return getattr(self.thread, name)

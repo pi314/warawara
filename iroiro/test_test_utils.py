@@ -559,23 +559,21 @@ class TestFakeTerminal(TestCase):
 
 
 class TestFakeTimeOutOfContext(TestCase):
+    def test_fake_time_without_testcase(self):
+        with self.raises(AssertionError):
+            fake_time = FakeTime()
+
     def test_fake_time_without_context(self):
-        fake_time = FakeTime()
-        with self.raises(RuntimeError):
-            fake_time.time()
+        self.fake_time.teardown()
 
         with self.raises(RuntimeError):
-            fake_time.sleep(3)
+            self.fake_time.time()
+
+        with self.raises(RuntimeError):
+            self.fake_time.sleep(3)
 
 
 class TestFakeTime(TestCase):
-    def setUp(self):
-        self.fake_time = FakeTime()
-        self.fake_time.setup(testcase=self)
-
-    def tearDown(self):
-        self.fake_time.teardown()
-
     def test_fake_thread_property(self):
         res = []
         def foo():

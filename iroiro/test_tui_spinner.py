@@ -19,7 +19,7 @@ class TestThreadedSpinner(TestCase):
                        ('timestamp', 'tag', 'args', 'callback'),
                        defaults=(None, None, None, None))
 
-    def setUp(self):
+    def setup(self):
         self.sys_time = 0
         self.behavior_queue = queue.Queue()
         self.events_upon_sleep = queue.Queue()

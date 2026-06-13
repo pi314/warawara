@@ -27,7 +27,7 @@ class TestMenuData(TestCase):
 
 
 class TestMenuCursor(TestCase):
-    def setUp(self):
+    def setup(self):
         self.menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
 
     def test_repr(self):
@@ -164,7 +164,7 @@ class TestMenuCursor(TestCase):
 
 
 class TestMenuKeyHandler(TestCase):
-    def setUp(self):
+    def setup(self):
         self.menu = iroiro.Menu('title', ['Option 1', 'Option 2'])
 
     def test_empty_handler(self):
@@ -448,7 +448,7 @@ class TestMenuKeyHandler(TestCase):
 
 
 class TestMenuItem(TestCase):
-    def setUp(self):
+    def setup(self):
         self.menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
 
     def test_repr(self):
@@ -617,7 +617,7 @@ class TestIdleMenuRendering(TestCase):
 
 
 class TestMenuFixture(TestCase):
-    def setUp(self):
+    def setup(self):
         from .lib_test_utils import FakeTerminal
         self.terminal = FakeTerminal()
         self.patch('sys.stdout.isatty', lambda *args, **kargs: True)
@@ -639,7 +639,7 @@ class TestMenuFixture(TestCase):
         self.key_queue = queue.Queue()
         self.patch('iroiro.tui.getch', self.mock_getch)
 
-    def tearDown(self):
+    def teardown(self):
         self.eq(self.menu_thread, None)
 
     def mock_getch(self, *args, **kwargs):
@@ -1492,7 +1492,7 @@ class TestMenuRendering(TestMenuFixture):
 
 
 class TestMenuEventDispatcher(TestCase):
-    def setUp(self):
+    def setup(self):
         self.menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
         def foo(): pass
         def bar(): pass
@@ -1593,7 +1593,7 @@ class TestMenuEventDispatcher(TestCase):
 
 
 class TestMenuEventHandler(TestCase):
-    def setUp(self):
+    def setup(self):
         self.menu = iroiro.Menu('title', ['Option 1', 'Option 2', 'Option 3'])
         self.ed = iroiro.tui.MenuEventDispatcher(self.menu)
         def foo(): pass

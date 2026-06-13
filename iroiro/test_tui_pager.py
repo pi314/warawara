@@ -4,7 +4,7 @@ from iroiro import Pager
 
 
 class TestPager(TestCase):
-    def setUp(self):
+    def setup(self):
         from .lib_test_utils import FakeTerminal
         self.terminal = FakeTerminal()
         self.patch('shutil.get_terminal_size', lambda: self.terminal.get_terminal_size())

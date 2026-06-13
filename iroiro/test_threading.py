@@ -46,13 +46,6 @@ class TestLock(TestCase):
 
 
 class TestTimer(TestCase):
-    def setUp(self):
-        self.fake_time = FakeTime()
-        self.fake_time.setup(testcase=self)
-
-    def tearDown(self):
-        self.fake_time.teardown()
-
     def check_status(self, timer, status):
         self.true(getattr(timer, status))
         self.check_consistency(timer)
@@ -218,6 +211,8 @@ class TestTimer(TestCase):
         self.false(res)
         self.check_status(timer, 'active')
 
+        timer.join()
+
     def test_timer_idle_cancel(self):
         def foo(*args, **kwargs):
             pass
@@ -281,13 +276,6 @@ class TestTimer(TestCase):
 
 
 class TestThrottler(TestCase):
-    def setUp(self):
-        self.fake_time = FakeTime()
-        self.fake_time.setup(testcase=self)
-
-    def tearDown(self):
-        self.fake_time.teardown()
-
     def test_non_callable(self):
         with self.raises(TypeError):
             iro.threading.Throttler(False, 1)

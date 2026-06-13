@@ -5,7 +5,7 @@ from iroiro import KEY_UP, KEY_HOME
 
 
 class TestGetch(TestCase):
-    def setUp(self):
+    def setup(self):
         self.patch('sys.stdin.fileno', self.mock_stdin_fileno)
         self.patch('select.select', self.mock_select)
         self.patch('os.read', self.mock_read)
@@ -28,7 +28,7 @@ class TestGetch(TestCase):
         self.term_attr = list(self.default_term_attr)
         self.killed = None
 
-    def tearDown(self):
+    def teardown(self):
         self.eq(self.term_attr, self.default_term_attr)
 
     def press(self, key):

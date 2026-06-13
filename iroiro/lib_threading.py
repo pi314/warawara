@@ -120,8 +120,8 @@ class Timer:
             self._canceled.set()
             return True
 
-    def join(self):
-        return self.timer.join()
+    def join(self, timeout=None):
+        return self.timer.join(timeout)
 
     @property
     def active(self):

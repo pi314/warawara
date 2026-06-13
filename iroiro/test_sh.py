@@ -9,7 +9,7 @@ import iroiro as iro
 
 
 class TestSh(TestCase):
-    def setUp(self):
+    def setup(self):
         self.root = Path(__file__).parent
         self.cwd = self.root
         iro.sh.dir_stack = []

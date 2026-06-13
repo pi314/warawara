@@ -8,12 +8,9 @@ import iroiro as iro
 
 
 class TestBinIroiro(TestCase):
-    def setUp(self):
+    def setup(self):
         self.prints = []
         self.patch('builtins.print', self.mock_print)
-
-    def tearDown(self):
-        pass
 
     def mock_print(self, *args, **kwargs):
         self.prints.append((args, kwargs))

@@ -4,7 +4,7 @@ from .lib_collections import namablelist
 
 
 class TestNamableList(TestCase):
-    def setUp(self):
+    def setup(self):
         self.nl = namablelist([10, 11, 12, 13])
         self.nl.nameit(0, 'apple')
         self.nl.nameit(1, 'banana')

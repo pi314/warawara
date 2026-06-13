@@ -15,7 +15,7 @@ def queue_to_list(Q):
 
 
 class TestPromptAskUser(TestCase):
-    def setUp(self):
+    def setup(self):
         self.input_queue = None
         self.print_queue = queue.Queue()
 
@@ -26,7 +26,7 @@ class TestPromptAskUser(TestCase):
         self.patch('builtins.open', self.mock_open)
         self.assert_called_open = True
 
-    def tearDown(self):
+    def teardown(self):
         if self.assert_called_open:
             self.mock_open.assert_has_calls([
                     unittest.mock.call('/dev/tty'),

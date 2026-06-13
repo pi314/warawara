@@ -565,7 +565,6 @@ def pipe(istream, *ostreams, start=True):
     p = Pipe(istream, *ostreams)
     for ostream in ostreams:
         ostream.pipe_attached()
-
     if start:
         p.start()
     return p
