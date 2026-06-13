@@ -26,7 +26,7 @@ if command -v pytest >/dev/null 2>&1 || [ -n "$ARGS_UV" ] ; then
 
     else
         rm -f "${COVERAGE_JSON}"
-        ${ARGS_UV} pytest --cov=iroiro --cov-report=json:"${COVERAGE_JSON}" --cov-report=html ${ARGS_VERBOSE} ${ARGS_TC} ${ARGS_CAPTURE}
+        ${ARGS_UV} pytest -v --cov=iroiro --cov-report=json:"${COVERAGE_JSON}" --cov-report=html ${ARGS_VERBOSE} ${ARGS_TC} ${ARGS_CAPTURE}
         succ=$?
         if [ ${succ} -eq 0 ]; then
             python3 "$0"
