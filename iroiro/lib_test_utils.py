@@ -529,9 +529,6 @@ class FakeTime:
             if self.pin_list:
                 self.advance_to(self.pin_list[0].timestamp)
 
-    def advance(self, secs, *args, **kwargs):
-        self.advance_to(self.world_time + secs, *args, **kwargs)
-
     def advance_to(self, timestamp):
         self.world_time = max(self.world_time, timestamp)
 

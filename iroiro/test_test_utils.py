@@ -677,3 +677,22 @@ class TestFakeTime(TestCase):
         tmr.start()
         tmr.join()
         self.true(tmr_checkpoint)
+
+    def test_join_timer_from_other_thread(self):
+        tmr_checkpoint = self.checkpoint()
+        def foo(arg):
+            self.eq(arg, 42)
+            tmr_checkpoint.set()
+
+        import threading
+        tmr = threading.Timer(10, foo, kwargs={'arg': 42})
+        tmr.start()
+
+        def bar():
+            tmr.join()
+
+        thread = threading.Thread(target=bar)
+        thread.start()
+        thread.join()
+
+        self.true(tmr_checkpoint)
