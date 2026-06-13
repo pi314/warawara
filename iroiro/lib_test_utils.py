@@ -608,8 +608,7 @@ class FakeTime:
         self.mail('suspend', current_thread())
         barrier, msg = mailbox.get()
         self.mail('resume', current_thread())
-        if hasattr(barrier, 'wait'):
-            barrier.wait()
+        barrier.wait()
 
 
 class FakeTimer:
@@ -665,8 +664,7 @@ class FakeTimer:
             self.world.mail('pin', secs=timeout, mailbox=mailbox, msg='timeout')
             self.world.mail('suspend', current_thread())
             barrier, msg = mailbox.get()
-            if hasattr(barrier, 'wait'):
-                barrier.wait()
+            barrier.wait()
             mailbox.task_done()
         else:
             self.world.mail('suspend', current_thread())
