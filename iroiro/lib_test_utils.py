@@ -638,8 +638,7 @@ class FakeTimer:
             self.expired.set()
             self.function(*self.args, **self.kwargs)
             self.finished.set()
-        if hasattr(barrier, 'wait'):
-            barrier.wait()
+        barrier.wait()
 
     def start(self):
         self.expired.clear()
@@ -653,7 +652,7 @@ class FakeTimer:
         self.active.clear()
         self.canceled.set()
         self.finished.set()
-        self.mailbox.put((None, 'canceled'))
+        self.mailbox.put((threading.Barrier(1), 'canceled'))
 
     def join(self, timeout=None):
         if not self.active.is_set():
@@ -705,8 +704,7 @@ class FakeThread:
             self.world.mail('pin', secs=timeout, mailbox=mailbox, msg='timeout')
             self.world.mail('suspend', current_thread())
             barrier, msg = mailbox.get()
-            if hasattr(barrier, 'wait'):
-                barrier.wait()
+            barrier.wait()
             mailbox.task_done()
         else:
             self.world.mail('suspend', current_thread())
@@ -742,8 +740,7 @@ class FakeEvent:
             self.world.mail('pin', secs=timeout, mailbox=mailbox, msg='timeout')
             self.world.mail('suspend', current_thread())
             barrier, msg = mailbox.get()
-            if hasattr(barrier, 'wait'):
-                barrier.wait()
+            barrier.wait()
             mailbox.task_done()
         else:
             self.world.mail('suspend', current_thread())

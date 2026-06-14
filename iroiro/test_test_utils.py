@@ -590,6 +590,11 @@ class TestFakeTime(TestCase):
         thread.join()
         self.eq(res, ['foo'])
 
+    def test_fake_thread_without_target(self):
+        thread = threading.Thread()
+        thread.start()
+        thread.join()
+
     def test_get_current_time(self):
         import time
         self.eq(time.time(), 0)
