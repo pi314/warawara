@@ -272,9 +272,10 @@ class TestSubproc(TestCase):
         self.eq(fake_file1.getvalue(), '[line1\n]\n[line2\n]\n[line333]\n')
 
     def test_wait_early(self):
-        p = command('seq 5'.split())
-        p.wait()
+        p = command(['python', '-c', 'import time; time.sleep(0.1); [print(i+1) for i in range(5)]'])
+        self.false(p.wait())
         p.run(wait=False)
+        self.false(p.wait(timeout=0))
         p.wait()
         self.eq(p.stdout.lines, '1 2 3 4 5'.split())
 
