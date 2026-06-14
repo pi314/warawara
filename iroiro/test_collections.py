@@ -36,6 +36,16 @@ class TestNamableList(TestCase):
         with self.raises(AttributeError):
             self.nl.indexof.canana
 
+        self.eq(self.nl.danana, 13)
+        self.eq(self.nl.indexof.danana, 3)
+        self.nl.unname(3)
+        with self.raises(KeyError):
+            self.nl['danana']
+        with self.raises(AttributeError):
+            self.nl.danana
+        with self.raises(AttributeError):
+            self.nl.indexof.danana
+
     def test_access_through_attr(self):
         nl = self.nl
         self.eq(nl.apple, 10)

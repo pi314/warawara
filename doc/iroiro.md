@@ -74,6 +74,7 @@ Documents and descriptions of the categories are as following:
 
 *   [iroiro](iroiro.md)
 *   [iroiro.colors](iroiro.colors.md)
+*   [iroiro.collections](iroiro.collections.md)
 *   [iroiro.datetime](iroiro.datetime.md)
 *   [iroiro.fs](iroiro.fs.md)
 *   [iroiro.itertools](iroiro.itertools.md)

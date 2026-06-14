@@ -41,8 +41,9 @@ class namablelist(list):
         self._name_to_index[name] = index
         self._index_to_name[index] = name
 
-    def unname(self, name):
-        index = self.indexof(name)
+    def unname(self, arg):
+        name = self.nameof(arg)
+        index = self.indexof(arg)
         del self._name_to_index[name]
         del self._index_to_name[index]
 

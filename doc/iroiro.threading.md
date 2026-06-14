@@ -89,7 +89,7 @@ Timer.start(interval=None, *, args=None, kwargs=None):
 
 Cancel the timer.
 
-### `Timer.join()`
+### `Timer.join(timeout=None)`
 
 Join the timer.
 
