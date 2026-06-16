@@ -55,6 +55,7 @@ assert nl['canana'] == 12
 assert nl['danana'] == 13
 ```
 
+
 #### `namablelist.unname(arg)`
 Unassociate `arg`. `arg` can either be an index or a name.
 
@@ -74,4 +75,51 @@ nl['apple'] # KeyError
 nl.unname('canana')
 nl.canana    # AttributeError
 nl['canana'] # KeyError
+```
+
+
+#### `namablelist.keys()`
+Get the list of names.
+
+__Examples__
+```python
+nl = namablelist(apple=10, banana=11, canana=12, danana=13)
+assert nl.keys() == ['apple', 'banana', 'canana', 'danana']
+```
+
+
+#### `namablelist.values()`
+Get the list of... values.
+
+__Examples__
+```python
+nl = namablelist(apple=10, banana=11, canana=12, danana=13)
+assert nl.values() == [10, 11, 12, 13]
+```
+
+
+#### `namablelist.indexof`
+Get the index of specified name.  
+It can be called as a function, and also accessed through attrubutes.  
+Names with no bindings are mapped to `None`.
+
+__Examples__
+```python
+nl = namablelist(apple=10, banana=11, canana=12, danana=13)
+assert nl.indexof('banana') == 11
+assert nl.indexof.banana == 11
+assert nl.indexof.eanana == None
+```
+
+
+#### `namablelist.nameof(index)`
+Get the name of specified index.  
+Due to the nature of Python syntax, it doesn't provide attribute access like `indexof` do.
+
+__Examples__
+```python
+nl = namablelist(apple=10, banana=11, canana=12, danana=13)
+assert nl.nameof(11) == 'banana'
+assert nl.nameof('banana') == 'banana'
+assert nl.nameof('eanana') == None
 ```

@@ -1,25 +1,35 @@
+from collections import UserList
+
 from .internal_utils import exporter
 export, __all__ = exporter()
 
 
 @export
-class namablelist(list):
+class namablelist(UserList):
     def __init__(self, *args, **kwargs):
+        super().__init__()
+
         super().__setattr__('_name_to_index', {})
         super().__setattr__('_index_to_name', {})
 
-        def indexof(name):
-            if isinstance(name, int):
-                return None if name >= len(self) else name
-            return self._name_to_index.get(name)
-        indexof.__dict__ = self._name_to_index
-        super().__setattr__('indexof', indexof)
+        class IndexOf:
+            def __init__(me, parent):
+                me.parent = parent
+
+            def __call__(me, name):
+                if isinstance(name, int):
+                    return None if name >= len(me.parent) else name
+                return me.parent._name_to_index.get(name)
+
+            def __getattr__(me, name):
+                return me.parent._name_to_index.get(name)
+        super().__setattr__('indexof', IndexOf(self))
 
         if args and kwargs:
             raise ValueError('Cannot mix named and unnamed values')
 
         if args:
-            super().__init__(args[0])
+            self.extend(args[0])
 
         if kwargs:
             for idx, (key, value) in enumerate(kwargs.items()):
@@ -78,6 +88,8 @@ class namablelist(list):
         return self._getitem(attr, _keyerror=AttributeError)
 
     def __setattr__(self, attr, value):
+        if attr == 'data':
+            return super().__setattr__(attr, value)
         return self._setitem(attr, value, _keyerror=AttributeError)
 
     def __dir__(self):

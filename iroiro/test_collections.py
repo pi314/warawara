@@ -1,3 +1,5 @@
+from collections import UserList
+
 from .lib_test_utils import *
 
 from .lib_collections import namablelist
@@ -33,8 +35,7 @@ class TestNamableList(TestCase):
             self.nl['canana']
         with self.raises(AttributeError):
             self.nl.canana
-        with self.raises(AttributeError):
-            self.nl.indexof.canana
+        self.eq(self.nl.indexof.canana, None)
 
         self.eq(self.nl.danana, 13)
         self.eq(self.nl.indexof.danana, 3)
@@ -43,8 +44,7 @@ class TestNamableList(TestCase):
             self.nl['danana']
         with self.raises(AttributeError):
             self.nl.danana
-        with self.raises(AttributeError):
-            self.nl.indexof.danana
+        self.eq(self.nl.indexof.danana, None)
 
     def test_access_through_attr(self):
         nl = self.nl
@@ -62,6 +62,9 @@ class TestNamableList(TestCase):
     def test_values(self):
         self.eq(self.nl.values(), list(self.nl))
 
+    def test_eq(self):
+        self.eq(self.nl, [10, 11, 12, 13])
+
     def test_indexof_method(self):
         nl = self.nl
         self.eq(nl.indexof('apple'), 0)
@@ -78,6 +81,7 @@ class TestNamableList(TestCase):
         self.eq(nl.indexof.banana, 1)
         self.eq(nl.indexof.canana, 2)
         self.eq(nl.indexof.danana, 3)
+        self.eq(nl.indexof.eanana, None)
 
     def test_nameof(self):
         nl = self.nl
@@ -116,3 +120,12 @@ class TestNamableList(TestCase):
 
         with self.raises(TypeError):
             nl[nl] = 1
+
+    def test_compatibility_with_list(self):
+        self.isinstance(self.nl, UserList)
+        self.eq(self.nl, [10, 11, 12, 13])
+        self.nl.extend([14, 15])
+        self.eq(self.nl, [10, 11, 12, 13, 14, 15])
+        self.nl.append(16)
+        self.eq(self.nl, [10, 11, 12, 13, 14, 15, 16])
+        self.eq(len(self.nl), len([10, 11, 12, 13, 14, 15, 16]))
