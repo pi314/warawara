@@ -282,11 +282,11 @@ class FakeTerminal:
 
         self.recording_history = False
 
-    @property
+    @getter
     def recording(self):
         return self.recording_history
 
-    @recording.setter
+    @setter
     def recording(self, enable):
         if not isinstance(enable, bool):
             raise TypeError('recording must be a boolean')
