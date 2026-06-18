@@ -239,8 +239,8 @@ pipe2.join()
 ```
 
 
-## `is_parant_process_alive()`
-## `is_parant_process_dead()`
+## `is_parent_process_alive()`
+## `is_parent_process_dead()`
 
 Check if parent process is alive or not.
 

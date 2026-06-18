@@ -898,9 +898,9 @@ class TestChildrenManagement(TestCase):
             self.log.append(('os.killpg', (pgid, signum)))
         self.patch('os.killpg', mock_killpg)
 
-    def test_is_parant_process_alive(self):
-        self.true(is_parant_process_alive())
-        self.false(is_parant_process_dead())
+    def test_is_parent_process_alive(self):
+        self.true(is_parent_process_alive())
+        self.false(is_parent_process_dead())
 
     def test_term_self_without_signum(self):
         self.patch_pid_funcions()
@@ -1003,15 +1003,15 @@ class TestChildrenManagement(TestCase):
 
     def test_monitor_thread(self):
         parent_proc_alive = True
-        def mock_is_parant_process_alive():
+        def mock_is_parent_process_alive():
             return parent_proc_alive
 
         callback_checkpoint = self.checkpoint()
         def mock_terminate_self():
             callback_checkpoint.set()
 
-        t = monitor_parant_process(interval=0.1,
-                                   cond=mock_is_parant_process_alive,
+        t = monitor_parent_process(interval=0.1,
+                                   cond=mock_is_parent_process_alive,
                                    callback=mock_terminate_self)
 
         parent_proc_alive = False

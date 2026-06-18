@@ -578,13 +578,13 @@ def pipe(istream, *ostreams, start=True):
 
 
 @export
-def is_parant_process_alive():
+def is_parent_process_alive():
     return os.getppid() != 1
 
 
 @export
-def is_parant_process_dead():
-    return not is_parant_process_alive()
+def is_parent_process_dead():
+    return not is_parent_process_alive()
 
 
 class Children(UserList):
@@ -674,7 +674,7 @@ def terminate_children(*signum_list, timeout=TERM_TIMEOUT, how=None):
 
 
 @export
-def monitor_parant_process(interval=TERM_TIMEOUT, cond=is_parant_process_alive, callback=terminate_self):
+def monitor_parent_process(interval=TERM_TIMEOUT, cond=is_parent_process_alive, callback=terminate_self):
     def loop():
         while cond():
             time.sleep(interval)
