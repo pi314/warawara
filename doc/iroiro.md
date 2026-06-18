@@ -73,11 +73,12 @@ In other words, `iroiro.subproc.xxx` is shortcut-ed to `iroiro.xxx`.
 Documents and descriptions of the categories are as following:
 
 *   [iroiro](iroiro.md)
-*   [iroiro.colors](iroiro.colors.md)
 *   [iroiro.collections](iroiro.collections.md)
+*   [iroiro.colors](iroiro.colors.md)
 *   [iroiro.datetime](iroiro.datetime.md)
 *   [iroiro.fs](iroiro.fs.md)
 *   [iroiro.itertools](iroiro.itertools.md)
+*   [iroiro.lang](iroiro.lang.md)
 *   [iroiro.math](iroiro.math.md)
 *   [iroiro.regex](iroiro.regex.md)
 *   [iroiro.sh](iroiro.sh.md)
