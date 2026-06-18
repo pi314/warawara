@@ -57,7 +57,7 @@ __Parameters__
 natsorted(iterable, key=None)
 ```
 
-This function was made for sorting ``os.listdir()`` with a slightly better result.
+This function was made for sorting `os.listdir()` with a slightly better result.
 
 __Examples__
 ```python

@@ -128,7 +128,7 @@ assert c.to_rgb() == ColorRGB(255, 175, 0)
 assert c.to_hsv() == ColorHSV(41, 100, 100)
 ```
 
-## Class ``ColorRGB``
+## Class `ColorRGB`
 
 Represents a RGB color.
 
@@ -210,7 +210,7 @@ assert c.RGB == (255, 174, 0)
 The escape sequence of a `ColorRGB` object is calculated based on `RGB`.
 
 
-## Class ``ColorHSV``
+## Class `ColorHSV`
 
 Represents a HSV color.
 
@@ -256,9 +256,9 @@ assert ColorHSV(41, 100, 100).to_hsv() == ColorHSV(41, 100, 100)
 ```
 
 Two sets of HSV values are provided:
-*   Lowercase ``hsv`` for real values
-*   Uppercase ``HSV`` for regulated values that are
-    ``round()`` and ``clamp()`` to proper range.
+*   Lowercase `hsv` for real values
+*   Uppercase `HSV` for regulated values that are
+    `round()` and `clamp()` to proper range.
 
 ```python
 # Similar to clementine
@@ -287,7 +287,7 @@ paint(em=None, fg=None, bg=None)
 ```
 
 
-## Class ``ColorCompound``
+## Class `ColorCompound`
 
 Binds two Color object together, one for foreground and one for background.
 
@@ -311,7 +311,7 @@ od = orange / darkorange
 assert od('ORANGE') == '\033[38;5;208;48;2;255;175;0mORANGE\033[m'
 ```
 
-In addition, `ColorCompound` objects supports ``__or__`` operation.
+In addition, `ColorCompound` objects supports `__or__` operation.
 *   Foreground remains foreground, background remains background
 *   The later color overrides the former
 
@@ -526,7 +526,7 @@ assert '{}'.format(nocolor) == '\033[m'
 
 ## `gradient()`
 
-Produces a series of colors from ``A`` to ``B`` of length ``N >= 2``.
+Produces a series of colors from `A` to `B` of length `N >= 2`.
 
 __Parameters__
 ```python
