@@ -5,7 +5,7 @@ This document describes the API set provided by `iroiro.subproc`.
 For the index of this package, see [iroiro.md](iroiro.md).
 
 
-## Class `command()`
+## Class `command`
 
 A line-oriented object for interacing with the specified command.
 
