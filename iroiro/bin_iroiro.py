@@ -3,6 +3,7 @@ import os
 import sys
 
 from os.path import basename, dirname
+from pathlib import Path
 
 from . import __version__
 from . import bin
@@ -12,19 +13,25 @@ def main():
     prog = basename(sys.argv[0])
     sys.argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(description='iroiro', prog='iroiro')
-    parser.add_argument('-v', '--version', action='version', help='print version and exit', version=__version__)
-    parser.add_argument('-w', '--which', '--where', action='version', help='print package path and exit', version=dirname(__file__))
-    parser.add_argument('command', nargs='*', help='sub-command and args')
-    args = parser.parse_args(sys.argv)
+    my_args = []
+    remain_args = []
 
-    arg_idx = None
-    for idx, arg in enumerate(sys.argv):
-        if arg != 'iroiro':
-            arg_idx = idx
-            break
+    dashing = True
+    for arg in sys.argv:
+        if arg.startswith('-') and dashing:
+            my_args.append(arg)
+        else:
+            dashing = False
+            remain_args.append(arg)
 
-    if arg_idx is None and len(sys.argv) > 2:
+    sys.argv = remain_args
+
+    recurse_depth = 0
+    while sys.argv and sys.argv[0] == 'iroiro':
+        recurse_depth += 1
+        sys.argv.pop(0)
+
+    if recurse_depth > 2:
         print(
 r'''
         ╭────────────────────────────────╮
@@ -49,8 +56,6 @@ r'''
 ''', file=sys.stderr)
         sys.exit(1)
 
-    sys.argv = sys.argv[(arg_idx or 0):]
-
     if not sys.argv:
         for f in sorted(os.listdir(os.path.dirname(__file__))):
             if f.startswith('bin_') and f.endswith('.py'):
@@ -59,6 +64,14 @@ r'''
         sys.exit(1)
 
     subcmd = sys.argv[0]
+
+    if subcmd == 'version':
+        print(__version__)
+        sys.exit()
+
+    elif subcmd == 'path':
+        print(Path(__file__).parent / 'bin')
+        sys.exit()
 
     try:
         getattr(bin, subcmd).main()
