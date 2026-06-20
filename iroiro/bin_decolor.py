@@ -12,8 +12,7 @@ def main():
 
     term_size = shutil.get_terminal_size()
 
-    parser = argparse.ArgumentParser(description='nowrap', prog='nowrap')
-    parser.add_argument('-w', '--width', type=int, help='Width limit')
+    parser = argparse.ArgumentParser(description='Remove ANSI color escape codes', prog='decolor')
 
     args = parser.parse_args(argv)
 
