@@ -17,10 +17,5 @@ def main():
 
     args = parser.parse_args(argv)
 
-    try:
-        for line in sys.stdin:
-            print(colors.decolor(line.rstrip('\n')))
-    except BrokenPipeError:
-        # https://docs.python.org/3/library/signal.html#note-on-sigpipe
-        devnull = os.open(os.devnull, os.O_WRONLY)
-        os.dup2(devnull, sys.stdout.fileno())
+    for line in sys.stdin:
+        print(colors.decolor(line.rstrip('\n')))

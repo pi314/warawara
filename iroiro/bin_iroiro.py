@@ -78,3 +78,7 @@ r'''
     except (AttributeError, ModuleNotFoundError):
         print(f'Unknown subcommand: {subcmd}', file=sys.stderr)
         sys.exit(1)
+    except (KeyboardInterrupt, BrokenPipeError):
+        # https://docs.python.org/3/library/signal.html#note-on-sigpipe
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
