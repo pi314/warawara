@@ -1,5 +1,4 @@
-iroiro
-===============================================================================
+# iroiro
 
 A swiss-knife-like library that collects cute utilities for my other projects.
 
@@ -39,8 +38,9 @@ for simple uses.
 For more detailed API usage, see [doc/iroiro.md](doc/iroiro.md)
 
 
-Installation
--------------------------------------------------------------------------------
+## Installation
+
+`iroiro` is on [pypi](https://pypi.org/project/iroiro/):
 ```console
 sh$ pip3 install iroiro
 ```
@@ -55,8 +55,86 @@ sys.path.pop(0)
 ```
 
 
-Testing
--------------------------------------------------------------------------------
+### Shell Utils
+
+`iroiro` comes with several shell utilities, invoke `iroiro` without arguments
+to get the list, and run them as sub-command:
+```console
+sh$ iroiro
+iroiro
+decolor
+nowrap
+ntfy
+palette
+rainbow
+sponge
+```
+```console
+sh$ iroiro rainbow
+(rainbow)
+```
+
+In order to not conflicting with your shell utilities
+(e.g. `sponge` from [`moreutils`](https://joeyh.name/code/moreutils/)),
+`iroiro` does not install scripts except `iroiro` itself.
+Instead, run `iroiro path` to get the shipped/installed `bin/` path.
+
+For example, if `iroiro` is installed through `pipx`, the output might look like this:
+
+```console
+sh$ iroiro path
+/Users/you/.local/pipx/venvs/iroiro/lib/python3.14/site-packages/iroiro/bin
+```
+
+Add it into `$PATH` at the desired position in your shell config to make it permanent.
+
+If the installed path is subjected to change, you can make it dynamic:
+```sh
+# To place it at the 1st path,
+if command -v iroiro >/dev/null 2&>1; then
+    export PATH="$(iroiro path)":"$PATH"
+fi
+
+# To placed it before certain path,
+if command -v iroiro >/dev/null 2&>1; then
+    export PATH="$(echo "$PATH" | \
+        tr ':' '\n' | \
+        awk '$0~/\.local\/bin/{ print ":" "'"$(iroiro path)"'" } { print ":" $0 }' | \
+        tr -d '\n' | \
+        sed 's/^://')"
+fi
+```
+
+For more precised control, you can pick certain commands,
+and manually create soft links
+or small snippets into your self-managed `bin` folder:
+```sh
+#!/usr/bin/env sh
+
+exec iroiro nowrap "$@"
+```
+
+Instead of `$PATH`, you might want to use alias to manage them.
+`iroiro alias` shows a sample snippet for reference:
+```console
+sh$ iroiro alias
+alias iroiro='iroiro iroiro'
+alias decolor='iroiro decolor'
+alias nowrap='iroiro nowrap'
+alias ntfy='iroiro ntfy'
+alias palette='iroiro palette'
+alias rainbow='iroiro rainbow'
+alias sponge='iroiro sponge'
+```
+
+You can do some processing beforing evaluating the output:
+```sh
+eval "$(iroiro alias | grep -v sponge)"
+```
+
+
+## Testing
+
 *   Through `Makefile`:
 
     ```console

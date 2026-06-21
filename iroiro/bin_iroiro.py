@@ -9,6 +9,15 @@ from . import __version__
 from . import bin
 
 
+def subcmd_list():
+    ret = []
+    for f in os.listdir(os.path.dirname(__file__)):
+        if f.startswith('bin_') and f.endswith('.py'):
+            c = os.path.splitext(f[4:])[0]
+            ret.append(c)
+    return sorted(ret, key=lambda x: (x != 'iroiro', x))
+
+
 def main():
     prog = basename(sys.argv[0])
     sys.argv = sys.argv[1:]
@@ -57,10 +66,8 @@ r'''
         sys.exit(1)
 
     if not sys.argv:
-        for f in sorted(os.listdir(os.path.dirname(__file__))):
-            if f.startswith('bin_') and f.endswith('.py'):
-                m = os.path.splitext(f[4:])[0]
-                print(m)
+        for c in subcmd_list():
+            print(c)
         sys.exit(1)
 
     subcmd = sys.argv[0]
@@ -71,6 +78,11 @@ r'''
 
     elif subcmd == 'path':
         print(Path(__file__).parent / 'bin')
+        sys.exit()
+
+    elif subcmd == 'alias':
+        for c in subcmd_list():
+            print(f"alias {c}='iroiro {c}'")
         sys.exit()
 
     try:
