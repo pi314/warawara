@@ -1456,7 +1456,6 @@ class Menu:
         self._refresh_throttler(blocking=force, args=[], kwargs={'force': force})
 
     def interact_loop(self):
-        self.unselect_all()
         self.pager.reset()
         try:
             self._active = True
