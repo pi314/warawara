@@ -132,6 +132,34 @@ You can do some processing beforing evaluating the output:
 eval "$(iroiro alias | grep -v sponge)"
 ```
 
+If alias is not suitable for you, and you don't want to deploy relay scripts,
+`iroiro bin` could be used to modify those scripts in-place.
+
+```console
+sh$ iroiro bin list
+enabled │ decolor
+enabled │ nowrap
+enabled │ ntfy
+enabled │ palette
+enabled │ rainbow
+enabled │ sponge
+```
+
+`iroiro bin` without other arguments launchs an interactive interface.
+Modifications are taking effect immediately, there's no 2nd confirmation.
+```console
+sh$ iroiro bin
+  enabled  │ decolor
+  enabled  │ nowrap
+> disabled │ ntfy
+  enabled  │ palette
+  enabled  │ rainbow
+  enabled  │ sponge
+```
+
+Obviously, the modification would be discarded after package upgrade.
+Use at your own risk.
+
 
 ## Testing
 
