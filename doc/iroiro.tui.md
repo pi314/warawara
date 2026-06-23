@@ -47,6 +47,29 @@ assert strwidth('\033[38;5;214mtest\033[m') == 4
 assert strwidth('哇嗚') == 4
 ```
 
+
+## `atomize()`
+Split the given string into either a single character or an ANSI escape sequence.
+
+__Parameters__
+```python
+atomize(s)
+```
+
+__Examples__
+```python
+assert atomize('asdf') == ('a', 's', 'd', 'f')
+assert atomize('i\033[31mro\033[1;32mい\033[mろ') == (
+                'i',
+                '\033[31m',
+                'r', 'o',
+                '\033[1;32m',
+                'い',
+                '\033[m',
+                'ろ')
+```
+
+
 ## `wrap()`
 
 Wrap the string with width limit.

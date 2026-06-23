@@ -21,6 +21,19 @@ class TestTypesettingUtils(TestCase):
         self.eq(strwidth(orange('test')), 4)
         self.eq(strwidth('哇嗚'), 4)
 
+    def test_atomize(self):
+        self.false(atomize(''))
+        self.eq(atomize('iroiro'), ('i', 'r', 'o', 'i', 'r', 'o'))
+        self.eq(atomize('いろiろ'), ('い', 'ろ', 'i', 'ろ'))
+        self.eq(atomize('\033[m'), ('\033[m',))
+        self.eq(atomize('\033[1;35m'), ('\033[1;35m',))
+        self.eq(atomize('\033[m\033[1;35m'), ('\033[m', '\033[1;35m',))
+        self.eq(atomize('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ'),
+                ('い', '\033[1;35m', 'ろ', '\033[m', '\033[1;35m', 'い', '\033[0m', 'ろ')
+                )
+        self.eq(atomize('i\033[31mro\033[1;32mい\033[mろ'),
+                ('i', '\033[31m', 'r', 'o', '\033[1;32m', 'い', '\033[m', 'ろ'))
+
     def test_wrap(self):
         # Basic cases
         self.eq(wrap('iroiro', 1), ('i', 'roiro'))

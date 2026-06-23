@@ -63,14 +63,7 @@ def atomize(s):
                 return ret
         return None
 
-    ret = []
-    for char in s:
-        atom = accumulate(char)
-        if atom is None:
-            continue
-        ret.append(atom)
-
-    return ret
+    return tuple(atom for atom in (accumulate(char) for char in s) if atom is not None)
 
 
 @export
