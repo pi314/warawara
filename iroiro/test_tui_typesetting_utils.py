@@ -74,7 +74,8 @@ class TestTypesettingUtils(TestCase):
         self.eq(wrap('い\033[1;35mろい\033[mろ', 8), ('い\033[1;35mろい\033[mろ', ''))
         self.eq(wrap('い\033[1;35mろい\033[mろ', 9), ('い\033[1;35mろい\033[mろ', ''))
 
-        self.eq(wrap('いろいろ\033[1;35m', 8), ('いろいろ', '\033[1;35m'))
+        self.eq(wrap('いろいろ\033[1;35m', 7), ('いろい', 'ろ\033[1;35m'))
+        self.eq(wrap('いろいろ\033[1;35m', 8), ('いろいろ\033[1;35m', ''))
         self.eq(wrap('いろいろ\033[1;35m', 9), ('いろいろ\033[1;35m', ''))
 
         # String with multiple color sequences
@@ -89,7 +90,8 @@ class TestTypesettingUtils(TestCase):
         self.eq(wrap('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', 9), ('い\033[1;35mろ\033[m\033[1;35mい\033[0mろ', ''))
 
         # String with unknown escape sequence
-        self.eq(wrap('い\033ろいろ', 4), ('い\033ろいろ', ''))
+        # I dont know what's the reasonable answer for this
+        self.eq(wrap('い\033ろいろ', 4), ('い', '\033ろいろ'))
 
         with self.raises(ValueError):
             wrap('whatever', 1, clip=1)

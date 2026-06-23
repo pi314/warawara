@@ -41,56 +41,88 @@ def strwidth(s):
 
 
 @export
-def wrap(s, width, clip=None):
-    if clip is None:
-        pass
-    elif not isinstance(clip, str) or (strwidth(clip) != 1):
-        raise ValueError('clip should be a single width string')
-
+def atomize(s):
     acc = ''
     def accumulate(char):
         nonlocal acc
         if not acc:
             if char != '\033':
-                return (char, charwidth(char))
+                return char
             acc = char
-            return (None, None)
+            return None
 
         elif acc == '\033':
             acc += char
-            return (None, None)
+            return None
 
         else:
             acc += char
             if ((not acc.startswith('\033[')) or
                     (char not in '0123456789;')):
                 ret, acc = acc, ''
-                return (ret, 0)
-        return (None, None)
+                return ret
+        return None
 
-    aw = 0
-    to = 0
+    ret = []
+    for char in s:
+        atom = accumulate(char)
+        if atom is None:
+            continue
+        ret.append(atom)
+
+    return ret
+
+
+@export
+def wrap(s, width, clip=None):
+    if clip is None:
+        pass
+    elif not isinstance(clip, str) or (strwidth(clip) != 1):
+        raise ValueError('clip should be a single width string')
+
+    total_width = 0
+    lhs = ''
     pending = ''
-    for idx, char in enumerate(s):
-        char, cw = accumulate(char)
-        if char is None:
+    rhs = ''
+    full = False
+    for atom in atomize(s):
+        atom_width = strwidth(atom)
+
+        if full:
+            rhs += pending + atom
+            pending = ''
             continue
 
-        if cw == 0 and char not in ('\033[m', '\033[0m'):
-            pending += char
+        if atom_width == 0:
+            if atom in ('\033[m', '\033[0m'):
+                lhs += atom
+            else:
+                pending += atom
             continue
 
-        if aw + cw > width:
-            if clip and aw + 1 <= width:
-                return (s[:to] + clip, s[to:])
-            return (s[:to], s[to:])
-        aw += cw
-        to = idx + 1
+        new_width = total_width + atom_width
 
-    if aw == width:
-        return (s[:to], s[to:])
+        if new_width <= width:
+            lhs += pending + atom
+            pending = ''
+
+        else:
+            if clip and total_width + 1 <= width:
+                lhs += pending + clip
+                pending = ''
+            rhs += pending + atom
+            pending = ''
+
+        total_width = new_width
+        if total_width > width:
+            full = True
+
+    if not full:
+        lhs += pending
     else:
-        return (s, '')
+        rhs += pending
+
+    return (lhs, rhs)
 
 
 def lpad(text, padding):

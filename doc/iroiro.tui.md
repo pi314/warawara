@@ -68,7 +68,7 @@ If theres a color escape sequence right on the wrap boundary, the algorithm tend
 *   not include it otherwise
 
 If the color sequence is at the end of string, the algorithm includes it only
-when `width` is larger than the result string.
+when `width` is larger than or equals to the result string.
 
 __Examples__
 ```python
