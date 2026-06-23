@@ -83,6 +83,52 @@ assert wrap('いろイロ\033[1;35m', 9) == ('いろイロ\033[1;35m', '')
 ```
 
 
+## `retab()`
+
+Expand tab characters in a string.
+
+__Parameters__
+```python
+retab(s, *, tabstop=4, listchars=' ')
+```
+
+For `tabstop`,
+*   Tab characters (`\t`) sitting on a multiple of `tabstop` (starting from `0`)
+    are expanded into full width.
+*   Tab characters sitting on other positions are expanded to fill the gap,
+    so that next character sits on a multiple of `tabstop`.
+
+For `listchars` (take `tabstop=4` for example,)
+
+*   If `listchars` has length 1, it's repeated for tab expansion.
+    Thus `listchars='-'` displays:
+    ```
+    -
+    --
+    ---
+    ----
+    ```
+
+*   If `listchars` has length 2 (e.g. `xy`), `x` is always used and `y` is repeated.
+    Thus `listchars='>-'` displays:
+    ```
+    >
+    >-
+    >--
+    >---
+    ```
+
+*   If `listchars` has length 3 (e.g. `xyz`), `z` is always used, `x` is prepended,
+    and then `y` is repeated until the gap is filled.
+    Thus `listchars='<->'` displays:
+    ```
+    >
+    <>
+    <->
+    <-->
+    ```
+
+
 ## `ljust()` / `rjust()`
 
 `ljust` and `rjust` `data` based on `strwidth()`.

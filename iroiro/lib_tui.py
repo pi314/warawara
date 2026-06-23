@@ -125,6 +125,34 @@ def wrap(s, width, clip=None):
     return (lhs, rhs)
 
 
+@export
+def retab(line, *, tabstop=4, listchars=' '):
+    ret = ''
+    width = 0
+    if len(listchars) == 1:
+        listchars = listchars * 3
+
+    for ch in atomize(line):
+        if ch == '\t':
+            if not tabstop:
+                continue
+
+            tab = tabstop - (width % tabstop)
+
+            if tab == 1:
+                ret += listchars[0] if len(listchars) <= 2 else listchars[-1]
+            elif tab == 2:
+                ret += listchars[0] + listchars[-1]
+            else:
+                ret += listchars[0] + (listchars[1] * (tab - 2)) + listchars[-1]
+
+            width += tab
+        else:
+            ret += ch
+            width += strwidth(ch)
+    return ret
+
+
 def lpad(text, padding):
     return text + padding
 

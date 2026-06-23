@@ -102,6 +102,38 @@ class TestTypesettingUtils(TestCase):
         with self.raises(ValueError):
             wrap('whatever', 1, clip='蛤')
 
+    def test_retab(self):
+        self.eq(retab(''), '')
+        self.eq(retab('\t'), '    ')
+        self.eq(retab('\t', tabstop=8), '        ')
+        self.eq(retab('\t', tabstop=8, listchars='-'), '--------')
+        self.eq(retab('\t', tabstop=8, listchars='>-'), '>-------')
+        self.eq(retab('\t', tabstop=8, listchars='<->'), '<------>')
+
+        self.eq(retab('\tB', tabstop=4, listchars='>-'), '>---B')
+        self.eq(retab('A\tB', tabstop=4, listchars='>-'), 'A>--B')
+        self.eq(retab('AA\tB', tabstop=4, listchars='>-'), 'AA>-B')
+        self.eq(retab('AAA\tB', tabstop=4, listchars='>-'), 'AAA>B')
+        self.eq(retab('AAAA\tB', tabstop=4, listchars='>-'), 'AAAA>---B')
+        self.eq(retab('AAAAA\tB', tabstop=4, listchars='>-'), 'AAAAA>--B')
+        self.eq(retab('AAAAAA\tB', tabstop=4, listchars='>-'), 'AAAAAA>-B')
+        self.eq(retab('AAAAAAA\tB', tabstop=4, listchars='>-'), 'AAAAAAA>B')
+        self.eq(retab('AAAAAAAA\tB', tabstop=4, listchars='>-'), 'AAAAAAAA>---B')
+
+        self.eq(retab('\tB', tabstop=5, listchars='<->'), '<--->B')
+        self.eq(retab('A\tB', tabstop=5, listchars='<->'), 'A<-->B')
+        self.eq(retab('AA\tB', tabstop=5, listchars='<->'), 'AA<->B')
+        self.eq(retab('AAA\tB', tabstop=5, listchars='<->'), 'AAA<>B')
+        self.eq(retab('AAAA\tB', tabstop=5, listchars='<->'), 'AAAA>B')
+        self.eq(retab('AAAAA\tB', tabstop=5, listchars='<->'), 'AAAAA<--->B')
+        self.eq(retab('AAAAAA\tB', tabstop=5, listchars='<->'), 'AAAAAA<-->B')
+        self.eq(retab('AAAAAAA\tB', tabstop=5, listchars='<->'), 'AAAAAAA<->B')
+        self.eq(retab('AAAAAAAA\tB', tabstop=5, listchars='<->'), 'AAAAAAAA<>B')
+        self.eq(retab('AAAAAAAAA\tB', tabstop=5, listchars='<->'), 'AAAAAAAAA>B')
+        self.eq(retab('AAAAAAAAAA\tB', tabstop=5, listchars='<->'), 'AAAAAAAAAA<--->B')
+
+        self.eq(retab('\t', tabstop=0), '')
+
     def test_ljust_str(self):
         self.eq(ljust('test', 10), 'test      ')
         self.eq(rjust('test', 10), '      test')
