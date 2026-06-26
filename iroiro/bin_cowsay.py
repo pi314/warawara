@@ -55,7 +55,7 @@ def BoxConfig(seq):
             return [BoxChar(c) for c in '⢰⠒⡆⢸⢤⡇⠸⠤⠇⡸']
 
     if len(seq) != 9:
-        raise ValueError('Box config should be in len= 9')
+        raise ValueError('Box config should be in len=9')
 
     return seq
 
@@ -94,26 +94,30 @@ def main():
     width = max(strwidth(line) for line in lines)
 
     def puts(line):
-        print(r(' ', args.margin) + line)
+        print(space(args.margin) + line)
+
+    cow_offset = -args.offset if args.offset < 0 else 0
 
     cow_image = [
-            '           (__) ' + box[9],
-            '   _______/(..)',
-            ' /(       /(__)',
-            '* | w----||',
-            '  ||     ||',
+            space(cow_offset) + '                ' + box[4],
+            space(cow_offset) + '           (__) ' + box[9],
+            space(cow_offset) + '   _______/(..)',
+            space(cow_offset) + ' /(       /(__)',
+            space(cow_offset) + '* | w----||',
+            space(cow_offset) + '  ||     ||',
             ]
-    anchor = cow_image[0].index(str(box[9]))
+    anchor = cow_image[0].index(str(box[4]))
 
     puts(space(args.offset) + box[0] + box[1](padding) + box[1](width) + box[1](padding) + box[2])
     for line in lines:
-        puts(space(args.offset) + box[3] + pad() + ljust(line, width) + pad() + box[5])
+        puts(space(args.offset) + box[3] + space(padding) + ljust(line, width) + space(padding) + box[5])
 
-    bubble_bottom_line = (space(args.offset) + box[6] + box[7](padding) + box[7](width) + box[7](padding) + box[8])
+    bubble_bottom_line = space(args.offset) + box[6] + box[7](padding) + box[7](width) + box[7](padding) + box[8]
+
     if bubble_bottom_line[anchor] == box[7]:
         bubble_bottom_line = bubble_bottom_line[:anchor] + box[4] + bubble_bottom_line[anchor+1:]
 
     puts(bubble_bottom_line)
 
-    for line in cow_image:
+    for line in cow_image[1:]:
         puts(line)
