@@ -114,8 +114,11 @@ def main():
 
     bubble_bottom_line = space(args.offset) + box[6] + box[7](padding) + box[7](width) + box[7](padding) + box[8]
 
-    if bubble_bottom_line[anchor] == box[7]:
-        bubble_bottom_line = bubble_bottom_line[:anchor] + box[4] + bubble_bottom_line[anchor+1:]
+    try:
+        if bubble_bottom_line[anchor] == box[7]:
+            bubble_bottom_line = bubble_bottom_line[:anchor] + box[4] + bubble_bottom_line[anchor+1:]
+    except IndexError:
+        pass
 
     puts(bubble_bottom_line)
 
